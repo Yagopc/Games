@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego del Ahorcado</title>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        #game-container {
+            padding: 20px;
+            background: url('fondoh.jpg') no-repeat center center fixed; /* Fondo del juego */
+            background-size: cover; /* Asegura que la imagen cubra todo el fondo */
+            min-height: 100vh; /* Asegura que ocupe toda la pantalla */
+        }
+
+        #word {
+            font-size: 24px;
+            letter-spacing: 10px;
+            margin-bottom: 20px;
+        }
+
+        #message {
+            margin: 20px;
+            font-size: 18px;
+            color: red;
+        }
+
+        .letter {
+            display: inline-block;
+            width: 30px;
+            border-bottom: 2px solid white;
+            text-transform: uppercase;
+        }
+
+        #letters {
+            margin: 20px 0;
+        }
+
+        .guess-btn {
+            background-color: white;
+            color: black;
+            border: none;
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .guess-btn:disabled {
+            background-color: grey;
+            cursor: not-allowed;
+        }
+
+        #hangman-drawing {
+            margin: 20px;
+        }
+
+        #hangman-image {
+            width: 200px;
+            height: 300px;
+        }
+
+        #restart-btn {
+            display: none;
+            font-size: 24px;
+            margin-top: 30px;
+            color: white;
+            background-color: red;
+            padding: 10px 20px;
+            border: none;
+            cursor: pointer;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Estilos para las animaciones al ganar o perder */
+   #win-animation, #lose-animation {
+    display: none;
+    margin-top: 20px;
+    width: 300px;
+    height: 300px;
+    position: absolute;
+    top: 75%; /* Centrado vertical */
+    left: 50%; /* Centrado horizontal */
+    transform: translate(-50%, -50%); /* Ajusta para centrar correctamente */
+}
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Juego del Ahorcado</h1>
+        <div id="word"></div>
+        <div id="message"></div>
+        <div id="letters"></div>
+        <div id="hangman-drawing">
+            <img id="hangman-image" src="0.png" alt="Ahorcado"> <!-- Imagen inicial -->
+        </div>
+        <img id="win-animation" src="win.gif" alt="Ganaste"> <!-- Animación al ganar -->
+        <img id="lose-animation" src="rip.gif" alt="Perdiste"> <!-- Animación al perder -->
+        <button id="restart-btn">Reiniciar Juego</button>
+    </div>
+
+    <audio id="error-sound" src="error.mp3"></audio>
+    <audio id="acierto-sound" src="acierto.mp3"></audio>
+    <audio id="end-sound" src="end.mp3"></audio>
+    <audio id="win-sound" src="win.mp3"></audio>
+
+    <script>
+        let words = [];
+        let chosenWord = '';
+        let remainingGuesses = 6;
+        let guessedLetters = [];
+        let displayedWord = '';
+
+        const wordElement = document.getElementById('word');
+        const messageElement = document.getElementById('message');
+        const lettersContainer = document.getElementById('letters');
+        const restartButton = document.getElementById('restart-btn');
+        const hangmanImage = document.getElementById('hangman-image');
+        const gameContainer = document.getElementById('game-container');
+        const winAnimation = document.getElementById('win-animation');
+        const loseAnimation = document.getElementById('lose-animation');
+        const errorSound = document.getElementById('error-sound');
+        const aciertoSound = document.getElementById('acierto-sound');
+        const endSound = document.getElementById('end-sound');
+        const winSound = document.getElementById('win-sound');
+
+        // Función para cargar las palabras desde diccionario.json
+        async function loadWords() {
+            try {
+                const response = await fetch('diccionario.json'); // Cargar el archivo JSON
+                const data = await response.json();
+                words = data.palabras; // Asignar las palabras desde el JSON
+                startGame();
+            } catch (error) {
+                console.error('Error al cargar el diccionario:', error);
+            }
+        }
+
+        function forceBackgroundImageLoad() {
+            const bgImage = new Image();
+            bgImage.src = 'fondoh.jpg';
+
+            bgImage.onload = function () {
+                gameContainer.style.backgroundImage = "url('fondoh.jpg')";
+                console.log('Fondo cargado correctamente.');
+            };
+
+            bgImage.onerror = function () {
+                console.error('Error al cargar la imagen de fondo.');
+                alert('Error: La imagen de fondo no se pudo cargar.');
+            };
+        }
+
+        function startGame() {
+            if (words.length === 0) {
+                alert('No se encontraron palabras en el diccionario.');
+                return;
+            }
+
+            chosenWord = words[Math.floor(Math.random() * words.length)];
+            guessedLetters = [];
+            remainingGuesses = 6;
+            displayedWord = '_'.repeat(chosenWord.length);
+            wordElement.textContent = displayedWord.split('').join(' ');
+            messageElement.textContent = '';
+            restartButton.style.display = 'none';
+            lettersContainer.innerHTML = '';
+            hangmanImage.src = "0.png"; 
+            winAnimation.style.display = 'none';
+            loseAnimation.style.display = 'none';
+            generateLetterButtons();
+        }
+
+        function normalizeLetter(letter) {
+            return letter.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
+        function generateLetterButtons() {
+            for (let i = 65; i <= 90; i++) {
+                const letter = String.fromCharCode(i);
+                const button = document.createElement('button');
+                button.textContent = letter;
+                button.classList.add('guess-btn');
+                button.onclick = () => guessLetter(letter);
+                lettersContainer.appendChild(button);
+            }
+        }
+
+        function guessLetter(letter) {
+            if (guessedLetters.includes(letter)) return;
+
+            guessedLetters.push(letter);
+            let updatedWord = '';
+            let correctGuess = false;
+
+            for (let i = 0; i < chosenWord.length; i++) {
+                if (normalizeLetter(chosenWord[i].toUpperCase()) === normalizeLetter(letter)) {
+                    updatedWord += chosenWord[i];
+                    correctGuess = true;
+                } else {
+                    updatedWord += displayedWord[i];
+                }
+            }
+
+            displayedWord = updatedWord;
+            wordElement.textContent = displayedWord.split('').join(' ');
+
+            if (correctGuess) {
+                aciertoSound.play();
+            } else {
+                remainingGuesses--;
+                errorSound.play();
+                updateHangmanImage(6 - remainingGuesses);
+            }
+
+            checkGameStatus();
+            disableButton(letter);
+        }
+
+        function disableButton(letter) {
+            const buttons = document.querySelectorAll('.guess-btn');
+            buttons.forEach(btn => {
+                if (btn.textContent === letter) {
+                    btn.disabled = true;
+                }
+            });
+        }
+
+        function checkGameStatus() {
+            if (displayedWord === chosenWord) {
+                messageElement.textContent = '¡Ganaste! ';
+                winSound.play();
+                winAnimation.style.display = 'block'; // Mostrar animación de ganar
+                endGame();
+            } else if (remainingGuesses === 0) {
+                messageElement.textContent = `Has perdido. La palabra era: ${chosenWord}`;
+                endSound.play();
+                loseAnimation.style.display = 'block'; // Mostrar animación de perder
+                endGame();
+            }
+        }
+
+        function endGame() {
+            const buttons = document.querySelectorAll('.guess-btn');
+            buttons.forEach(btn => btn.disabled = true);
+            restartButton.style.display = 'block';
+        }
+
+        restartButton.onclick = startGame;
+
+        function updateHangmanImage(failures) {
+            hangmanImage.src = `${failures}.png`;
+        }
+
+        loadWords();
+        forceBackgroundImageLoad();
+    </script>
+</body>
+</html>

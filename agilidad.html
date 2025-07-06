@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sumas Rápidas</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            font-size: 3rem;
+            color: #333;
+        }
+        #container {
+            margin-top: 20px;
+        }
+        #problem {
+            font-size: 2rem;
+        }
+        input {
+            font-size: 1.5rem;
+            padding: 10px;
+            width: 150px;
+            text-align: center;
+        }
+        button {
+            font-size: 1.2rem;
+            padding: 10px 20px;
+            margin-top: 20px;
+        }
+        #timer {
+            margin-top: 20px;
+            font-size: 1.5rem;
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Sumas Rápidas</h1>
+    <div id="container">
+        <div id="problem"></div>
+        <input type="number" id="answer" placeholder="Respuesta">
+        <button id="submitBtn">Enviar</button>
+        <div id="timer"></div>
+    </div>
+
+    <script>
+        let num1, num2, correctAnswer, timeLimit = 5, score = 0;
+        let timer, timeLeft;
+
+        const problemDiv = document.getElementById("problem");
+        const answerInput = document.getElementById("answer");
+        const submitBtn = document.getElementById("submitBtn");
+        const timerDiv = document.getElementById("timer");
+
+        function startGame() {
+            generateProblem();
+            startTimer();
+        }
+
+        function generateProblem() {
+            num1 = Math.floor(Math.random() * 50) + 1;
+            num2 = Math.floor(Math.random() * 50) + 1;
+            correctAnswer = num1 + num2;
+            problemDiv.textContent = `${num1} + ${num2} = ?`;
+            answerInput.value = '';
+            answerInput.focus();
+        }
+
+        function startTimer() {
+            timeLeft = timeLimit;
+            timerDiv.textContent = `Tiempo: ${timeLeft}s`;
+            clearInterval(timer);
+            timer = setInterval(() => {
+                timeLeft--;
+                timerDiv.textContent = `Tiempo: ${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    alert(`¡Se acabó el tiempo! Tu puntaje es: ${score}`);
+                    resetGame();
+                }
+            }, 1000);
+        }
+
+        function checkAnswer() {
+            const userAnswer = parseInt(answerInput.value);
+            if (userAnswer === correctAnswer) {
+                score++;
+                timeLimit = Math.max(1, timeLimit - 0.5); // Cada vez se reduce el tiempo disponible
+                generateProblem();
+                startTimer();
+            } else {
+                alert(`¡Respuesta incorrecta! El resultado era ${correctAnswer}. Puntaje: ${score}`);
+                resetGame();
+            }
+        }
+
+        function resetGame() {
+            score = 0;
+            timeLimit = 5;
+            startGame();
+        }
+
+        submitBtn.addEventListener('click', checkAnswer);
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        startGame();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Botones de Archivos HTML</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <h1>Archivos HTML</h1>
+    <div class="button-container" id="buttonContainer"></div>
+
+    <script>
+        // Función para obtener la lista de archivos HTML y generar botones
+        async function loadHtmlFiles() {
+            try {
+                // Hacer una solicitud al servidor para obtener la lista de archivos
+                const response = await fetch('/list-html-files');
+                const files = await response.json();
+
+                const buttonContainer = document.getElementById('buttonContainer');
+
+                // Filtrar archivos HTML, excluyendo index.html
+                const htmlFiles = files.filter(file => 
+                    file.endsWith('.html') && file.toLowerCase() !== 'index.html'
+                );
+
+                // Crear un botón para cada archivo HTML
+                htmlFiles.forEach(file => {
+                    const button = document.createElement('button');
+                    button.textContent = file; // Nombre del archivo como texto del botón
+                    button.onclick = () => window.location.href = file; // Abrir el archivo al hacer clic
+                    buttonContainer.appendChild(button);
+                });
+
+                // Mostrar mensaje si no hay archivos HTML
+                if (htmlFiles.length === 0) {
+                    const message = document.createElement('p');
+                    message.textContent = 'No se encontraron archivos HTML en el directorio.';
+                    buttonContainer.appendChild(message);
+                }
+            } catch (error) {
+                console.error('Error al cargar los archivos:', error);
+                const buttonContainer = document.getElementById('buttonContainer');
+                const message = document.createElement('p');
+                message.textContent = 'Error al cargar los archivos. Asegúrate de que el servidor esté funcionando.';
+                buttonContainer.appendChild(message);
+            }
+        }
+
+        // Cargar los archivos al cargar la página
+        document.addEventListener('DOMContentLoaded', loadHtmlFiles);
+    </script>
+</body>
+</html>

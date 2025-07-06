@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toca la Pelota</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            border: 2px solid #333;
+            background-color: #87CEEB;
+        }
+        #score {
+            font-size: 24px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Puntuación: 0</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+
+        // Ajustar el tamaño del canvas al dispositivo
+        canvas.width = Math.min(300, window.innerWidth - 20);
+        canvas.height = Math.min(500, window.innerHeight - 100);
+
+        let score = 0;
+        let balls = [];
+        const ballRadius = 20;
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'];
+
+        // Crear una nueva pelota
+        function createBall() {
+            return {
+                x: Math.random() * (canvas.width - 2 * ballRadius) + ballRadius,
+                y: -ballRadius,
+                speed: Math.random() * 3 + 2,
+                color: colors[Math.floor(Math.random() * colors.length)]
+            };
+        }
+
+        // Actualizar y dibujar las pelotas
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Generar nuevas pelotas aleatoriamente
+            if (Math.random() < 0.03) {
+                balls.push(createBall());
+            }
+
+            // Actualizar posición de las pelotas
+            balls = balls.filter(ball => ball.y < canvas.height + ballRadius);
+            balls.forEach(ball => {
+                ball.y += ball.speed;
+
+                // Dibujar pelota
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ballRadius, 0, Math.PI * 2);
+                ctx.fillStyle = ball.color;
+                ctx.fill();
+                ctx.closePath();
+            });
+
+            scoreDisplay.textContent = `Puntuación: ${score}`;
+            requestAnimationFrame(update);
+        }
+
+        // Manejar toques/clicks
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            const touchY = touch.clientY - rect.top;
+
+            checkHit(touchX, touchY);
+        });
+
+        canvas.addEventListener('click', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+
+            checkHit(clickX, clickY);
+        });
+
+        // Verificar si se tocó una pelota
+        function checkHit(x, y) {
+            for (let i = balls.length - 1; i >= 0; i--) {
+                const ball = balls[i];
+                const distance = Math.sqrt((x - ball.x) ** 2 + (y - ball.y) ** 2);
+                if (distance < ballRadius) {
+                    balls.splice(i, 1);
+                    score += 10;
+                    break;
+                }
+            }
+        }
+
+        // Iniciar el juego
+        update();
+    </script>
+</body>
+</html>

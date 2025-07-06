@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snake Game</title>
+  <style>
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      background-color: black;
+      color: white;
+      height: 100vh;
+    }
+    canvas {
+      border: 1px solid white;
+      display: none; /* Hidden until game starts */
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      cursor: pointer;
+      background-color: white;
+      border: none;
+      border-radius: 5px;
+      color: black;
+    }
+    button:hover {
+      background-color: lightgray;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="gameCanvas"></canvas>
+  <button id="startButton">Start Game</button>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const startButton = document.getElementById("startButton");
+
+    // Canvas size
+    canvas.width = 400;
+    canvas.height = 400;
+
+    const gridSize = 20; // Size of each square in the grid
+    let snake = [{ x: 200, y: 200 }]; // Snake starts in the center
+    let direction = "RIGHT"; // Initial direction
+    let food = getRandomPosition(); // Generate initial food
+    let gameRunning = false; // Game starts paused
+    let lastRenderTime = 0;
+    const gameSpeed = 150; // Lower value = faster game
+
+    // Start button event listener
+    startButton.addEventListener("click", () => {
+      startButton.style.display = "none";
+      canvas.style.display = "block";
+      gameRunning = true;
+      window.requestAnimationFrame(mainGameLoop);
+    });
+
+    // Handle touch input
+    canvas.addEventListener("touchstart", handleTouch);
+
+    function handleTouch(event) {
+      const touchX = event.touches[0].clientX - canvas.offsetLeft;
+      const touchY = event.touches[0].clientY - canvas.offsetTop;
+      const snakeHead = snake[0];
+
+      if (Math.abs(touchX - snakeHead.x) > Math.abs(touchY - snakeHead.y)) {
+        // Horizontal swipe
+        direction = touchX > snakeHead.x ? "RIGHT" : "LEFT";
+      } else {
+        // Vertical swipe
+        direction = touchY > snakeHead.y ? "DOWN" : "UP";
+      }
+    }
+
+    function mainGameLoop(currentTime) {
+      if (!gameRunning) return;
+
+      window.requestAnimationFrame(mainGameLoop);
+
+      const timeSinceLastRender = currentTime - lastRenderTime;
+      if (timeSinceLastRender < gameSpeed) return;
+
+      lastRenderTime = currentTime;
+
+      gameLoop();
+    }
+
+    function gameLoop() {
+      if (!gameRunning) return;
+
+      // Move the snake
+      const head = { ...snake[0] };
+      switch (direction) {
+        case "UP":
+          head.y -= gridSize;
+          break;
+        case "DOWN":
+          head.y += gridSize;
+          break;
+        case "LEFT":
+          head.x -= gridSize;
+          break;
+        case "RIGHT":
+          head.x += gridSize;
+          break;
+      }
+
+      // Check for collisions
+      if (
+        head.x < 0 ||
+        head.y < 0 ||
+        head.x >= canvas.width ||
+        head.y >= canvas.height ||
+        snake.some(segment => segment.x === head.x && segment.y === head.y)
+      ) {
+        gameRunning = false;
+        alert("Game Over!");
+        resetGame();
+        return;
+      }
+
+      // Check if snake eats food
+      if (head.x === food.x && head.y === food.y) {
+        food = getRandomPosition();
+      } else {
+        snake.pop(); // Remove the tail if no food eaten
+      }
+
+      snake.unshift(head); // Add new head
+
+      // Draw everything
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw food
+      ctx.fillStyle = "red";
+      ctx.fillRect(food.x, food.y, gridSize, gridSize);
+
+      // Draw snake
+      ctx.fillStyle = "green";
+      snake.forEach(segment => {
+        ctx.fillRect(segment.x, segment.y, gridSize, gridSize);
+      });
+    }
+
+    function getRandomPosition() {
+      const x = Math.floor(Math.random() * (canvas.width / gridSize)) * gridSize;
+      const y = Math.floor(Math.random() * (canvas.height / gridSize)) * gridSize;
+      return { x, y };
+    }
+
+    function resetGame() {
+      snake = [{ x: 200, y: 200 }];
+      direction = "RIGHT";
+      food = getRandomPosition();
+      startButton.style.display = "block";
+      canvas.style.display = "none";
+    }
+  </script>
+</body>
+</html>

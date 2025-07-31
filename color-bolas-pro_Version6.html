@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adivina los Colores - Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f8cff;
+            --secondary: #374151;
+            --bg: #f7fafc;
+            --white: #fff;
+            --shadow: 0 4px 18px rgba(0,0,0,0.08), 0 1.5px 8px rgba(79,140,255,0.07);
+            --radius: 18px;
+            --transition: 0.3s cubic-bezier(.4,2,.6,1);
+            --ball-size: 64px;
+            --font-main: 'Montserrat', Arial, sans-serif;
+        }
+        html, body {
+            background: var(--bg);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+        }
+        body {
+            font-family: var(--font-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #dbeafe 0%, #f7fafc 100%);
+        }
+        h1 {
+            margin: 32px 0 18px 0;
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+            text-shadow: 0 2px 8px rgba(79,140,255,0.18);
+        }
+        .game-container {
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 32px 30px 26px 30px;
+            max-width: 420px;
+            width: 100%;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .section-label {
+            color: var(--secondary);
+            font-size: 1.08rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-top: 14px;
+        }
+        .row {
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 15px;
+        }
+        .ball {
+            width: var(--ball-size);
+            height: var(--ball-size);
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+            font-weight: 700;
+            border: 3px solid #e5e7eb;
+            background: linear-gradient(145deg, #fff 60%, #e5e7eb 100%);
+            cursor: pointer;
+            user-select: none;
+            color: #222;
+            transition: border 0.2s, box-shadow 0.2s, transform var(--transition);
+            position: relative;
+        }
+        .ball:active {
+            transform: scale(0.95);
+        }
+        .ball.selected {
+            border: 3.5px solid var(--primary);
+            box-shadow: 0 4px 22px rgba(79,140,255,0.15);
+        }
+        .secret-ball {
+            background: linear-gradient(135deg, #fff 60%, #e5e7eb 100%);
+            color: #222;
+            border: 2.5px dashed #c7d2fe;
+        }
+        .game-container h2, .section-label {
+            margin-bottom: 10px;
+            margin-top: 0;
+            font-size: 1.15rem;
+            color: var(--secondary);
+        }
+        .check-btn {
+            width: 100%;
+            padding: 12px 0;
+            margin: 18px 0 0 0;
+            background: var(--primary);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-size: 1.18rem;
+            font-weight: bold;
+            box-shadow: 0 2px 12px rgba(79,140,255,0.09);
+            cursor: pointer;
+            letter-spacing: 0.5px;
+            transition: background 0.2s, box-shadow 0.2s;
+        }
+        .check-btn:hover:not(:disabled) {
+            background: #2563eb;
+            box-shadow: 0 2px 20px rgba(79,140,255,0.18);
+        }
+        .check-btn:disabled {
+            background: #dbeafe;
+            color: #b4b4b4;
+            cursor: not-allowed;
+        }
+        .result {
+            margin: 20px 0 10px 0;
+            font-size: 1.16rem;
+            font-weight: 600;
+            text-align: center;
+            min-height: 36px;
+            color: var(--primary);
+            letter-spacing: 0.4px;
+        }
+        .attempts-container {
+            margin-top: 18px;
+        }
+        .attempt-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 13px;
+            margin-bottom: 7px;
+        }
+        .colors {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin: 22px 0 0 0;
+        }
+        .color-option {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            border: 2.5px solid #d1d5db;
+            box-shadow: 0 1.5px 7px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: border 0.19s, box-shadow 0.18s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .color-option.selected {
+            border: 2.7px solid var(--primary);
+            box-shadow: 0 2px 20px rgba(79,140,255,0.16);
+        }
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 22px;
+            margin-bottom: 4px;
+        }
+        .action-btn {
+            padding: 10px 28px;
+            border: none;
+            border-radius: 7px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            outline: none;
+            transition: background 0.18s;
+            letter-spacing: 0.5px;
+        }
+        .restart-btn {
+            background: #22d3ee;
+            color: #222;
+        }
+        .restart-btn:hover {
+            background: #06b6d4;
+        }
+        .exit-btn {
+            background: #f87171;
+            color: #fff;
+        }
+        .exit-btn:hover {
+            background: #dc2626;
+        }
+        /* Color backgrounds for balls */
+        .ball.red, .color-option.red { background: linear-gradient(135deg, #fe4a49 60%, #ffb0b0 100%); color: #fff; }
+        .ball.yellow, .color-option.yellow { background: linear-gradient(135deg, #fde047 60%, #fef9c3 100%); color: #a16207; }
+        .ball.green, .color-option.green { background: linear-gradient(135deg, #34d399 60%, #bbf7d0 100%); color: #065f46; }
+        .ball.blue, .color-option.blue { background: linear-gradient(135deg, #2563eb 60%, #93c5fd 100%); color: #fff; }
+        .ball.black, .color-option.black { background: linear-gradient(135deg, #222 70%, #57534e 100%); color: #fff; }
+        .ball.question {
+            color: #bdbdbd !important;
+            background: linear-gradient(135deg, #fff 70%, #eee 100%);
+        }
+        /* Feedback letras: solo cambia color de fuente, sin borde ni cuadrito */
+        .feedback-letter {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1;
+            /* No border, no background, only color from JS */
+            border: none !important;
+            background: none !important;
+            padding: 0 !important;
+            margin: 0;
+            display: inline-block;
+            pointer-events: none;
+            user-select: none;
+            /* efecto blink solo para C */
+        }
+        .blink {
+            animation: blink-animation 1.2s steps(2, start) infinite;
+        }
+        @keyframes blink-animation {
+            to { visibility: hidden; }
+        }
+        /* Responsive */
+        @media (max-width: 500px) {
+            .game-container {
+                padding: 16px 4px;
+                max-width: 99vw;
+            }
+            .row, .colors { gap: 7px; }
+            .ball { --ball-size: 44px; font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Adivina los Colores</h1>
+    <div class="game-container">
+        <div class="section-label">Combinación secreta:</div>
+        <div class="row" id="secretRow"></div>
+        <div class="section-label" style="margin-top:18px;">Tu intento:</div>
+        <div class="row" id="currentGuessRow"></div>
+
+        <div class="colors" id="colorOptions"></div>
+
+        <button class="check-btn" id="checkBtn">Comprobar</button>
+        <div class="result" id="result"></div>
+
+        <div class="attempts-container" id="attemptsContainer"></div>
+        <div class="action-buttons" id="actionButtons" style="display: none;">
+            <button class="action-btn restart-btn" id="restartBtn">Repetir Juego</button>
+            <button class="action-btn exit-btn" id="exitBtn">Terminar</button>
+        </div>
+    </div>
+    <script>
+        // Colores y nombres
+        const colors = ['red', 'yellow', 'green', 'blue', 'black'];
+        const colorNames = {
+            'red': 'Rojo',
+            'yellow': 'Amarillo',
+            'green': 'Verde',
+            'blue': 'Azul',
+            'black': 'Negro'
+        };
+
+        // Contraste máximo: blanco o negro según color de fondo de la bola
+        function getContrastTextColor(color) {
+            // color puede ser 'red', 'yellow', etc.
+            switch (color) {
+                case 'red':
+                case 'blue':
+                case 'black':
+                    return '#fff';
+                case 'yellow':
+                case 'green':
+                    return '#222';
+                default:
+                    return '#222';
+            }
+        }
+
+        // Estado del juego
+        let secretBalls = [];
+        let currentGuess = Array(5).fill(null);
+        let selectedBallIndex = 0;
+        let attempts = 0;
+        const maxAttempts = 8;
+        let gameOver = false;
+
+        // DOM
+        const secretRow = document.getElementById('secretRow');
+        const currentGuessRow = document.getElementById('currentGuessRow');
+        const colorOptionsContainer = document.getElementById('colorOptions');
+        const checkBtn = document.getElementById('checkBtn');
+        const resultElement = document.getElementById('result');
+        const attemptsContainer = document.getElementById('attemptsContainer');
+        const actionButtons = document.getElementById('actionButtons');
+        const restartBtn = document.getElementById('restartBtn');
+        const exitBtn = document.getElementById('exitBtn');
+
+        // --- Inicializar el juego ---
+        function initGame() {
+            // Combinación secreta
+            secretBalls = [];
+            for (let i = 0; i < 5; i++) {
+                secretBalls.push(colors[Math.floor(Math.random() * colors.length)]);
+            }
+
+            currentGuess = Array(5).fill(null);
+            selectedBallIndex = 0;
+            attempts = 0;
+            gameOver = false;
+
+            // UI
+            secretRow.innerHTML = '';
+            attemptsContainer.innerHTML = '';
+            resultElement.textContent = '';
+            actionButtons.style.display = 'none';
+            checkBtn.disabled = false;
+
+            // Secret balls: ocultas
+            for (let i = 0; i < 5; i++) {
+                const ball = document.createElement('div');
+                ball.className = 'ball secret-ball question';
+                ball.textContent = '?';
+                secretRow.appendChild(ball);
+            }
+
+            // Guess balls
+            renderGuessRow();
+            renderColorOptions();
+        }
+
+        // --- Renderiza la fila de bolas para adivinar ---
+        function renderGuessRow(feedback = null) {
+            currentGuessRow.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                let ball = document.createElement('div');
+                let cls = 'ball';
+                if (currentGuess[i]) cls += ` ${currentGuess[i]}`;
+                else cls += ' question';
+                if (selectedBallIndex === i && !feedback) cls += ' selected';
+
+                if (feedback && feedback[i]) {
+                    // Muestra letra feedback, con el color de contraste de la bola
+                    let textColor = currentGuess[i] ? getContrastTextColor(currentGuess[i]) : '#222';
+                    let blink = feedback[i] === 'C' ? ' blink' : '';
+                    ball.innerHTML = `<span class="feedback-letter${blink}" style="color:${textColor}">${feedback[i]}</span>`;
+                } else {
+                    ball.textContent = '';
+                }
+                ball.className = cls;
+                ball.setAttribute('data-index', i);
+                ball.setAttribute('title', currentGuess[i] ? colorNames[currentGuess[i]] : 'Sin color');
+                if (!feedback) {
+                    ball.addEventListener('click', () => {
+                        if (gameOver) return;
+                        selectedBallIndex = i;
+                        renderGuessRow();
+                        renderColorOptions();
+                    });
+                }
+                currentGuessRow.appendChild(ball);
+            }
+        }
+
+        // --- Renderiza los colores disponibles abajo ---
+        function renderColorOptions() {
+            colorOptionsContainer.innerHTML = '';
+            for (const color of colors) {
+                const option = document.createElement('div');
+                option.className = `color-option ${color}`;
+                if (currentGuess[selectedBallIndex] === color) option.classList.add('selected');
+                option.setAttribute('title', colorNames[color]);
+                option.textContent = '';
+                option.style.userSelect = 'none';
+                option.addEventListener('click', () => {
+                    if (gameOver) return;
+                    currentGuess[selectedBallIndex] = color;
+                    // Autopasar al siguiente
+                    if (selectedBallIndex < 4) selectedBallIndex++;
+                    renderGuessRow();
+                    renderColorOptions();
+                });
+                colorOptionsContainer.appendChild(option);
+            }
+        }
+
+        // --- Comprobar el intento actual ---
+        function checkAttempt() {
+            if (currentGuess.some(c => c === null)) {
+                resultElement.textContent = 'Selecciona un color para todas las bolas.';
+                resultElement.style.color = "#dc2626";
+                return;
+            }
+            attempts++;
+
+            // Copias
+            const secretCopy = [...secretBalls];
+            const guessCopy = [...currentGuess];
+            const feedback = Array(5).fill(null);
+
+            // Primero: Aciertos exactos
+            for (let i = 0; i < 5; i++) {
+                if (guessCopy[i] === secretCopy[i]) {
+                    feedback[i] = 'A'; // Acierto (Letra A)
+                    secretCopy[i] = null;
+                    guessCopy[i] = null;
+                }
+            }
+            // Segundo: Color correcto, lugar incorrecto
+            for (let i = 0; i < 5; i++) {
+                if (guessCopy[i]) {
+                    const idx = secretCopy.indexOf(guessCopy[i]);
+                    if (idx !== -1) {
+                        feedback[i] = 'C'; // Color correcto (blink)
+                        secretCopy[idx] = null;
+                        guessCopy[i] = null;
+                    }
+                }
+            }
+            // Tercero: No existe en combinación
+            for (let i = 0; i < 5; i++) {
+                if (guessCopy[i] !== null) {
+                    feedback[i] = 'N'; // No está
+                }
+            }
+
+            // Mostrar intento en historial (bolas COLOREADAS + letra feedback)
+            const attemptRow = document.createElement('div');
+            attemptRow.className = 'attempt-row';
+
+            for (let i = 0; i < 5; i++) {
+                const ball = document.createElement('div');
+                let cls = `ball`;
+                if (currentGuess[i]) cls += ` ${currentGuess[i]}`;
+                else cls += ' question';
+
+                // La letra (A/C/N) se muestra con color de contraste, sin fondo ni borde
+                if (feedback[i]) {
+                    let textColor = currentGuess[i] ? getContrastTextColor(currentGuess[i]) : '#222';
+                    let blink = feedback[i] === 'C' ? ' blink' : '';
+                    ball.innerHTML = `<span class="feedback-letter${blink}" style="color:${textColor}">${feedback[i]}</span>`;
+                } else {
+                    ball.textContent = '';
+                }
+                ball.className = cls;
+                attemptRow.appendChild(ball);
+            }
+            attemptsContainer.prepend(attemptRow);
+
+            // Mostrar feedback en la fila de juego solo para el último intento
+            renderGuessRow(feedback);
+
+            // Comprobar victoria
+            const isWin = feedback.every(f => f === 'A');
+            if (isWin) {
+                endGame(true);
+                return;
+            }
+            if (attempts >= maxAttempts) {
+                endGame(false);
+                return;
+            }
+
+            // Reset para siguiente intento
+            setTimeout(() => {
+                currentGuess = Array(5).fill(null);
+                selectedBallIndex = 0;
+                renderGuessRow();
+                renderColorOptions();
+            }, 900);
+
+            resultElement.textContent = `Intento ${attempts} de ${maxAttempts}. ¡Sigue intentando!`;
+            resultElement.style.color = "var(--primary)";
+        }
+
+        // --- Terminar juego, mostrar solución ---
+        function endGame(isWin) {
+            gameOver = true;
+            // Mostrar la combinación secreta real
+            for (let i = 0; i < 5; i++) {
+                secretRow.children[i].className = `ball ${secretBalls[i]}`;
+                secretRow.children[i].textContent = '';
+                secretRow.children[i].setAttribute('title', colorNames[secretBalls[i]]);
+            }
+            if (isWin) {
+                resultElement.textContent = '¡Felicidades! ¡Has acertado la combinación!';
+                resultElement.style.color = "#22d3ee";
+            } else {
+                resultElement.textContent = '¡Has perdido! La combinación correcta se muestra arriba.';
+                resultElement.style.color = "#f87171";
+            }
+            checkBtn.disabled = true;
+            actionButtons.style.display = 'flex';
+        }
+
+        // --- Listeners ---
+        checkBtn.addEventListener('click', checkAttempt);
+        restartBtn.addEventListener('click', initGame);
+        exitBtn.addEventListener('click', () => {
+            alert('Gracias por jugar. Puedes cerrar la pestaña.');
+        });
+
+        // Teclado: izquierda/derecha/colores rápidos
+        document.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            if (e.key === 'ArrowRight') {
+                if (selectedBallIndex < 4) {
+                    selectedBallIndex++;
+                    renderGuessRow();
+                    renderColorOptions();
+                }
+            } else if (e.key === 'ArrowLeft') {
+                if (selectedBallIndex > 0) {
+                    selectedBallIndex--;
+                    renderGuessRow();
+                    renderColorOptions();
+                }
+            } else {
+                // Atajos: R, A, V, Z, N para cada color
+                const keyColor = {
+                    'r': 'red',
+                    'a': 'yellow',
+                    'v': 'green',
+                    'z': 'blue',
+                    'n': 'black'
+                };
+                const k = e.key.toLowerCase();
+                if (k in keyColor) {
+                    currentGuess[selectedBallIndex] = keyColor[k];
+                    if (selectedBallIndex < 4) selectedBallIndex++;
+                    renderGuessRow();
+                    renderColorOptions();
+                }
+            }
+        });
+
+        // --- Iniciar juego al cargar ---
+        initGame();
+    </script>
+</body>
+</html>

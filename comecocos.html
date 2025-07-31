@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Comecocos</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Arial', sans-serif;
+            touch-action: manipulation;
+            overflow: hidden;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 448px;
+            height: 496px;
+            background-color: #000;
+            border: 8px solid #0000FF;
+            box-sizing: border-box;
+        }
+        
+        #maze {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #score-display {
+            position: absolute;
+            top: 10px;
+            left: 20px;
+            color: #FFF;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        #lives-display {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            color: #FFF;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        #game-title {
+            color: #FF0;
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-shadow: 0 0 5px #FFF;
+        }
+        
+        #start-button {
+            background-color: #FF0;
+            color: #000;
+            border: none;
+            padding: 10px 30px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        
+        #start-button:hover {
+            background-color: #FFF;
+        }
+        
+        #game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        #game-over-text {
+            color: #FF0;
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+        
+        #final-score {
+            color: #FFF;
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        
+        #restart-button {
+            background-color: #FF0;
+            color: #000;
+            border: none;
+            padding: 10px 30px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        
+        .wall {
+            position: absolute;
+            background-color: #00F;
+            z-index: 1;
+        }
+        
+        .dot {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background-color: #FFF;
+            border-radius: 50%;
+            z-index: 2;
+        }
+        
+        .power-pellet {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: #FFF;
+            border-radius: 50%;
+            z-index: 2;
+        }
+        
+        #pacman {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background-color: #FF0;
+            border-radius: 50%;
+            z-index: 3;
+        }
+        
+        .ghost {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-radius: 8px 8px 0 0;
+            z-index: 3;
+        }
+        
+        .ghost::before {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 16px;
+            height: 4px;
+            background-color: inherit;
+        }
+        
+        .ghost::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            left: 2px;
+            width: 4px;
+            height: 4px;
+            background-color: #FFF;
+            border-radius: 50%;
+            box-shadow: 6px 0 0 #FFF;
+        }
+        
+        .ghost-frightened {
+            background-color: #00F !important;
+        }
+        
+        .fruit {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            z-index: 2;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="maze"></div>
+        <div id="score-display">PUNTUACIÓN: 0</div>
+        <div id="lives-display">VIDAS: 3</div>
+        
+        <div id="start-screen">
+            <div id="game-title">COMECOCOS</div>
+            <button id="start-button">START</button>
+        </div>
+        
+        <div id="game-over">
+            <div id="game-over-text">GAME OVER</div>
+            <div id="final-score">PUNTUACIÓN: 0</div>
+            <button id="restart-button">JUGAR DE NUEVO</button>
+        </div>
+    </div>
+
+    <script>
+        // Configuración del juego
+        const config = {
+            scale: 2,
+            tileSize: 16,
+            pacmanSpeed: 1,
+            ghostSpeed: 1,
+            frightenedSpeed: 1,
+            frightenedTime: 10000, // 10 segundos
+            fruitTime: 10000, // 10 segundos
+            fruitInterval: 30000, // 30 segundos
+            ghostColors: ['#FF0000', '#00FFFF', '#FFB8FF', '#FFB852']
+        };
+        
+        // Elementos del juego
+        const maze = document.getElementById('maze');
+        const scoreDisplay = document.getElementById('score-display');
+        const livesDisplay = document.getElementById('lives-display');
+        const startScreen = document.getElementById('start-screen');
+        const startButton = document.getElementById('start-button');
+        const gameOverScreen = document.getElementById('game-over');
+        const gameOverText = document.getElementById('game-over-text');
+        const finalScore = document.getElementById('final-score');
+        const restartButton = document.getElementById('restart-button');
+        
+        // Variables del juego
+        let score = 0;
+        let lives = 3;
+        let gameRunning = false;
+        let pacman;
+        let ghosts = [];
+        let dots = [];
+        let powerPellets = [];
+        let fruit = null;
+        let walls = [];
+        let direction = { x: 0, y: 0 };
+        let nextDirection = { x: 0, y: 0 };
+        let frightenedMode = false;
+        let frightenedTimer = null;
+        let fruitTimer = null;
+        let fruitIntervalTimer = null;
+        let animationId = null;
+        
+        // Mapa del laberinto (1 = pared, 0 = camino, 2 = punto, 3 = power pellet)
+        const mazeMap = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+            [1,3,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,3,1],
+            [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
+            [1,2,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,2,1],
+            [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+            [1,1,1,1,1,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,1,1,1,1,1],
+            [0,0,0,0,0,1,2,1,1,1,1,1,0,1,1,0,1,1,1,1,1,2,1,0,0,0,0,0],
+            [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+            [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+            [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+            [0,0,0,0,0,0,2,0,0,0,1,0,0,0,0,0,0,1,0,0,0,2,0,0,0,0,0,0],
+            [1,1,1,1,1,1,2,1,1,0,1,0,0,0,0,0,0,1,0,1,1,2,1,1,1,1,1,1],
+            [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+            [0,0,0,0,0,1,2,1,1,0,0,0,0,0,0,0,0,0,0,1,1,2,1,0,0,0,0,0],
+            [0,0,0,0,0,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,0,0,0,0,0],
+            [1,1,1,1,1,1,2,1,1,0,1,1,1,1,1,1,1,1,0,1,1,2,1,1,1,1,1,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,1,1,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+            [1,2,1,1,1,1,2,1,1,1,1,1,2,1,1,2,1,1,1,1,1,2,1,1,1,1,2,1],
+            [1,3,2,2,1,1,2,2,2,2,2,2,2,0,0,2,2,2,2,2,2,2,1,1,2,2,3,1],
+            [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
+            [1,1,1,2,1,1,2,1,1,2,1,1,1,1,1,1,1,1,2,1,1,2,1,1,2,1,1,1],
+            [1,2,2,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,1,1,2,2,2,2,2,2,1],
+            [1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1],
+            [1,2,1,1,1,1,1,1,1,1,1,1,2,1,1,2,1,1,1,1,1,1,1,1,1,1,2,1],
+            [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
+        ];
+        
+        // Posiciones iniciales
+        const pacmanStartPos = { x: 14 * config.tileSize, y: 23 * config.tileSize };
+        const ghostStartPositions = [
+            { x: 13 * config.tileSize, y: 11 * config.tileSize },
+            { x: 14 * config.tileSize, y: 11 * config.tileSize },
+            { x: 13 * config.tileSize, y: 14 * config.tileSize },
+            { x: 14 * config.tileSize, y: 14 * config.tileSize }
+        ];
+        
+        // Inicializar el juego
+        function initGame() {
+            createMaze();
+            createPacman();
+            createGhosts();
+            updateScore();
+            updateLives();
+        }
+        
+        // Crear el laberinto
+        function createMaze() {
+            maze.innerHTML = '';
+            dots = [];
+            powerPellets = [];
+            walls = [];
+            
+            for (let y = 0; y < mazeMap.length; y++) {
+                for (let x = 0; x < mazeMap[y].length; x++) {
+                    const tile = mazeMap[y][x];
+                    const posX = x * config.tileSize;
+                    const posY = y * config.tileSize;
+                    
+                    if (tile === 1) { // Pared
+                        const wall = document.createElement('div');
+                        wall.className = 'wall';
+                        wall.style.left = posX + 'px';
+                        wall.style.top = posY + 'px';
+                        wall.style.width = config.tileSize + 'px';
+                        wall.style.height = config.tileSize + 'px';
+                        maze.appendChild(wall);
+                        walls.push({ x: posX, y: posY, width: config.tileSize, height: config.tileSize });
+                    } else if (tile === 2) { // Punto
+                        const dot = document.createElement('div');
+                        dot.className = 'dot';
+                        dot.style.left = (posX + config.tileSize / 2 - 2) + 'px';
+                        dot.style.top = (posY + config.tileSize / 2 - 2) + 'px';
+                        maze.appendChild(dot);
+                        dots.push({ element: dot, x: posX, y: posY });
+                    } else if (tile === 3) { // Power pellet
+                        const pellet = document.createElement('div');
+                        pellet.className = 'power-pellet';
+                        pellet.style.left = (posX + config.tileSize / 2 - 6) + 'px';
+                        pellet.style.top = (posY + config.tileSize / 2 - 6) + 'px';
+                        maze.appendChild(pellet);
+                        powerPellets.push({ element: pellet, x: posX, y: posY });
+                    }
+                }
+            }
+            
+            // Crear fruta (inicialmente oculta)
+            fruit = document.createElement('div');
+            fruit.className = 'fruit';
+            fruit.style.left = (14 * config.tileSize) + 'px';
+            fruit.style.top = (17 * config.tileSize) + 'px';
+            fruit.style.width = config.tileSize + 'px';
+            fruit.style.height = config.tileSize + 'px';
+            fruit.style.backgroundImage = 'url("cherry.png")';
+            fruit.style.backgroundSize = 'cover';
+            maze.appendChild(fruit);
+        }
+        
+        // Crear al Comecocos
+        function createPacman() {
+    pacman = document.createElement('img');
+    pacman.id = 'pacman';
+    pacman.src = 'pacman.gif'; // Asegúrate que 'pacman.gif' esté en el mismo directorio que el HTML
+    pacman.style.position = 'absolute';
+    pacman.style.width = config.tileSize + 'px';
+    pacman.style.height = config.tileSize + 'px';
+    pacman.style.left = pacmanStartPos.x + 'px';
+    pacman.style.top = pacmanStartPos.y + 'px';
+    pacman.style.zIndex = '3';
+    maze.appendChild(pacman);
+
+    direction = { x: 0, y: 0 };
+    nextDirection = { x: 0, y: 0 };
+}
+
+        
+        // Crear los fantasmas
+        function createGhosts() {
+            ghosts = [];
+            
+            for (let i = 0; i < 4; i++) {
+                const ghost = document.createElement('div');
+                ghost.className = 'ghost';
+                ghost.style.left = ghostStartPositions[i].x + 'px';
+                ghost.style.top = ghostStartPositions[i].y + 'px';
+                ghost.style.backgroundColor = config.ghostColors[i];
+                maze.appendChild(ghost);
+                
+                ghosts.push({
+                    element: ghost,
+                    x: ghostStartPositions[i].x,
+                    y: ghostStartPositions[i].y,
+                    direction: { x: 0, y: 0 },
+                    speed: config.ghostSpeed,
+                    frightened: false
+                });
+            }
+        }
+        
+        // Actualizar la puntuación
+        function updateScore() {
+            scoreDisplay.textContent = `PUNTUACIÓN: ${score}`;
+        }
+        
+        // Actualizar las vidas
+        function updateLives() {
+            livesDisplay.textContent = `VIDAS: ${lives}`;
+        }
+        
+        // Comprobar colisiones con las paredes
+        function checkWallCollision(x, y) {
+            const pacmanSize = config.tileSize;
+            
+            for (const wall of walls) {
+                if (
+                    x < wall.x + wall.width &&
+                    x + pacmanSize > wall.x &&
+                    y < wall.y + wall.height &&
+                    y + pacmanSize > wall.y
+                ) {
+                    return true;
+                }
+            }
+            
+            return false;
+        }
+        
+        // Comprobar colisiones con los puntos
+        function checkDotCollision() {
+            const pacmanRect = pacman.getBoundingClientRect();
+            const pacmanCenter = {
+                x: pacmanRect.left + pacmanRect.width / 2,
+                y: pacmanRect.top + pacmanRect.height / 2
+            };
+            
+            for (let i = 0; i < dots.length; i++) {
+                const dot = dots[i];
+                const dotRect = dot.element.getBoundingClientRect();
+                const dotCenter = {
+                    x: dotRect.left + dotRect.width / 2,
+                    y: dotRect.top + dotRect.height / 2
+                };
+                
+                const distance = Math.sqrt(
+                    Math.pow(pacmanCenter.x - dotCenter.x, 2) + 
+                    Math.pow(pacmanCenter.y - dotCenter.y, 2)
+                );
+                
+                if (distance < 8) {
+                    dot.element.remove();
+                    dots.splice(i, 1);
+                    score += 10;
+                    updateScore();
+                    return;
+                }
+            }
+        }
+        
+        // Comprobar colisiones con los power pellets
+        function checkPowerPelletCollision() {
+            const pacmanRect = pacman.getBoundingClientRect();
+            const pacmanCenter = {
+                x: pacmanRect.left + pacmanRect.width / 2,
+                y: pacmanRect.top + pacmanRect.height / 2
+            };
+            
+            for (let i = 0; i < powerPellets.length; i++) {
+                const pellet = powerPellets[i];
+                const pelletRect = pellet.element.getBoundingClientRect();
+                const pelletCenter = {
+                    x: pelletRect.left + pelletRect.width / 2,
+                    y: pelletRect.top + pelletRect.height / 2
+                };
+                
+                const distance = Math.sqrt(
+                    Math.pow(pacmanCenter.x - pelletCenter.x, 2) + 
+                    Math.pow(pacmanCenter.y - pelletCenter.y, 2)
+                );
+                
+                if (distance < 8) {
+                    pellet.element.remove();
+                    powerPellets.splice(i, 1);
+                    score += 50;
+                    updateScore();
+                    activateFrightenedMode();
+                    return;
+                }
+            }
+        }
+        
+        // Comprobar colisiones con la fruta
+        function checkFruitCollision() {
+            if (!fruit || fruit.style.display === 'none') return;
+            
+            const pacmanRect = pacman.getBoundingClientRect();
+            const fruitRect = fruit.getBoundingClientRect();
+            
+            if (
+                pacmanRect.left < fruitRect.right &&
+                pacmanRect.right > fruitRect.left &&
+                pacmanRect.top < fruitRect.bottom &&
+                pacmanRect.bottom > fruitRect.top
+            ) {
+                fruit.style.display = 'none';
+                score += 100;
+                updateScore();
+            }
+        }
+        
+        // Activar el modo asustado para los fantasmas
+        function activateFrightenedMode() {
+            frightenedMode = true;
+            
+            for (const ghost of ghosts) {
+                ghost.frightened = true;
+                ghost.element.classList.add('ghost-frightened');
+                ghost.speed = config.frightenedSpeed;
+            }
+            
+            if (frightenedTimer) {
+                clearTimeout(frightenedTimer);
+            }
+            
+            frightenedTimer = setTimeout(() => {
+                deactivateFrightenedMode();
+            }, config.frightenedTime);
+        }
+        
+        // Desactivar el modo asustado
+        function deactivateFrightenedMode() {
+            frightenedMode = false;
+            
+            for (const ghost of ghosts) {
+                ghost.frightened = false;
+                ghost.element.classList.remove('ghost-frightened');
+                ghost.speed = config.ghostSpeed;
+            }
+        }
+        
+        // Mostrar la fruta
+        function showFruit() {
+            if (fruitIntervalTimer) {
+                clearTimeout(fruitIntervalTimer);
+            }
+            
+            fruit.style.display = 'block';
+            
+            if (fruitTimer) {
+                clearTimeout(fruitTimer);
+            }
+            
+            fruitTimer = setTimeout(() => {
+                fruit.style.display = 'none';
+                fruitIntervalTimer = setTimeout(showFruit, config.fruitInterval);
+            }, config.fruitTime);
+        }
+        
+        // Comprobar colisiones con los fantasmas
+        function checkGhostCollision() {
+            const pacmanRect = pacman.getBoundingClientRect();
+            
+            for (const ghost of ghosts) {
+                const ghostRect = ghost.element.getBoundingClientRect();
+                
+                if (
+                    pacmanRect.left < ghostRect.right &&
+                    pacmanRect.right > ghostRect.left &&
+                    pacmanRect.top < ghostRect.bottom &&
+                    pacmanRect.bottom > ghostRect.top
+                ) {
+                    if (ghost.frightened) {
+                        // Comecocos come al fantasma
+                        ghost.x = ghostStartPositions[0].x;
+                        ghost.y = ghostStartPositions[0].y;
+                        ghost.element.style.left = ghost.x + 'px';
+                        ghost.element.style.top = ghost.y + 'px';
+                        ghost.frightened = false;
+                        ghost.element.classList.remove('ghost-frightened');
+                        ghost.speed = config.ghostSpeed;
+                        score += 200;
+                        updateScore();
+                    } else {
+                        // Fantasma come al Comecocos
+                        loseLife();
+                    }
+                    return;
+                }
+            }
+        }
+        
+        // Perder una vida
+        function loseLife() {
+            lives--;
+            updateLives();
+            
+            if (lives <= 0) {
+                gameOver();
+            } else {
+                resetPositions();
+            }
+        }
+        
+        // Reiniciar posiciones después de perder una vida
+        function resetPositions() {
+            // Reiniciar Comecocos
+            pacman.style.left = pacmanStartPos.x + 'px';
+            pacman.style.top = pacmanStartPos.y + 'px';
+            direction = { x: 0, y: 0 };
+            nextDirection = { x: 0, y: 0 };
+            
+            // Reiniciar fantasmas
+            for (let i = 0; i < ghosts.length; i++) {
+                ghosts[i].x = ghostStartPositions[i].x;
+                ghosts[i].y = ghostStartPositions[i].y;
+                ghosts[i].element.style.left = ghosts[i].x + 'px';
+                ghosts[i].element.style.top = ghosts[i].y + 'px';
+                ghosts[i].direction = { x: 0, y: 0 };
+                ghosts[i].frightened = false;
+                ghosts[i].element.classList.remove('ghost-frightened');
+                ghosts[i].speed = config.ghostSpeed;
+            }
+            
+            // Pausa breve antes de continuar
+            setTimeout(() => {
+                if (gameRunning) {
+                    updateGame();
+                }
+            }, 1000);
+        }
+        
+        // Fin del juego
+        function gameOver() {
+            gameRunning = false;
+            finalScore.textContent = `PUNTUACIÓN: ${score}`;
+            gameOverScreen.style.display = 'flex';
+            
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+                animationId = null;
+            }
+        }
+        
+        // Mover al Comecocos
+        function movePacman() {
+            if (!gameRunning) return;
+            
+            const currentLeft = parseInt(pacman.style.left);
+            const currentTop = parseInt(pacman.style.top);
+            
+            // Intentar cambiar de dirección si hay una dirección siguiente
+            if (nextDirection.x !== 0 || nextDirection.y !== 0) {
+                const newX = currentLeft + nextDirection.x * config.pacmanSpeed;
+                const newY = currentTop + nextDirection.y * config.pacmanSpeed;
+                
+                if (!checkWallCollision(newX, newY)) {
+                    direction = { ...nextDirection };
+                    nextDirection = { x: 0, y: 0 };
+                }
+            }
+            
+            // Mover en la dirección actual
+            if (direction.x !== 0 || direction.y !== 0) {
+                const newX = currentLeft + direction.x * config.pacmanSpeed;
+                const newY = currentTop + direction.y * config.pacmanSpeed;
+                
+                if (!checkWallCollision(newX, newY)) {
+                    pacman.style.left = newX + 'px';
+                    pacman.style.top = newY + 'px';
+                    
+                    // Teletransporte entre los túneles laterales
+                    if (newX < -config.tileSize) {
+                        pacman.style.left = (mazeMap[0].length * config.tileSize) + 'px';
+                    } else if (newX > mazeMap[0].length * config.tileSize) {
+                        pacman.style.left = (-config.tileSize) + 'px';
+                    }
+                } else {
+                    // Detener el movimiento si choca con una pared
+                    direction = { x: 0, y: 0 };
+                }
+            }
+        }
+        
+        // Mover los fantasmas
+        function moveGhosts() {
+            if (!gameRunning) return;
+            
+            for (const ghost of ghosts) {
+                const currentLeft = parseInt(ghost.element.style.left);
+                const currentTop = parseInt(ghost.element.style.top);
+                
+                // Si el fantasma no tiene dirección o choca con una pared, elegir una nueva dirección aleatoria
+                if (ghost.direction.x === 0 && ghost.direction.y === 0 || 
+                    checkWallCollision(
+                        currentLeft + ghost.direction.x * ghost.speed, 
+                        currentTop + ghost.direction.y * ghost.speed
+                    )) {
+                    
+                    const possibleDirections = [];
+                    
+                    // Comprobar direcciones posibles (sin chocar con paredes)
+                    if (!checkWallCollision(currentLeft, currentTop - ghost.speed)) possibleDirections.push({ x: 0, y: -1 });
+                    if (!checkWallCollision(currentLeft, currentTop + ghost.speed)) possibleDirections.push({ x: 0, y: 1 });
+                    if (!checkWallCollision(currentLeft - ghost.speed, currentTop)) possibleDirections.push({ x: -1, y: 0 });
+                    if (!checkWallCollision(currentLeft + ghost.speed, currentTop)) possibleDirections.push({ x: 1, y: 0 });
+                    
+                    // Evitar invertir la dirección (a menos que sea necesario)
+                    const oppositeDirection = { x: -ghost.direction.x, y: -ghost.direction.y };
+                    const filteredDirections = possibleDirections.filter(dir => 
+                        !(dir.x === oppositeDirection.x && dir.y === oppositeDirection.y) || possibleDirections.length === 1
+                    );
+                    
+                    if (filteredDirections.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * filteredDirections.length);
+                        ghost.direction = filteredDirections[randomIndex];
+                    } else {
+                        ghost.direction = { x: 0, y: 0 };
+                    }
+                }
+                
+                // Mover el fantasma
+                const newX = currentLeft + ghost.direction.x * ghost.speed;
+                const newY = currentTop + ghost.direction.y * ghost.speed;
+                
+                ghost.x = newX;
+                ghost.y = newY;
+                ghost.element.style.left = newX + 'px';
+                ghost.element.style.top = newY + 'px';
+                
+                // Teletransporte entre los túneles laterales
+                if (newX < -config.tileSize) {
+                    ghost.element.style.left = (mazeMap[0].length * config.tileSize) + 'px';
+                    ghost.x = mazeMap[0].length * config.tileSize;
+                } else if (newX > mazeMap[0].length * config.tileSize) {
+                    ghost.element.style.left = (-config.tileSize) + 'px';
+                    ghost.x = -config.tileSize;
+                }
+            }
+        }
+        
+        // Actualizar el juego
+        function updateGame() {
+            if (!gameRunning) return;
+            
+            movePacman();
+            moveGhosts();
+            
+            checkDotCollision();
+            checkPowerPelletCollision();
+            checkFruitCollision();
+            checkGhostCollision();
+            
+            // Comprobar si se han comido todos los puntos
+            if (dots.length === 0 && powerPellets.length === 0) {
+                // Nivel completado
+                score += 1000; // Bonus por completar el nivel
+                updateScore();
+                resetLevel();
+            }
+            
+            animationId = requestAnimationFrame(updateGame);
+        }
+        
+        // Reiniciar el nivel
+        function resetLevel() {
+            createMaze();
+            resetPositions();
+            showFruit();
+        }
+        
+        // Iniciar el juego
+        function startGame() {
+            score = 0;
+            lives = 3;
+            gameRunning = true;
+            
+            startScreen.style.display = 'none';
+            gameOverScreen.style.display = 'none';
+            
+            initGame();
+            showFruit();
+            updateGame();
+        }
+        
+        // Reiniciar el juego
+        function restartGame() {
+            gameOverScreen.style.display = 'none';
+            startGame();
+        }
+        
+        // Event listeners
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', restartGame);
+        
+        // Control táctil
+        maze.addEventListener('touchstart', handleTouch);
+        maze.addEventListener('touchmove', handleTouch);
+        
+        function handleTouch(e) {
+            e.preventDefault();
+            
+            if (!gameRunning) return;
+            
+            const touch = e.touches[0];
+            const rect = maze.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+            const touchY = touch.clientY - rect.top;
+            
+            const pacmanRect = pacman.getBoundingClientRect();
+            const pacmanX = pacmanRect.left - rect.left + pacmanRect.width / 2;
+            const pacmanY = pacmanRect.top - rect.top + pacmanRect.height / 2;
+            
+            const diffX = touchX - pacmanX;
+            const diffY = touchY - pacmanY;
+            
+            // Determinar la dirección predominante
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                // Movimiento horizontal
+                nextDirection = { x: diffX > 0 ? 1 : -1, y: 0 };
+            } else {
+                // Movimiento vertical
+                nextDirection = { x: 0, y: diffY > 0 ? 1 : -1 };
+            }
+        }
+    </script>
+</body>
+</html>

@@ -3,108 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Selector de Juegos</title>
+    <title>Selección de Juegos</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
+            font-family: 'Arial', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
             padding: 20px;
-            background-color: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         h1 {
-            color: #333;
+            color: #2c3e50;
+            margin-bottom: 30px;
             text-align: center;
         }
-        .game-list {
+        .games-container {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
         }
-        .game-button {
-            background-color: #4CAF50;
-            border: none;
+        .game-btn {
+            background-color: #3498db;
             color: white;
-            padding: 15px 20px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
-            margin: 4px 2px;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
             cursor: pointer;
-            border-radius: 5px;
-            transition: background-color 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            text-transform: capitalize;
         }
-        .game-button:hover {
-            background-color: #45a049;
+        .game-btn:hover {
+            background-color: #2980b9;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
         }
-        .loading {
-            text-align: center;
-            font-style: italic;
-            color: #666;
+        .game-btn:active {
+            transform: translateY(1px);
         }
-        .error {
-            color: #f44336;
-            text-align: center;
+        @media (max-width: 600px) {
+            .games-container {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Selecciona un Juego</h1>
-    <div id="loading" class="loading">Cargando lista de juegos...</div>
-    <div id="game-container" class="game-list"></div>
-    <div id="error-message" class="error"></div>
+    <h1>Elige un Juego</h1>
+    
+    <div class="games-container" id="gamesContainer">
+        <!-- Los botones se generarán automáticamente con JavaScript -->
+    </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const baseUrl = 'https://yagopc.github.io/Games/';
-            const currentFile = window.location.pathname.split('/').pop() || 'index.html';
+        // Lista manual de juegos (nombre para mostrar y archivo)
+        const games = [
+            { name: "Asteroide", file: "Asteroide.html" },
+            { name: "Invasión", file: "invasión.html" },
+            { name: "Bolas de color", file: "Bolascolor.html" },
+            { name: "El ahorcado", file: "el_ahorcado.html" },
+            { name: "Snake", file: "snake.html" },
+            { name: "Agilidad", file: "agilidad.html" },
+            { name: "Comecocos", file: "comecocos.html" },
+            { name: "Lluvia de pelotas", file: "lluvia de pelotas.html" }
+        ];
+
+        const baseUrl = "https://Yagopc.github.io/Games/";
+        const gamesContainer = document.getElementById('gamesContainer');
+
+        // Crear botones para cada juego
+        games.forEach(game => {
+            const button = document.createElement('button');
+            button.className = 'game-btn';
+            button.textContent = game.name;
             
-            fetch(baseUrl)
-                .then(response => response.text())
-                .then(html => {
-                    // Crear un parser para extraer los enlaces del índice
-                    const parser = new DOMParser();
-                    const doc = parser.parseFromString(html, 'text/html');
-                    const links = doc.querySelectorAll('a[href$=".html"]');
-                    
-                    const gameContainer = document.getElementById('game-container');
-                    const loadingElement = document.getElementById('loading');
-                    
-                    // Ocultar mensaje de carga
-                    loadingElement.style.display = 'none';
-                    
-                    if (links.length === 0) {
-                        document.getElementById('error-message').textContent = 
-                            'No se encontraron archivos HTML en el directorio.';
-                        return;
-                    }
-                    
-                    // Crear botones para cada archivo HTML encontrado
-                    links.forEach(link => {
-                        const fileName = link.getAttribute('href');
-                        
-                        // Omitir el archivo actual
-                        if (fileName !== currentFile) {
-                            const button = document.createElement('button');
-                            button.className = 'game-button';
-                            button.textContent = fileName.replace('.html', '');
-                            
-                            button.addEventListener('click', function() {
-                                window.location.href = baseUrl + fileName;
-                            });
-                            
-                            gameContainer.appendChild(button);
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error('Error al cargar la lista de juegos:', error);
-                    document.getElementById('loading').style.display = 'none';
-                    document.getElementById('error-message').textContent = 
-                        'Error al cargar la lista de juegos. Por favor, inténtalo más tarde.';
-                });
+            button.addEventListener('click', () => {
+                window.location.href = baseUrl + game.file;
+            });
+            
+            gamesContainer.appendChild(button);
         });
     </script>
 </body>

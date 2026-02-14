@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hundir la Flota - IA con Imágenes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .game-section {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .board-container {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .board-title {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(10, 40px);
+            gap: 2px;
+            background: #003366;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: #4a90e2;
+            border: 1px solid #2c5aa0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            position: relative;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .cell:hover {
+            background: #5ba0f2;
+            transform: scale(1.1);
+        }
+
+        /* Estilo para cuando el barco es alcanzado (TOCADO) */
+        .cell.hit::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 0, 0, 0.5);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        /* Estilo para cuando el barco está HUNDIDO */
+        .cell.sunk {
+            filter: grayscale(1) brightness(0.5);
+        }
+        
+        .cell.sunk::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 20px;
+            z-index: 3;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        .cell.miss {
+            background: #87ceeb;
+            color: #003366;
+        }
+
+        .cell.miss::after {
+            content: '•';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #003366;
+        }
+
+        .cell.auto-miss {
+            background: #b0c4de;
+            color: #003366;
+            opacity: 0.7;
+        }
+
+        .controls {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .direction-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: #4a90e2;
+            color: white;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #5ba0f2;
+            transform: translateY(-2px);
+        }
+
+        button.active {
+            background: #ffd700;
+            color: #003366;
+        }
+
+        .info {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .status {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .ships-list {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .ship-info {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .sound-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            z-index: 1000;
+        }
+
+        @media (max-width: 900px) {
+            .board {
+                grid-template-columns: repeat(10, 30px);
+                grid-template-rows: repeat(10, 30px);
+            }
+            .cell {
+                width: 30px;
+                height: 30px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sound-toggle" onclick="toggleSound()" id="soundToggle"></div>
+
+    <div class="container">
+        <h1> Hundir la Flota - IA con Imágenes </h1>
+
+        <div class="controls" id="setupControls">
+            <div class="status" id="setupStatus">Coloca tus barcos</div>
+            <div class="direction-buttons">
+                <button onclick="setDirection('horizontal')" id="btnHorizontal" class="active">Horizontal </button>
+                <button onclick="setDirection('vertical')" id="btnVertical">Vertical </button>
+            </div>
+            <div class="info">
+                <p>Barco actual: <span id="currentShip">Portaaviones (4 casillas)</span></p>
+                <p>Barcos restantes: <span id="shipsRemaining">10</span></p>
+            </div>
+            <div class="ships-list">
+                <div class="ship-info">1x 4 casillas (B4.jpg)</div>
+                <div class="ship-info">2x 3 casillas (B3.jpg)</div>
+                <div class="ship-info">3x 2 casillas (B2.jpg)</div>
+                <div class="ship-info">4x 1 casilla (B1.jpg)</div>
+            </div>
+        </div>
+
+        <div class="controls hidden" id="gameControls">
+            <div class="status" id="gameStatus">¡Comienza el juego! Tu turno</div>
+            <div class="info">
+                <p>Tus barcos restantes: <span id="playerShips">10</span> | Barcos enemigos restantes: <span id="enemyShips">10</span></p>
+                <p style="font-size: 0.9em; margin-top: 5px; color: #b0c4de;">IA enemiga: Inteligencia avanzada con rastreo de barcos</p>
+            </div>
+        </div>
+
+        <div class="game-section">
+            <div class="board-container">
+                <div class="board-title"> Tablero Enemigo (Dispara aquí)</div>
+                <div class="board" id="enemyBoard"></div>
+            </div>
+
+            <div class="board-container">
+                <div class="board-title"> Tu Tablero</div>
+                <div class="board" id="playerBoard"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración del juego
+        const BOARD_SIZE = 10;
+        const SHIPS_CONFIG = [
+            { size: 4, count: 1, name: 'Portaaviones' },
+            { size: 3, count: 2, name: 'Crucero' },
+            { size: 2, count: 3, name: 'Destructor' },
+            { size: 1, count: 4, name: 'Submarino' }
+        ];
+
+        // Estado del juego
+        let gameState = 'setup';
+        let currentDirection = 'horizontal';
+        let currentShipIndex = 0;
+        let shipsToPlace = [];
+        let playerBoard = [];
+        let enemyBoard = [];
+        let playerShips = [];
+        let enemyShips = [];
+        let isPlayerTurn = true;
+        let soundEnabled = true;
+
+        // IA del enemigo
+        let aiState = {
+            mode: 'hunt',
+            hits: [],
+            direction: null,
+            lastHit: null,
+            firstHit: null,
+            tryDirections: []
+        };
+
+        // Gestor de sonidos
+        const sounds = {
+            agua: new Audio('Agua.mp3'),
+            tocado: new Audio('tocado.mp3'),
+            hundido: new Audio('hundido.mp3'),
+            disparo: new Audio('disparo.mp3'),
+            win: new Audio('win.mp3'),
+            pierdes: new Audio('pierdes.mp3')
+        };
+
+        Object.values(sounds).forEach(sound => {
+            sound.load();
+        });
+
+        function playSound(soundName) {
+            if (!soundEnabled) return;
+            const sound = sounds[soundName];
+            if (sound) {
+                sound.currentTime = 0;
+                sound.play().catch(e => console.log('Error reproduciendo sonido:', e));
+            }
+        }
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('soundToggle').textContent = soundEnabled ? '' : '';
+        }
+
+        function initBoards() {
+            const playerContainer = document.getElementById('playerBoard');
+            const enemyContainer = document.getElementById('enemyBoard');
+
+            playerContainer.innerHTML = '';
+            enemyContainer.innerHTML = '';
+
+            playerBoard = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
+            enemyBoard = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
+
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.onclick = () => handlePlayerBoardClick(row, col);
+                    playerContainer.appendChild(cell);
+                }
+            }
+
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.row = row;
+                    cell.dataset.col = col;
+                    cell.onclick = () => handleEnemyBoardClick(row, col);
+                    enemyContainer.appendChild(cell);
+                }
+            }
+        }
+
+        function initShips() {
+            shipsToPlace = [];
+            for (const config of SHIPS_CONFIG) {
+                for (let i = 0; i < config.count; i++) {
+                    shipsToPlace.push({ size: config.size, name: config.name });
+                }
+            }
+            updateShipInfo();
+        }
+
+        function updateShipInfo() {
+            if (currentShipIndex < shipsToPlace.length) {
+                const ship = shipsToPlace[currentShipIndex];
+                document.getElementById('currentShip').textContent =
+                    `${ship.name} (${ship.size} casillas)`;
+                document.getElementById('shipsRemaining').textContent =
+                    shipsToPlace.length - currentShipIndex;
+            } else {
+                document.getElementById('currentShip').textContent = '¡Todos colocados!';
+                document.getElementById('shipsRemaining').textContent = '0';
+            }
+        }
+
+        function setDirection(direction) {
+            currentDirection = direction;
+            document.getElementById('btnHorizontal').classList.toggle('active', direction === 'horizontal');
+            document.getElementById('btnVertical').classList.toggle('active', direction === 'vertical');
+        }
+
+        function canPlaceShip(board, row, col, size, direction) {
+            const cells = [];
+
+            for (let i = 0; i < size; i++) {
+                const r = direction === 'horizontal' ? row : row + i;
+                const c = direction === 'horizontal' ? col + i : col;
+
+                if (r >= BOARD_SIZE || c >= BOARD_SIZE) return null;
+                cells.push({row: r, col: c});
+            }
+
+            for (const cell of cells) {
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        const nr = cell.row + dr;
+                        const nc = cell.col + dc;
+                        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                            if (board[nr][nc] !== null) return null;
+                        }
+                    }
+                }
+            }
+
+            return cells;
+        }
+
+        function applyShipImage(cellElement, shipSize, row, col, direction, startRow, startCol) {
+            // Intentar con diferentes formatos de ruta
+            const imageFile = `B${shipSize}.jpg`; // Nombre simple
+            
+            // Configurar la imagen
+            cellElement.style.backgroundImage = `url('${imageFile}')`;
+            cellElement.style.backgroundSize = 'cover';
+            cellElement.style.backgroundRepeat = 'no-repeat';
+
+            // Calcular offset para imagen continua
+            let offset;
+            if (direction === 'horizontal') {
+                offset = col - startCol;
+                cellElement.style.backgroundPosition = `-${offset * 40}px 0`;
+            } else {
+                offset = row - startRow;
+                cellElement.style.backgroundPosition = `0 -${offset * 40}px`;
+            }
+
+            cellElement.classList.add('ship-image');
+            
+            // Fallback si la imagen no carga
+            cellElement.onerror = function() {
+                console.log(`No se pudo cargar la imagen: ${imageFile}`);
+                this.style.backgroundImage = 'none';
+                this.style.backgroundColor = '#666';
+                this.textContent = ''; // Emoji de barco como respaldo
+                this.style.fontSize = '24px';
+            };
+        }
+
+        function handlePlayerBoardClick(row, col) {
+            if (gameState !== 'setup' || currentShipIndex >= shipsToPlace.length) return;
+
+            const ship = shipsToPlace[currentShipIndex];
+            const cells = canPlaceShip(playerBoard, row, col, ship.size, currentDirection);
+
+            if (cells) {
+                const shipId = playerShips.length;
+                playerShips.push({ cells: cells, hits: 0, size: ship.size });
+
+                for (let i = 0; i < cells.length; i++) {
+                    const cell = cells[i];
+                    playerBoard[cell.row][cell.col] = shipId;
+                    const cellElement = document.querySelector(`#playerBoard .cell[data-row="${cell.row}"][data-col="${cell.col}"]`);
+
+                    applyShipImage(cellElement, ship.size, cell.row, cell.col, currentDirection, row, col);
+                }
+
+                currentShipIndex++;
+                updateShipInfo();
+
+                if (currentShipIndex >= shipsToPlace.length) {
+                    finishSetup();
+                }
+            } else {
+                const cellElement = document.querySelector(`#playerBoard .cell[data-row="${row}"][data-col="${col}"]`);
+                cellElement.style.backgroundColor = '#ff4444';
+                setTimeout(() => {
+                    cellElement.style.backgroundColor = '';
+                }, 300);
+            }
+        }
+
+        function placeEnemyShips() {
+            enemyShips = [];
+
+            for (const config of SHIPS_CONFIG) {
+                for (let i = 0; i < config.count; i++) {
+                    let placed = false;
+                    let attempts = 0;
+
+                    while (!placed && attempts < 100) {
+                        const row = Math.floor(Math.random() * BOARD_SIZE);
+                        const col = Math.floor(Math.random() * BOARD_SIZE);
+                        const direction = Math.random() > 0.5 ? 'horizontal' : 'vertical';
+
+                        const cells = canPlaceShip(enemyBoard, row, col, config.size, direction);
+
+                        if (cells) {
+                            const shipId = enemyShips.length;
+                            enemyShips.push({ cells: cells, hits: 0, size: config.size });
+
+                            for (const cell of cells) {
+                                enemyBoard[cell.row][cell.col] = shipId;
+                            }
+                            placed = true;
+                        }
+                        attempts++;
+                    }
+                }
+            }
+        }
+
+        function finishSetup() {
+            gameState = 'playing';
+            placeEnemyShips();
+            document.getElementById('setupControls').classList.add('hidden');
+            document.getElementById('gameControls').classList.remove('hidden');
+            updateGameStatus();
+        }
+
+        function markSurroundingWater(ship, boardId, board) {
+            const cellsToMark = new Set();
+
+            for (const cell of ship.cells) {
+                for (let dr = -1; dr <= 1; dr++) {
+                    for (let dc = -1; dc <= 1; dc++) {
+                        const nr = cell.row + dr;
+                        const nc = cell.col + dc;
+
+                        if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
+                            const isPartOfShip = ship.cells.some(c => c.row === nr && c.col === nc);
+                            if (!isPartOfShip && board[nr][nc] !== 'miss' && board[nr][nc] !== 'hit' && board[nr][nc] !== 'sunk') {
+                                cellsToMark.add(`${nr},${nc}`);
+                            }
+                        }
+                    }
+                }
+            }
+
+            cellsToMark.forEach(coord => {
+                const [row, col] = coord.split(',').map(Number);
+                board[row][col] = 'miss';
+                const cellElement = document.querySelector(`#${boardId} .cell[data-row="${row}"][data-col="${col}"]`);
+                if (cellElement && !cellElement.classList.contains('hit') && !cellElement.classList.contains('sunk')) {
+                    cellElement.classList.add('auto-miss');
+                }
+            });
+        }
+
+        function handleEnemyBoardClick(row, col) {
+            if (gameState !== 'playing' || !isPlayerTurn) return;
+            if (enemyBoard[row][col] === 'hit' || enemyBoard[row][col] === 'miss' || enemyBoard[row][col] === 'sunk') return;
+
+            playSound('disparo');
+
+            const cellElement = document.querySelector(`#enemyBoard .cell[data-row="${row}"][data-col="${col}"]`);
+
+            if (typeof enemyBoard[row][col] === 'number') {
+                setTimeout(() => playSound('tocado'), 200);
+
+                const shipId = enemyBoard[row][col];
+                enemyBoard[row][col] = 'hit';
+                cellElement.classList.add('hit');
+                cellElement.textContent = ''; // Quitar texto
+
+                enemyShips[shipId].hits++;
+
+                if (enemyShips[shipId].hits === enemyShips[shipId].size) {
+                    setTimeout(() => playSound('hundido'), 400);
+                    markSunkShip(enemyShips[shipId], 'enemyBoard', enemyBoard);
+                    markSurroundingWater(enemyShips[shipId], 'enemyBoard', enemyBoard);
+                    checkWin();
+                }
+            } else {
+                setTimeout(() => playSound('agua'), 200);
+                enemyBoard[row][col] = 'miss';
+                cellElement.classList.add('miss');
+
+                isPlayerTurn = false;
+                document.getElementById('gameStatus').textContent = 'Turno del enemigo...';
+                setTimeout(enemyTurn, 1500);
+            }
+
+            updateGameStatus();
+        }
+
+        function markSunkShip(ship, boardId, board) {
+            for (const cell of ship.cells) {
+                const cellElement = document.querySelector(`#${boardId} .cell[data-row="${cell.row}"][data-col="${cell.col}"]`);
+                cellElement.classList.remove('hit');
+                cellElement.classList.add('sunk');
+                cellElement.textContent = ''; // El pseudo-elemento muestra la calavera
+                board[cell.row][cell.col] = 'sunk';
+            }
+        }
+
+        // IA del enemigo (funciones completas)
+        function isValidCell(row, col) {
+            return row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE;
+        }
+
+        function isCellAvailable(board, row, col) {
+            if (!isValidCell(row, col)) return false;
+            const cell = board[row][col];
+            return cell !== 'hit' && cell !== 'miss' && cell !== 'sunk';
+        }
+
+        function getAdjacentCells(row, col) {
+            return [
+                {row: row-1, col: col},
+                {row: row+1, col: col},
+                {row: row, col: col-1},
+                {row: row, col: col+1}
+            ];
+        }
+
+        function findNextShot() {
+            if (aiState.mode === 'target' && aiState.hits.length > 0) {
+                if (aiState.hits.length === 1) {
+                    const hit = aiState.hits[0];
+                    const adjacent = getAdjacentCells(hit.row, hit.col);
+                    const valid = adjacent.filter(cell => isCellAvailable(playerBoard, cell.row, cell.col));
+                    if (valid.length > 0) {
+                        return valid[Math.floor(Math.random() * valid.length)];
+                    }
+                }
+
+                if (aiState.hits.length >= 2) {
+                    const first = aiState.hits[0];
+                    const last = aiState.hits[aiState.hits.length - 1];
+                    const isHorizontal = first.row === last.row;
+
+                    if (isHorizontal) {
+                        const row = first.row;
+                        const cols = aiState.hits.map(h => h.col).sort((a,b) => a-b);
+                        if (isCellAvailable(playerBoard, row, cols[0] - 1)) {
+                            return {row: row, col: cols[0] - 1};
+                        }
+                        if (isCellAvailable(playerBoard, row, cols[cols.length-1] + 1)) {
+                            return {row: row, col: cols[cols.length-1] + 1};
+                        }
+                    } else {
+                        const col = first.col;
+                        const rows = aiState.hits.map(h => h.row).sort((a,b) => a-b);
+                        if (isCellAvailable(playerBoard, rows[0] - 1, col)) {
+                            return {row: rows[0] - 1, col: col};
+                        }
+                        if (isCellAvailable(playerBoard, rows[rows.length-1] + 1, col)) {
+                            return {row: rows[rows.length-1] + 1, col: col};
+                        }
+                    }
+                }
+            }
+            return findHuntShot();
+        }
+
+        function findHuntShot() {
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (isCellAvailable(playerBoard, row, col) && (row + col) % 2 === 0) {
+                        return {row, col};
+                    }
+                }
+            }
+            for (let row = 0; row < BOARD_SIZE; row++) {
+                for (let col = 0; col < BOARD_SIZE; col++) {
+                    if (isCellAvailable(playerBoard, row, col)) {
+                        return {row, col};
+                    }
+                }
+            }
+            return null;
+        }
+
+        function updateAIState(row, col, isHit, isSunk) {
+            if (isSunk) {
+                aiState.hits = [];
+                aiState.mode = 'hunt';
+                return;
+            }
+            if (isHit) {
+                aiState.hits.push({row, col});
+                aiState.mode = 'target';
+            }
+        }
+
+        function enemyTurn() {
+            if (gameState !== 'playing') return;
+
+            const target = findNextShot();
+            if (!target) return;
+
+            const {row, col} = target;
+            playSound('disparo');
+            
+            const cellElement = document.querySelector(`#playerBoard .cell[data-row="${row}"][data-col="${col}"]`);
+
+            setTimeout(() => {
+                if (typeof playerBoard[row][col] === 'number') {
+                    playSound('tocado');
+                    const shipId = playerBoard[row][col];
+                    playerBoard[row][col] = 'hit';
+                    cellElement.classList.add('hit');
+                    
+                    // Guardar la imagen original si existe
+                    const originalBg = cellElement.style.backgroundImage;
+                    cellElement.style.backgroundImage = 'none';
+                    cellElement.dataset.originalBg = originalBg;
+                    
+                    playerShips[shipId].hits++;
+                    const isSunk = playerShips[shipId].hits === playerShips[shipId].size;
+
+                    updateAIState(row, col, true, isSunk);
+
+                    if (isSunk) {
+                        setTimeout(() => playSound('hundido'), 400);
+                        markSunkShip(playerShips[shipId], 'playerBoard', playerBoard);
+                        markSurroundingWater(playerShips[shipId], 'playerBoard', playerBoard);
+                        checkWin();
+                    }
+
+                    setTimeout(enemyTurn, 1500);
+                } else {
+                    playSound('agua');
+                    playerBoard[row][col] = 'miss';
+                    cellElement.classList.add('miss');
+                    
+                    updateAIState(row, col, false, false);
+
+                    isPlayerTurn = true;
+                    document.getElementById('gameStatus').textContent = '¡Tu turno! Dispara en el tablero enemigo';
+                }
+                updateGameStatus();
+            }, 300);
+        }
+
+        function updateGameStatus() {
+            const playerAlive = playerShips.filter(s => s.hits < s.size).length;
+            const enemyAlive = enemyShips.filter(s => s.hits < s.size).length;
+            document.getElementById('playerShips').textContent = playerAlive;
+            document.getElementById('enemyShips').textContent = enemyAlive;
+        }
+
+        function checkWin() {
+            const playerAlive = playerShips.filter(s => s.hits < s.size).length;
+            const enemyAlive = enemyShips.filter(s => s.hits < s.size).length;
+
+            if (enemyAlive === 0) {
+                gameState = 'ended';
+                setTimeout(() => playSound('win'), 500);
+                document.getElementById('gameStatus').textContent = ' ¡Has ganado!';
+                document.getElementById('gameStatus').style.color = '#ffd700';
+            } else if (playerAlive === 0) {
+                gameState = 'ended';
+                setTimeout(() => playSound('pierdes'), 500);
+                document.getElementById('gameStatus').textContent = ' Has perdido';
+                document.getElementById('gameStatus').style.color = '#ff4444';
+            }
+        }
+
+        // Iniciar juego
+        initBoards();
+        initShips();
+    </script>
+</body>
+</html>

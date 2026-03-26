@@ -4,41 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mario Game</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #87CEEB;
-        }
-        #gameCanvas {
-            border: 2px solid black;
-            display: block;
-            margin: auto;
-            background-color: #fff;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
+    <script src="game.js" defer></script>
 </head>
 <body>
-    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <div class="game-container">
+        <div class="score">Score: <span id="score">0</span></div>
+        <div class="game-area">
+            <!-- Game elements will be generated here -->
+        </div>
+    </div>
+    <audio id="coin-sound" src="coin.mp3"></audio>
+    <audio id="jump-sound" src="jump.mp3"></audio>
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        let score = 0;
+        const scoreDisplay = document.getElementById('score');
+        const coinSound = document.getElementById('coin-sound');
+        const jumpSound = document.getElementById('jump-sound');
 
-        // Game variables
-        let player = { x: 50, y: 300, width: 50, height: 50, color: 'red' };
-
-        function drawPlayer() {
-            ctx.fillStyle = player.color;
-            ctx.fillRect(player.x, player.y, player.width, player.height);
+        function increaseScore() {
+            score += 10;
+            scoreDisplay.textContent = score;
+            coinSound.play();
         }
 
-        function gameLoop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            drawPlayer();
-            requestAnimationFrame(gameLoop);
-        }
-
-        gameLoop();
+        // Game logic, controls and animations go here
     </script>
 </body>
 </html>

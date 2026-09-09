@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Guerra Submarina</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #0a0a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            touch-action: none;
+            margin: 0;
+            padding: 0;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
+
+        #gameContainer {
+            width: 100vw;
+            height: 80vh;
+            max-width: 450px;
+            max-height: 800px;
+            background: #0a0a1a;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 2px solid #2a2a4a;
+            box-shadow: 0 0 40px rgba(0, 150, 255, 0.2);
+        }
+
+        #canvasWrapper {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: #87CEEB;
+            min-height: 0;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            touch-action: none;
+            background: #87CEEB;
+        }
+
+        #buttonPanel {
+            height: 45px;
+            min-height: 45px;
+            max-height: 45px;
+            background: linear-gradient(180deg, #1a1a2e, #0a0a1a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            padding: 6px 10px;
+            border-top: 1px solid #3a3a5a;
+            flex-shrink: 0;
+            z-index: 10;
+        }
+
+        .action-btn {
+            background: linear-gradient(180deg, #3a3a5a, #2a2a4a);
+            border: 2px solid #4a6a8a;
+            border-radius: 25px;
+            color: white;
+            font-size: 0.85rem;
+            font-weight: bold;
+            padding: 6px 14px;
+            min-width: 65px;
+            text-align: center;
+            letter-spacing: 0.5px;
+            touch-action: manipulation;
+            cursor: pointer;
+            transition: all 0.1s;
+            box-shadow: 0 3px 0 #0a0a1a, inset 0 1px 0 rgba(255,255,255,0.1);
+            text-shadow: 0 2px 2px rgba(0,0,0,0.5);
+            flex: 1;
+            max-width: 120px;
+        }
+
+        .action-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 0 0 #0a0a1a;
+        }
+
+        .action-btn.left {
+            border-color: #4a8a6a;
+            background: linear-gradient(180deg, #2a5a3a, #1a3a2a);
+        }
+
+        .action-btn.right {
+            border-color: #8a4a6a;
+            background: linear-gradient(180deg, #5a2a3a, #3a1a2a);
+        }
+
+        .action-btn.reset {
+            border-color: #8a6a4a;
+            background: linear-gradient(180deg, #5a3a2a, #3a2a1a);
+            min-width: 45px;
+            max-width: 50px;
+            font-size: 1.1rem;
+            padding: 6px 8px;
+            flex: 0.5;
+        }
+
+        @media (max-width: 400px) {
+            .action-btn {
+                min-width: 50px;
+                padding: 5px 10px;
+                font-size: 0.75rem;
+                max-width: 80px;
+            }
+            #buttonPanel {
+                gap: 6px;
+                min-height: 40px;
+                padding: 4px 6px;
+            }
+        }
+
+        @media (orientation: landscape) {
+            #gameContainer {
+                max-width: 100vh;
+                max-height: 100vw;
+                transform: rotate(90deg);
+                transform-origin: center center;
+                margin: 0 auto;
+            }
+            body {
+                background: #000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="canvasWrapper">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+        <div id="buttonPanel">
+            <button class="action-btn left" id="bombLeftBtn">⬅ BOMBA</button>
+            <button class="action-btn reset" id="resetBtn">🔄</button>
+            <button class="action-btn right" id="bombRightBtn">BOMBA ➡</button>
+        </div>
+    </div>
+
+    <script>
+        // ----- GENERADOR DE SONIDOS RETROCOMPATIBLE -----
+        const SoundGenerator = {
+            audioContext: null,
+            
+            init() {
+                if (!this.audioContext) {
+                    try {
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        console.log('AudioContext no disponible');
+                    }
+                }
+            },
+
+            playBombLaunch() {
+                if (!this.audioContext) return;
+                try {
+                    const ctx = this.audioContext;
+                    const now = ctx.currentTime;
+                    
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(200, now + 0.1);
+                    
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } catch (e) {}
+            },
+
+            playExplosion(frequency = 100) {
+                if (!this.audioContext) return;
+                try {
+                    const ctx = this.audioContext;
+                    const now = ctx.currentTime;
+                    
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    
+                    osc.frequency.setValueAtTime(frequency, now);
+                    osc.frequency.exponentialRampToValueAtTime(50, now + 0.3);
+                    
+                    gain.gain.setValueAtTime(0.4, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } catch (e) {}
+            },
+
+            playMissileImpact() {
+                if (!this.audioContext) return;
+                try {
+                    const ctx = this.audioContext;
+                    const now = ctx.currentTime;
+                    
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+                    
+                    gain.gain.setValueAtTime(0.5, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } catch (e) {}
+            }
+        };
+
+        (function(){
+            // ----- CONFIGURACIÓN DE NIVELES -----
+            const LEVELS = [
+                { maxSubs: 3, subsToAdvance: 20 },
+                { maxSubs: 4, subsToAdvance: 30 },
+                { maxSubs: 5, subsToAdvance: 40 },
+                { maxSubs: 6, subsToAdvance: 50 },
+                { maxSubs: 7, subsToAdvance: Infinity }
+            ];
+
+            // ----- ESTADO DEL JUEGO -----
+            let gameState = {
+                currentLevel: 0,
+                lives: 3,
+                score: 0,
+                subsDestroyed: 0,
+                totalSubsDestroyed: 0,
+                gameOver: false,
+                levelUpMessage: '',
+                levelUpTimer: 0
+            };
+
+            // ----- ELEMENTOS DOM -----
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const wrapper = document.getElementById('canvasWrapper');
+            const bombLeftBtn = document.getElementById('bombLeftBtn');
+            const bombRightBtn = document.getElementById('bombRightBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            // ----- DIMENSIONES -----
+            let canvasWidth, canvasHeight;
+            let skyHeight, waterHeight, seaLevel;
+
+            // ----- OBJETOS DEL JUEGO -----
+            let ship = { x: 0, y: 0, width: 40, height: 20, targetX: null };
+            let bombs = [];
+            let submarines = [];
+            let missiles = [];
+            let explosions = [];
+
+            // ----- CONSTANTES -----
+            const CONST = {
+                subSpeed: 0.8,
+                bombSpeed: 1.5,
+                missileSpeed: 1.2,
+                shipSpeed: 2,
+                depthLevels: 5,
+                maxSubsPerLine: 3
+            };
+
+            // ----- CLASE EXPLOSIÓN -----
+            class Explosion {
+                constructor(x, y, type = 'bomb') {
+                    this.x = x;
+                    this.y = y;
+                    this.type = type;
+                    this.radius = 0;
+                    this.maxRadius = type === 'bomb' ? 40 : 25;
+                    this.life = 0;
+                    this.maxLife = type === 'bomb' ? 20 : 15;
+                    this.particles = [];
+                    
+                    const particleCount = type === 'bomb' ? 15 : 10;
+                    for (let i = 0; i < particleCount; i++) {
+                        const angle = (Math.PI * 2 * i) / particleCount + (Math.random() - 0.5) * 0.5;
+                        const speed = 2 + Math.random() * 3;
+                        this.particles.push({
+                            vx: Math.cos(angle) * speed,
+                            vy: Math.sin(angle) * speed,
+                            life: 1,
+                            size: 2 + Math.random() * 4,
+                            color: type === 'bomb' ? ['#ff4444', '#ff8844', '#ffaa44'][Math.floor(Math.random() * 3)] : '#ffaa00'
+                        });
+                    }
+                }
+
+                update() {
+                    this.life++;
+                    this.radius = (this.life / this.maxLife) * this.maxRadius;
+                    
+                    for (let p of this.particles) {
+                        p.vy += 0.1;
+                        p.life -= 0.05;
+                        if (p.life < 0) p.life = 0;
+                    }
+                }
+
+                draw(ctx) {
+                    const alpha = 1 - (this.life / this.maxLife);
+                    
+                    if (this.type === 'bomb') {
+                        ctx.fillStyle = `rgba(255, 100, 50, ${alpha * 0.6})`;
+                        ctx.shadowColor = `rgba(255, 150, 0, ${alpha})`;
+                        ctx.shadowBlur = 20 * alpha;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else {
+                        ctx.fillStyle = `rgba(255, 200, 0, ${alpha * 0.5})`;
+                        ctx.shadowColor = `rgba(255, 150, 0, ${alpha})`;
+                        ctx.shadowBlur = 15 * alpha;
+                        ctx.beginPath();
+                        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+
+                    for (let p of this.particles) {
+                        const px = this.x + (p.vx * this.life * 2);
+                        const py = this.y + (p.vy * this.life * 2);
+                        ctx.fillStyle = p.color.replace(')', `, ${p.life * 0.8})`).replace('rgb', 'rgba');
+                        ctx.shadowBlur = 0;
+                        ctx.beginPath();
+                        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+
+                isAlive() {
+                    return this.life < this.maxLife;
+                }
+            }
+
+            // ----- FUNCIONES DE REDIMENSIÓN -----
+            function resizeCanvas() {
+                const rect = wrapper.getBoundingClientRect();
+                canvas.width = rect.width;
+                canvas.height = rect.height;
+                
+                canvasWidth = canvas.width;
+                canvasHeight = canvas.height;
+
+                skyHeight = canvasHeight * 0.20;
+                waterHeight = canvasHeight * 0.75;
+                seaLevel = skyHeight;
+
+                ship.y = seaLevel - ship.height/2;
+                if (ship.x === 0 || ship.x + ship.width > canvasWidth) {
+                    ship.x = canvasWidth/2 - ship.width/2;
+                }
+                ship.targetX = ship.x;
+            }
+
+            // ----- CLASE SUBMARINO -----
+            class Submarine {
+                constructor() {
+                    this.depthLevel = 1 + Math.floor(Math.random() * (CONST.depthLevels - 1));
+                    
+                    const minY = seaLevel + 10;
+                    const maxY = seaLevel + waterHeight - 20;
+                    const step = (maxY - minY) / (CONST.depthLevels - 1);
+                    this.y = minY + this.depthLevel * step;
+                    this.y += (Math.random() - 0.5) * 10;
+
+                    const lengthType = Math.floor(Math.random() * 3);
+                    if (lengthType === 0) {
+                        this.length = 30;
+                        this.lengthScore = 15;
+                    } else if (lengthType === 1) {
+                        this.length = 45;
+                        this.lengthScore = 10;
+                    } else {
+                        this.length = 60;
+                        this.lengthScore = 5;
+                    }
+                    this.width = 12;
+
+                    this.points = (this.depthLevel + 1) * 5 + this.lengthScore;
+                    this.direction = Math.random() > 0.5 ? 1 : -1;
+                    
+                    if (this.direction === 1) {
+                        this.x = -this.length;
+                    } else {
+                        this.x = canvasWidth + this.length;
+                    }
+
+                    this.speed = CONST.subSpeed * (0.8 + Math.random() * 0.4);
+                    this.active = true;
+                    this.hasMissileActive = false;
+                    this.shootTimer = 0;
+                    this.shootInterval = 80 + Math.random() * 100;
+                }
+
+                update() {
+                    if (!this.active) return;
+                    
+                    this.x += this.direction * this.speed;
+
+                    if (this.x > canvasWidth + 50 || this.x < -this.length - 50) {
+                        this.active = false;
+                        return;
+                    }
+
+                    if (!this.hasMissileActive && this.x > 10 && this.x < canvasWidth - 10) {
+                        this.shootTimer++;
+                        if (this.shootTimer >= this.shootInterval) {
+                            this.shootTimer = 0;
+                            this.shootInterval = 80 + Math.random() * 100;
+                            
+                            missiles.push({
+                                x: this.x + this.length/2,
+                                y: this.y - 5,
+                                width: 4,
+                                height: 12,
+                                speed: CONST.missileSpeed,
+                                active: true,
+                                subOwner: this
+                            });
+                            this.hasMissileActive = true;
+                        }
+                    }
+                }
+
+                draw(ctx) {
+                    if (!this.active) return;
+                    
+                    const x = this.x;
+                    const y = this.y;
+                    const w = this.length;
+                    const h = this.width;
+
+                    ctx.save();
+                    ctx.fillStyle = '#2a5a2a';
+                    ctx.shadowColor = 'rgba(0,255,0,0.3)';
+                    ctx.shadowBlur = 8;
+                    ctx.beginPath();
+                    ctx.ellipse(x + w/2, y, w/2, h/2, 0, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#3a7a3a';
+                    ctx.fillRect(x + w/2 - 3, y - h/2 - 4, 6, 8);
+                    ctx.restore();
+
+                    if (this.hasMissileActive) {
+                        ctx.fillStyle = 'rgba(255,0,0,0.5)';
+                        ctx.beginPath();
+                        ctx.arc(x + w/2, y - h/2 - 8, 3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+
+                collidesWith(bomb) {
+                    if (!this.active) return false;
+                    
+                    const bx = bomb.x - bomb.width/2;
+                    const by = bomb.y - bomb.height/2;
+                    const bw = bomb.width;
+                    const bh = bomb.height;
+
+                    const sx = this.x;
+                    const sy = this.y - this.width/2;
+                    const sw = this.length;
+                    const sh = this.width;
+
+                    return bx < sx + sw && bx + bw > sx &&
+                           by < sy + sh && by + bh > sy;
+                }
+            }
+
+            // ----- FUNCIONES DE JUEGO -----
+            function spawnSubmarine() {
+                const currentMax = LEVELS[gameState.currentLevel].maxSubs;
+                if (submarines.length >= currentMax) return;
+
+                const newSub = new Submarine();
+                
+                let sameLine = 0;
+                for (let s of submarines) {
+                    if (Math.abs(s.y - newSub.y) < 15) sameLine++;
+                }
+                if (sameLine >= CONST.maxSubsPerLine) return;
+
+                submarines.push(newSub);
+            }
+
+            function launchBomb(direction) {
+                if (gameState.gameOver) return;
+                
+                // Reproducir sonido de lanzamiento
+                SoundGenerator.playBombLaunch();
+                
+                const bomb = {
+                    x: ship.x + (direction === 'right' ? ship.width : 0),
+                    y: ship.y + ship.height/2,
+                    width: 8,
+                    height: 10,
+                    speedX: (direction === 'right' ? 1.5 : -1.5),
+                    speedY: CONST.bombSpeed,
+                    active: true,
+                    direction: direction
+                };
+                bomb.x += (direction === 'right' ? 2 : -2);
+                bombs.push(bomb);
+            }
+
+            function checkLevelProgress() {
+                const level = LEVELS[gameState.currentLevel];
+                if (gameState.subsDestroyed >= level.subsToAdvance) {
+                    if (gameState.currentLevel < LEVELS.length - 1) {
+                        gameState.currentLevel++;
+                        gameState.subsDestroyed = 0;
+                        gameState.levelUpMessage = `¡NIVEL ${gameState.currentLevel + 1}!`;
+                        gameState.levelUpTimer = 120;
+                    }
+                }
+            }
+
+            function resetGame() {
+                gameState.currentLevel = 0;
+                gameState.lives = 3;
+                gameState.score = 0;
+                gameState.subsDestroyed = 0;
+                gameState.totalSubsDestroyed = 0;
+                gameState.gameOver = false;
+                gameState.levelUpMessage = '';
+                gameState.levelUpTimer = 0;
+                
+                bombs = [];
+                submarines = [];
+                missiles = [];
+                explosions = [];
+                
+                ship.x = canvasWidth/2 - ship.width/2;
+                ship.targetX = ship.x;
+            }
+
+            // ----- ACTUALIZACIONES -----
+            function updateShip() {
+                if (gameState.gameOver) return;
+                
+                if (ship.targetX !== null) {
+                    const dx = ship.targetX - ship.x;
+                    if (Math.abs(dx) > 1) {
+                        ship.x += Math.sign(dx) * CONST.shipSpeed;
+                    } else {
+                        ship.x = ship.targetX;
+                    }
+                }
+                ship.x = Math.max(0, Math.min(canvasWidth - ship.width, ship.x));
+            }
+
+            function updateBombs() {
+                for (let i = bombs.length - 1; i >= 0; i--) {
+                    const bomb = bombs[i];
+                    bomb.x += bomb.speedX * 0.5;
+                    bomb.y += bomb.speedY;
+
+                    if (bomb.y + bomb.height/2 > seaLevel + waterHeight) {
+                        bombs.splice(i, 1);
+                        continue;
+                    }
+
+                    let bombUsed = false;
+                    for (let sub of submarines) {
+                        if (sub.active && sub.collidesWith(bomb)) {
+                            // Crear explosión
+                            explosions.push(new Explosion(bomb.x, bomb.y, 'bomb'));
+                            
+                            // Reproducir sonido de explosión
+                            SoundGenerator.playExplosion(120);
+                            
+                            sub.active = false;
+                            gameState.score += sub.points;
+                            gameState.subsDestroyed++;
+                            gameState.totalSubsDestroyed++;
+                            bombUsed = true;
+                            checkLevelProgress();
+                            break;
+                        }
+                    }
+                    if (bombUsed) {
+                        bombs.splice(i, 1);
+                    }
+                }
+            }
+
+            function updateMissiles() {
+                for (let i = missiles.length - 1; i >= 0; i--) {
+                    const missile = missiles[i];
+                    missile.y -= missile.speed;
+
+                    if (missile.y < seaLevel) {
+                        if (missile.subOwner) {
+                            missile.subOwner.hasMissileActive = false;
+                        }
+                        missiles.splice(i, 1);
+                        continue;
+                    }
+
+                    if (missile.x > ship.x && missile.x < ship.x + ship.width &&
+                        missile.y > ship.y && missile.y < ship.y + ship.height) {
+                        
+                        // Crear explosión en el barco
+                        explosions.push(new Explosion(ship.x + ship.width/2, ship.y, 'missile'));
+                        
+                        // Reproducir sonido de impacto
+                        SoundGenerator.playMissileImpact();
+                        
+                        gameState.lives--;
+                        if (missile.subOwner) {
+                            missile.subOwner.hasMissileActive = false;
+                        }
+                        missiles.splice(i, 1);
+                        
+                        if (gameState.lives <= 0) {
+                            gameState.gameOver = true;
+                        }
+                        continue;
+                    }
+                }
+            }
+
+            function updateSubmarines() {
+                for (let sub of submarines) {
+                    sub.update();
+                }
+                submarines = submarines.filter(s => s.active);
+            }
+
+            function updateExplosions() {
+                for (let i = explosions.length - 1; i >= 0; i--) {
+                    explosions[i].update();
+                    if (!explosions[i].isAlive()) {
+                        explosions.splice(i, 1);
+                    }
+                }
+            }
+
+            // ----- DIBUJO -----
+            function drawGame() {
+                // Cielo
+                const gradSky = ctx.createLinearGradient(0, 0, 0, seaLevel);
+                gradSky.addColorStop(0, '#b0d4f1');
+                gradSky.addColorStop(1, '#e8f4fd');
+                ctx.fillStyle = gradSky;
+                ctx.fillRect(0, 0, canvasWidth, seaLevel);
+
+                // Mar
+                const gradSea = ctx.createLinearGradient(0, seaLevel, 0, canvasHeight);
+                gradSea.addColorStop(0, '#1a6a8a');
+                gradSea.addColorStop(0.3, '#0a5a7a');
+                gradSea.addColorStop(0.7, '#0a3a5a');
+                gradSea.addColorStop(1, '#0a1a2a');
+                ctx.fillStyle = gradSea;
+                ctx.fillRect(0, seaLevel, canvasWidth, waterHeight);
+
+                // Marcador
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(0, 0, canvasWidth, 45);
+                
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 14px monospace';
+                ctx.textAlign = 'left';
+                ctx.fillText(`🏆 ${gameState.score}`, 10, 20);
+                ctx.fillStyle = '#FFD700';
+                ctx.fillText(`NIVEL ${gameState.currentLevel + 1}`, 10, 38);
+                
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#ff6666';
+                ctx.fillText(`❤️ ${gameState.lives}`, canvasWidth - 10, 20);
+                ctx.fillStyle = '#66ff66';
+                ctx.fillText(`🚢 ${gameState.totalSubsDestroyed}`, canvasWidth - 10, 38);
+
+                // Dibujar objetos
+                for (let sub of submarines) {
+                    sub.draw(ctx);
+                }
+
+                for (let bomb of bombs) {
+                    ctx.fillStyle = '#ff4444';
+                    ctx.shadowColor = '#ff8800';
+                    ctx.shadowBlur = 15;
+                    ctx.beginPath();
+                    ctx.arc(bomb.x, bomb.y, bomb.width/2, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = 'rgba(255,100,0,0.2)';
+                    ctx.beginPath();
+                    ctx.arc(bomb.x, bomb.y + 10, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+
+                for (let missile of missiles) {
+                    ctx.fillStyle = '#ffaa00';
+                    ctx.shadowColor = '#ff8800';
+                    ctx.shadowBlur = 15;
+                    ctx.fillRect(missile.x - 2, missile.y - 6, 4, 12);
+                    ctx.shadowBlur = 0;
+                }
+
+                // Dibujar explosiones
+                for (let explosion of explosions) {
+                    explosion.draw(ctx);
+                }
+
+                drawShip();
+
+                if (gameState.levelUpTimer > 0) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+                    ctx.fillRect(0, canvasHeight/2 - 70, canvasWidth, 140);
+                    
+                    ctx.fillStyle = '#FFD700';
+                    ctx.font = 'bold 40px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowColor = '#FFD700';
+                    ctx.shadowBlur = 20;
+                    ctx.fillText(gameState.levelUpMessage, canvasWidth/2, canvasHeight/2 - 15);
+                    ctx.shadowBlur = 0;
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = '16px monospace';
+                    ctx.fillText(`Máximo: ${LEVELS[gameState.currentLevel].maxSubs} submarinos`, canvasWidth/2, canvasHeight/2 + 40);
+                    
+                    gameState.levelUpTimer--;
+                }
+
+                if (gameState.gameOver) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                    ctx.fillRect(0, canvasHeight/2 - 90, canvasWidth, 180);
+                    
+                    ctx.fillStyle = '#ff3333';
+                    ctx.font = 'bold 44px monospace';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.shadowColor = '#ff0000';
+                    ctx.shadowBlur = 30;
+                    ctx.fillText('GAME OVER', canvasWidth/2, canvasHeight/2 - 15);
+                    ctx.shadowBlur = 0;
+                    
+                    ctx.fillStyle = 'white';
+                    ctx.font = '18px monospace';
+                    ctx.fillText(`Puntuación: ${gameState.score}`, canvasWidth/2, canvasHeight/2 + 40);
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillText(`Nivel alcanzado: ${gameState.currentLevel + 1}`, canvasWidth/2, canvasHeight/2 + 75);
+                }
+            }
+
+            function drawShip() {
+                const x = ship.x;
+                const y = ship.y;
+                const w = ship.width;
+                const h = ship.height;
+
+                ctx.save();
+                ctx.shadowColor = 'rgba(0,0,0,0.3)';
+                ctx.shadowBlur = 15;
+                ctx.shadowOffsetY = 3;
+                
+                ctx.fillStyle = '#4a5a6a';
+                ctx.beginPath();
+                ctx.ellipse(x + w/2, y + h/2, w/2, h/2, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.fillStyle = '#6a7a8a';
+                ctx.fillRect(x + 5, y + 3, w - 10, 5);
+
+                ctx.fillStyle = '#3a4a5a';
+                ctx.fillRect(x + w/2 - 4, y - 1, 8, 10);
+                ctx.fillStyle = '#2a3a4a';
+                ctx.fillRect(x + w/2 - 10, y, 20, 4);
+
+                ctx.fillStyle = '#8aaa9a';
+                ctx.fillRect(x + 8, y + 8, 4, 3);
+                ctx.fillRect(x + w - 12, y + 8, 4, 3);
+
+                ctx.restore();
+            }
+
+            // ----- CONTROLES -----
+            function handleCanvasInteraction(e) {
+                e.preventDefault();
+                const rect = canvas.getBoundingClientRect();
+                const clientX = e.type === 'touchstart' || e.type === 'touchmove' 
+                    ? e.touches[0].clientX 
+                    : e.clientX;
+                    
+                const canvasX = (clientX - rect.left) * (canvas.width / rect.width);
+
+                if (canvasX > ship.x - 20 && canvasX < ship.x + ship.width + 20) {
+                    ship.targetX = ship.x;
+                    return;
+                }
+                if (canvasX < ship.x) {
+                    ship.targetX = Math.max(0, canvasX - ship.width/2);
+                } else {
+                    ship.targetX = Math.min(canvasWidth - ship.width, canvasX - ship.width/2);
+                }
+            }
+
+            canvas.addEventListener('touchstart', handleCanvasInteraction);
+            canvas.addEventListener('touchmove', handleCanvasInteraction);
+            canvas.addEventListener('mousedown', handleCanvasInteraction);
+
+            bombLeftBtn.addEventListener('touchstart', (e) => { e.preventDefault(); launchBomb('left'); });
+            bombLeftBtn.addEventListener('mousedown', (e) => { e.preventDefault(); launchBomb('left'); });
+            
+            bombRightBtn.addEventListener('touchstart', (e) => { e.preventDefault(); launchBomb('right'); });
+            bombRightBtn.addEventListener('mousedown', (e) => { e.preventDefault(); launchBomb('right'); });
+
+            resetBtn.addEventListener('click', resetGame);
+
+            // ----- BUCLE PRINCIPAL -----
+            function gameLoop() {
+                if (!gameState.gameOver) {
+                    updateShip();
+                    updateBombs();
+                    updateMissiles();
+                    updateSubmarines();
+                    updateExplosions();
+
+                    if (Math.random() < 0.025) {
+                        spawnSubmarine();
+                    }
+                }
+
+                drawGame();
+                requestAnimationFrame(gameLoop);
+            }
+
+            // ----- INICIALIZACIÓN -----
+            function init() {
+                SoundGenerator.init();
+                resizeCanvas();
+                resetGame();
+                gameLoop();
+            }
+
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(() => {
+                    resizeCanvas();
+                }, 100);
+            });
+            
+            window.addEventListener('orientationchange', () => {
+                setTimeout(resizeCanvas, 300);
+            });
+
+            if (window.ResizeObserver) {
+                const observer = new ResizeObserver(() => {
+                    resizeCanvas();
+                });
+                observer.observe(wrapper);
+            }
+
+            init();
+
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Naves</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+        }
+        canvas {
+            display: block;
+            background: url('fondo.gif') no-repeat center center;
+            background-size: cover;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Sonidos
+        const fondoSound = new Audio('fondo.mp3');
+        fondoSound.loop = true; // Reproducir en bucle
+        fondoSound.volume = 0.5; // Volumen moderado
+        
+        const disparoSound = new Audio('disparo.mp3');
+        const explosionSound = new Audio('explosion.mp3');
+
+        // Función para reproducir sonido de disparo
+        function playDisparo() {
+            const sound = new Audio('disparo.mp3');
+            sound.volume = 0.3;
+            sound.play().catch(e => console.log("Error reproduciendo disparo:", e));
+        }
+
+        // Función para reproducir sonido de explosión
+        function playExplosion() {
+            const sound = new Audio('explosion.mp3');
+            sound.volume = 0.4;
+            sound.play().catch(e => console.log("Error reproduciendo explosión:", e));
+        }
+
+        // Reproducir música de fondo al iniciar (con interacción del usuario)
+        function playBackgroundMusic() {
+            fondoSound.play().catch(error => {
+                console.log("Error al reproducir el sonido de fondo:", error);
+                // Si falla, esperar a que el usuario haga clic para reproducir
+                document.addEventListener('click', function initMusic() {
+                    fondoSound.play().catch(e => console.log("Error en reproducción de fondo:", e));
+                    document.removeEventListener('click', initMusic);
+                }, { once: true });
+            });
+        }
+
+        let gameOver = false;
+        let score = 0;  // Contador de asteroides destruidos
+
+        // Cargar imágenes
+        const shipImage = new Image();
+        shipImage.src = 'nave.gif';
+
+        const bulletImage = new Image();
+        bulletImage.src = 'misil.png';
+
+        const ship = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            size: 20,
+            rotation: 0 // Ángulo de rotación de la nave
+        };
+
+        const bullets = [];
+        const rocks = [];
+
+        // Dibuja la nave usando la imagen
+        function drawShip() {
+            ctx.save();
+            ctx.translate(ship.x, ship.y);
+            ctx.rotate(ship.rotation);
+            ctx.drawImage(shipImage, -ship.size, -ship.size, ship.size * 2, ship.size * 2);
+            ctx.restore();
+        }
+
+        // Dibuja los disparos usando la imagen del misil
+        function drawBullets() {
+            bullets.forEach(bullet => {
+                ctx.save();
+                ctx.translate(bullet.x, bullet.y);
+                ctx.rotate(bullet.angle);  // Rotar el misil según la dirección del disparo
+                ctx.drawImage(bulletImage, -10, -20, 20, 40);
+                ctx.restore();
+            });
+        }
+
+        // Dibuja las rocas con formas irregulares
+        function drawRocks() {
+            rocks.forEach(rock => {
+                ctx.beginPath();
+                ctx.moveTo(
+                    rock.x + rock.size * rock.shape[0].x,
+                    rock.y + rock.size * rock.shape[0].y
+                );
+                for (let i = 1; i < rock.shape.length; i++) {
+                    ctx.lineTo(
+                        rock.x + rock.size * rock.shape[i].x,
+                        rock.y + rock.size * rock.shape[i].y
+                    );
+                }
+                ctx.closePath();
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            });
+        }
+
+        // Dibujar marcador de asteroides destruidos
+        function drawScore() {
+            ctx.fillStyle = 'yellow';
+            ctx.font = "24px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText("Asteroides destruidos: " + score, 20, 30);
+        }
+
+        // Generar un asteroide con forma irregular
+        function createRock(x, y, size, parentSpeedX = 0, parentSpeedY = 0, angleOffset = 0) {
+            // Si se proporcionan coordenadas, crear en esa posición (para fragmentos)
+            // Si no, crear en los bordes (para asteroides iniciales)
+            let rockX, rockY;
+            
+            if (x !== undefined && y !== undefined) {
+                rockX = x;
+                rockY = y;
+            } else {
+                const side = Math.random() < 0.5 ? 0 : 1;
+                rockX = side ? Math.random() * canvas.width : (Math.random() < 0.5 ? 0 : canvas.width);
+                rockY = !side ? Math.random() * canvas.height : (Math.random() < 0.5 ? 0 : canvas.height);
+            }
+
+            // Calcular velocidad base
+            let speedX, speedY;
+            
+            if (parentSpeedX !== 0 || parentSpeedY !== 0) {
+                // Para fragmentos, mantener velocidad base similar a la del asteroide padre
+                const baseSpeed = Math.sqrt(parentSpeedX * parentSpeedX + parentSpeedY * parentSpeedY);
+                const baseAngle = Math.atan2(parentSpeedY, parentSpeedX);
+                
+                // Aplicar desviación de ángulo (30 grados = 0.52 radianes)
+                const newAngle = baseAngle + angleOffset;
+                speedX = Math.cos(newAngle) * baseSpeed;
+                speedY = Math.sin(newAngle) * baseSpeed;
+            } else {
+                // Para asteroides nuevos aleatorios
+                speedX = (Math.random() - 0.5) * 2;
+                speedY = (Math.random() - 0.5) * 2;
+            }
+
+            const rock = {
+                x: rockX,
+                y: rockY,
+                size: size || 10 + Math.random() * 10,
+                originalSize: size || 10 + Math.random() * 10,
+                speedX: speedX,
+                speedY: speedY,
+                shape: []
+            };
+
+            // Crear forma irregular
+            for (let i = 0; i < 10; i++) {
+                const angle = (i * Math.PI * 2) / 10;
+                const radius = 0.7 + Math.random() * 0.6;
+                rock.shape.push({
+                    x: Math.cos(angle) * radius,
+                    y: Math.sin(angle) * radius
+                });
+            }
+
+            return rock;
+        }
+
+        // Añadir asteroide al juego
+        function addRock(x, y, size, parentSpeedX = 0, parentSpeedY = 0, angleOffset = 0) {
+            const rock = createRock(x, y, size, parentSpeedX, parentSpeedY, angleOffset);
+            rocks.push(rock);
+        }
+
+        // Inicializar asteroides
+        function initRocks(count) {
+            for (let i = 0; i < count; i++) {
+                addRock();
+            }
+        }
+
+        // Mover rocas
+        function updateRocks() {
+            rocks.forEach((rock, index) => {
+                // Calcular la distancia a la nave
+                const distX = rock.x - ship.x;
+                const distY = rock.y - ship.y;
+                const distance = Math.sqrt(distX * distX + distY * distY);
+
+                // Agrandar la roca a medida que se acerca a la nave
+                if (distance < canvas.width / 2) {
+                    rock.size = rock.originalSize + (canvas.width / 2 - distance) / 30;
+                } else {
+                    rock.size = rock.originalSize;
+                }
+
+                rock.x += rock.speedX;
+                rock.y += rock.speedY;
+
+                // Colisión con la nave
+                if (distance < rock.size) {
+                    gameOver = true;
+                }
+
+                // Si sale del borde de la pantalla
+                if (
+                    rock.x < -rock.size * 2 || rock.x > canvas.width + rock.size * 2 ||
+                    rock.y < -rock.size * 2 || rock.y > canvas.height + rock.size * 2
+                ) {
+                    rocks.splice(index, 1);
+                    addRock(); // Crear un nuevo asteroide
+                }
+            });
+        }
+
+        // Mover disparos
+        function updateBullets() {
+            bullets.forEach((bullet, bulletIndex) => {
+                bullet.x += bullet.speedX;
+                bullet.y += bullet.speedY;
+
+                // Eliminar el disparo si sale de la pantalla
+                if (
+                    bullet.x < 0 || bullet.x > canvas.width ||
+                    bullet.y < 0 || bullet.y > canvas.height
+                ) {
+                    bullets.splice(bulletIndex, 1);
+                    return;
+                }
+
+                // Verificar colisión con las rocas
+                rocks.forEach((rock, rockIndex) => {
+                    const distX = bullet.x - rock.x;
+                    const distY = bullet.y - rock.y;
+                    const distance = Math.sqrt(distX * distX + distY * distY);
+                    
+                    if (distance < rock.size) {
+                        // Reproducir sonido de explosión
+                        playExplosion();
+                        
+                        // Si el asteroide es suficientemente grande, partirlo en dos
+                        if (rock.originalSize > 8) {
+                            const newSize = rock.originalSize * 0.6; // 60% del tamaño original
+                            
+                            // Crear dos fragmentos con ángulos divergentes (±30 grados = 0.52 radianes)
+                            addRock(rock.x, rock.y, newSize, rock.speedX, rock.speedY, 0.52);
+                            addRock(rock.x, rock.y, newSize, rock.speedX, rock.speedY, -0.52);
+                        }
+                        
+                        // Eliminar el asteroide original
+                        rocks.splice(rockIndex, 1);
+                        
+                        // Eliminar el disparo
+                        bullets.splice(bulletIndex, 1);
+                        
+                        score++; // Incrementar marcador
+                        
+                        // Salir del bucle forEach de rocas
+                        return;
+                    }
+                });
+            });
+        }
+
+        // Disparo desde la punta de la nave
+        function shoot(targetX, targetY) {
+            const speed = 5;
+            // Coordenadas de la punta de la nave
+            const bulletX = ship.x + ship.size * Math.cos(ship.rotation - Math.PI / 2);
+            const bulletY = ship.y + ship.size * Math.sin(ship.rotation - Math.PI / 2);
+            const angle = Math.atan2(targetY - bulletY, targetX - bulletX);
+            
+            bullets.push({
+                x: bulletX,
+                y: bulletY,
+                speedX: speed * Math.cos(angle),
+                speedY: speed * Math.sin(angle),
+                angle: angle
+            });
+            
+            // Reproducir sonido de disparo
+            playDisparo();
+        }
+
+        // Girar la nave hacia el punto de disparo
+        function rotateShipTo(targetX, targetY) {
+            ship.rotation = Math.atan2(targetY - ship.y, targetX - ship.x) + Math.PI / 2;
+        }
+
+        // Evento de clic/touch
+        function handleInput(e) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            let targetX, targetY;
+            
+            if (e.type === 'touchstart') {
+                targetX = e.touches[0].clientX - rect.left;
+                targetY = e.touches[0].clientY - rect.top;
+            } else {
+                targetX = e.clientX - rect.left;
+                targetY = e.clientY - rect.top;
+            }
+            
+            rotateShipTo(targetX, targetY);
+            shoot(targetX, targetY);
+        }
+
+        canvas.addEventListener("click", handleInput);
+        canvas.addEventListener("touchstart", handleInput);
+
+        // Juego principal
+        function gameLoop() {
+            if (gameOver) {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = 'white';
+                ctx.font = "48px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("Game Over", canvas.width / 2, canvas.height / 2);
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Actualizar y dibujar
+            drawShip();
+            drawBullets();
+            drawRocks();
+            drawScore();
+
+            updateBullets();
+            updateRocks();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Iniciar el juego
+        initRocks(5);
+        gameLoop();
+        
+        // Intentar reproducir música de fondo
+        playBackgroundMusic();
+
+        // Ajustar canvas al cambiar ventana
+        window.addEventListener("resize", () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

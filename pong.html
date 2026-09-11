@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>PONG VINTAGE</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#000;color:#fff;font-family:monospace;touch-action:none}
+body{display:flex;flex-direction:column}
+#topBar{height:48px;min-height:48px;display:flex;align-items:center;padding-left:12px;background:#000;border-bottom:2px solid #fff;font-size:16px;font-weight:bold;letter-spacing:1px}
+#topBar span.highlight{color:#ff0}
+#gameArea{position:relative;flex:1;width:100%;overflow:hidden;background:#000}
+#gameCanvas{position:absolute;left:0;top:0;width:100%;height:100%;display:block}
+.overlay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;background:rgba(0,0,0,.9);z-index:20;text-align:center}
+.overlay.hidden{display:none}
+.title{font-size:clamp(30px,10vw,60px);font-weight:bold;letter-spacing:5px;margin-bottom:15px}
+.subtitle{font-size:14px;margin-bottom:30px}
+button{background:#000;color:#fff;border:2px solid #fff;padding:12px 30px;font-family:monospace;font-size:18px;font-weight:bold;border-radius:0;cursor:pointer}
+button:active{background:#fff;color:#000}
+#goalMessage{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:10;font-size:clamp(24px,8vw,48px);font-weight:bold;display:none;text-align:center;white-space:nowrap}
+#bottomBar{height:38px;min-height:38px;border-top:2px solid #fff;background:#000;display:flex;align-items:center;padding:0 10px;font-size:13px;font-weight:bold}
+#bottomInfo{display:flex;width:100%;justify-content:space-between}
+#pauseText{font-size:30px;margin-bottom:20px}
+#powerupIndicator{position:absolute;top:10px;right:10px;z-index:5;font-size:14px;text-align:right;display:none;background:rgba(0,0,0,.8);padding:8px 12px;border:2px solid #fff;}
+#powerupIndicator.visible{display:block}
+</style>
+</head>
+<body>
+<div id="topBar">
+<div>TANTOS: <span id="scoreValue">0</span>&nbsp;&nbsp;-&nbsp;&nbsp;MARCA: 5 
+<span id="powerupScoreBonus" style="display:none;color:#ff0;"> ★×2</span>
+</div>
+</div>
+<div id="gameArea">
+<canvas id="gameCanvas"></canvas>
+<div id="powerupIndicator" class="visible">
+<div id="powerupName">⚡ ACTIVADO</div>
+<div id="powerupTimer">30s</div>
+</div>
+<div id="goalMessage">¡TANTO!</div>
+<div id="startScreen" class="overlay">
+<div class="title">PONG</div>
+<div class="subtitle">MUEVE LA BARRA CON EL DEDO</div>
+<div style="display:flex;gap:10px;justify-content:center;align-items:center;">
+<button type="button" id="startButton">JUGAR</button>
+<button type="button" id="configButton">CONFIG.</button>
+</div>
+</div>
+<div id="configScreen" class="overlay hidden">
+<div class="title" style="font-size:28px;letter-spacing:3px;">CONFIGURACIÓN</div>
+<div style="width:min(82vw,360px);text-align:left;font-size:16px;line-height:1.8;">
+<label for="speedInput">Velocidad: <strong><span id="speedDisplay">5</span></strong></label>
+<input id="speedInput" type="range" min="1" max="10" step="1" value="5" style="width:100%;display:block;">
+
+<label for="ballsInput">Bolas en juego: <strong><span id="ballsDisplay">1</span></strong></label>
+<input id="ballsInput" type="range" min="1" max="5" step="1" value="1" style="width:100%;display:block;">
+
+<label for="paddleWidthInput">Ancho de barra: <strong><span id="paddleWidthDisplay">8</span></strong></label>
+<input id="paddleWidthInput" type="range" min="10" max="3" step="1" value="8" style="width:100%;display:block;direction:rtl;">
+<div style="font-size:11px;color:#888;margin-top:-5px;">← Estrecha | Ancha →</div>
+</div>
+<div style="font-size:12px;margin:12px 0 20px;max-width:320px;">
+Los valores se aplicarán al pulsar JUGAR.
+</div>
+<div style="display:flex;gap:10px;">
+<button type="button" id="saveConfigButton">GUARDAR</button>
+<button type="button" id="cancelConfigButton">CANCELAR</button>
+</div>
+</div>
+<div id="pauseScreen" class="overlay hidden"><div id="pauseText">PAUSA</div><button id="resumeButton">CONTINUAR</button></div>
+<div id="gameOverScreen" class="overlay hidden"><div class="title">FIN</div><div class="subtitle" id="finalText">PARTIDA TERMINADA</div><button id="restartButton">OTRA PARTIDA</button></div>
+</div>
+<div id="bottomBar"><div id="bottomInfo"><span>◀ PONG ▶</span><span>REBOTES: <span id="reboundValue">0</span></span></div></div>
+
+<script>
+const canvas=document.getElementById("gameCanvas"),ctx=canvas.getContext("2d"),gameArea=document.getElementById("gameArea");
+const scoreValue=document.getElementById("scoreValue"),reboundValue=document.getElementById("reboundValue");
+const startScreen=document.getElementById("startScreen"),pauseScreen=document.getElementById("pauseScreen"),gameOverScreen=document.getElementById("gameOverScreen");
+const goalMessage=document.getElementById("goalMessage"),finalText=document.getElementById("finalText");
+const startButton=document.getElementById("startButton"),resumeButton=document.getElementById("resumeButton"),restartButton=document.getElementById("restartButton");
+const configButton=document.getElementById("configButton"),configScreen=document.getElementById("configScreen"),saveConfigButton=document.getElementById("saveConfigButton");
+const cancelConfigButton=document.getElementById("cancelConfigButton");
+const speedInput=document.getElementById("speedInput"),ballsInput=document.getElementById("ballsInput");
+const paddleWidthInput=document.getElementById("paddleWidthInput");
+const speedDisplay=document.getElementById("speedDisplay"),ballsDisplay=document.getElementById("ballsDisplay");
+const paddleWidthDisplay=document.getElementById("paddleWidthDisplay");
+const powerupIndicator=document.getElementById("powerupIndicator");
+const powerupName=document.getElementById("powerupName");
+const powerupTimer=document.getElementById("powerupTimer");
+const powerupScoreBonus=document.getElementById("powerupScoreBonus");
+
+let W=0,H=0,running=false,paused=false,gameOver=false,score=0,rebounds=0;
+let selectedSpeed=5;
+let selectedBalls=1;
+let selectedPaddleWidth=8;
+let basePaddleWidth=0; // Guarda el ancho base sin power-ups
+const maxScore=5;
+const CONFIG={paddleHeight:12,paddleBottomDistance:45,initialSpeed:5,speedIncrease:.10,maxSpeed:10,border:3};
+const paddle={x:0,y:0,width:0,height:CONFIG.paddleHeight,targetX:0,baseWidth:0};
+const ball={x:0,y:0,radius:7,vx:0,vy:0,speed:0};
+let balls=[];
+let powerups=[];
+let activePowerup=null;
+let powerupTimerId=null;
+let lastPowerupType=null;
+let scoreMultiplier=1;
+
+// Definición de power-ups
+const POWERUP_TYPES = [
+    { id: 0, name: 'BARRA GRANDE', color: '#4488ff', emoji: '📏', duration: 30, effect: 'bigPaddle' },
+    { id: 1, name: 'BARRA PEQUEÑA', color: '#ff4444', emoji: '📐', duration: 30, effect: 'smallPaddle' },
+    { id: 2, name: '+ BOLA', color: '#44ff44', emoji: '⚪', duration: 30, effect: 'addBall' },
+    { id: 3, name: 'VELOCIDAD +10%', color: '#ffffff', emoji: '⚡', duration: 30, effect: 'speedUp' },
+    { id: 4, name: 'VELOCIDAD -15%', color: '#ffdd44', emoji: '🐢', duration: 30, effect: 'speedDown' },
+    { id: 5, name: 'PUNTOS ×2', color: '#cc44ff', emoji: '⭐', duration: 30, effect: 'doublePoints' }
+];
+
+function resizeCanvas(){
+ const rect=gameArea.getBoundingClientRect(),dpr=Math.min(window.devicePixelRatio||1,2);
+ W=rect.width;H=rect.height;canvas.width=W*dpr;canvas.height=H*dpr;
+ canvas.style.width=W+"px";canvas.style.height=H+"px";ctx.setTransform(dpr,0,0,dpr,0,0);
+ 
+ // Aplicar límites: entre 1/10 y 1/3 del ancho
+ const minWidth = W/10;
+ const maxWidth = W/3;
+ let width = W/selectedPaddleWidth;
+ width = Math.max(minWidth, Math.min(maxWidth, width));
+ 
+ paddle.width=width;
+ paddle.baseWidth=width;
+ paddle.y=H-CONFIG.paddleBottomDistance-paddle.height;
+ if(!running){paddle.x=(W-paddle.width)/2;paddle.targetX=paddle.x;}
+}
+window.addEventListener("resize",resizeCanvas);
+
+let audioContext=null;
+function initAudio(){
+ if(!audioContext){const AC=window.AudioContext||window.webkitAudioContext;if(AC)audioContext=new AC();}
+ if(audioContext&&audioContext.state==="suspended")audioContext.resume();
+}
+function beep(frequency,duration,volume){
+ if(!audioContext)return;
+ const o=audioContext.createOscillator(),g=audioContext.createGain();
+ o.type="square";o.frequency.value=frequency;
+ g.gain.setValueAtTime(volume,audioContext.currentTime);
+ g.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+duration);
+ o.connect(g);g.connect(audioContext.destination);o.start();o.stop(audioContext.currentTime+duration);
+}
+function soundPaddle(){beep(500,.045,.08)}
+function soundWall(){beep(750,.035,.06)}
+function soundGoal(){beep(180,.18,.12);setTimeout(()=>beep(100,.20,.10),100)}
+function soundGameOver(){beep(150,.25,.12);setTimeout(()=>beep(100,.35,.10),200)}
+function soundPowerup(){beep(1200,.1,.15);setTimeout(()=>beep(800,.1,.12),80)}
+function vibrate(ms){if(navigator.vibrate)navigator.vibrate(ms)}
+
+function createBall(){
+ ball.x=W/2;ball.y=H*.45;ball.radius=Math.max(5,Math.min(8,W*.018));
+ // Asegurar velocidad dentro de límites
+ let speed = selectedSpeed;
+ if(activePowerup && activePowerup.effect === 'speedUp') speed *= 1.1;
+ if(activePowerup && activePowerup.effect === 'speedDown') speed *= 0.85;
+ ball.speed = Math.min(Math.max(speed, 1), 10);
+ 
+ const angle=Math.random()*.9-.45;
+ ball.vx=Math.sin(angle)*ball.speed;ball.vy=Math.cos(angle)*ball.speed;
+}
+
+function createBalls(){
+ balls=[];
+ for(let i=0;i<Math.min(selectedBalls,5);i++){
+  createBall();
+  balls.push({x:ball.x,y:ball.y,radius:ball.radius,vx:ball.vx,vy:ball.vy,speed:ball.speed});
+ }
+}
+
+function loadBall(b){
+ ball.x=b.x;ball.y=b.y;ball.radius=b.radius;ball.vx=b.vx;ball.vy=b.vy;ball.speed=b.speed;
+}
+function saveBall(b){
+ b.x=ball.x;b.y=ball.y;b.radius=ball.radius;b.vx=ball.vx;b.vy=ball.vy;b.speed=ball.speed;
+}
+
+function spawnPowerup(){
+ if(!running || gameOver || paused) return;
+ if(powerups.length > 0) return; // Solo uno a la vez
+ 
+ // Elegir power-up aleatorio diferente al anterior
+ let available = POWERUP_TYPES.filter(p => p.id !== lastPowerupType);
+ if(available.length === 0) available = POWERUP_TYPES;
+ const type = available[Math.floor(Math.random() * available.length)];
+ lastPowerupType = type.id;
+ 
+ const size = Math.max(20, Math.min(35, W*0.045));
+ const x = size + Math.random() * (W - size*2);
+ const y = size + 50 + Math.random() * (H * 0.5);
+ 
+ powerups.push({
+  type: type,
+  x: x,
+  y: y,
+  size: size,
+  timeLeft: 30, // 30 segundos
+  active: true
+ });
+}
+
+function updatePowerups(){
+ for(let i=powerups.length-1; i>=0; i--){
+  const p = powerups[i];
+  p.timeLeft -= 1/60;
+  
+  if(p.timeLeft <= 0){
+   powerups.splice(i,1);
+   if(powerups.length === 0) {
+    powerupIndicator.classList.remove('visible');
+   }
+   continue;
+  }
+  
+  // Verificar colisión con la bola
+  for(const b of balls){
+   const dx = b.x - p.x;
+   const dy = b.y - p.y;
+   const dist = Math.sqrt(dx*dx + dy*dy);
+   if(dist < b.radius + p.size/2){
+    applyPowerup(p.type);
+    powerups.splice(i,1);
+    soundPowerup();
+    vibrate(50);
+    powerupIndicator.classList.remove('visible');
+    break;
+   }
+  }
+ }
+ 
+ // Actualizar timer en UI si hay powerup activo
+ if(activePowerup){
+  activePowerup.timeLeft -= 1/60;
+  powerupTimer.textContent = Math.ceil(activePowerup.timeLeft) + 's';
+  if(activePowerup.timeLeft <= 0){
+   clearPowerup();
+  }
+ }
+}
+
+function applyPowerup(type){
+ // Limpiar power-up anterior
+ if(activePowerup) clearPowerup();
+ 
+ activePowerup = {
+  type: type,
+  timeLeft: type.duration || 30
+ };
+ 
+ // Mostrar en UI
+ powerupName.textContent = type.emoji + ' ' + type.name;
+ powerupTimer.textContent = Math.ceil(activePowerup.timeLeft) + 's';
+ powerupIndicator.style.borderColor = type.color;
+ powerupIndicator.classList.add('visible');
+ 
+ // Aplicar efecto
+ switch(type.effect){
+  case 'bigPaddle':
+   paddle.baseWidth = paddle.width;
+   const maxWidth = W/3;
+   paddle.width = Math.min(paddle.width * 1.5, maxWidth);
+   break;
+  case 'smallPaddle':
+   paddle.baseWidth = paddle.width;
+   const minWidth = W/10;
+   paddle.width = Math.max(paddle.width * 0.5, minWidth);
+   break;
+  case 'addBall':
+   if(balls.length < 5){
+    createBall();
+    balls.push({x:ball.x, y:ball.y, radius:ball.radius, vx:-ball.vx, vy:-ball.vy, speed:ball.speed});
+   }
+   break;
+  case 'speedUp':
+   // La velocidad ya se aplica al crear nuevas bolas
+   break;
+  case 'speedDown':
+   // La velocidad ya se aplica al crear nuevas bolas
+   break;
+  case 'doublePoints':
+   scoreMultiplier = 2;
+   powerupScoreBonus.style.display = 'inline';
+   break;
+ }
+}
+
+function clearPowerup(){
+ if(!activePowerup) return;
+ 
+ // Revertir efectos
+ switch(activePowerup.type.effect){
+  case 'bigPaddle':
+  case 'smallPaddle':
+   paddle.width = paddle.baseWidth;
+   break;
+  case 'doublePoints':
+   scoreMultiplier = 1;
+   powerupScoreBonus.style.display = 'none';
+   break;
+  case 'speedUp':
+  case 'speedDown':
+   // Actualizar velocidad de todas las bolas a la base
+   for(const b of balls){
+    b.speed = selectedSpeed;
+    const currentAngle = Math.atan2(b.vy, b.vx);
+    b.vx = Math.cos(currentAngle) * b.speed;
+    b.vy = Math.sin(currentAngle) * b.speed;
+   }
+   break;
+ }
+ 
+ activePowerup = null;
+ powerupIndicator.classList.remove('visible');
+}
+
+function newGame(){
+ score=0;rebounds=0;scoreMultiplier=1;scoreValue.textContent=score;reboundValue.textContent=rebounds;
+ gameOver=false;paused=false;running=true;
+ powerups=[];activePowerup=null;lastPowerupType=null;
+ powerupScoreBonus.style.display = 'none';
+ powerupIndicator.classList.remove('visible');
+ if(powerupTimerId){clearInterval(powerupTimerId);powerupTimerId=null;}
+ 
+ paddle.width = W/selectedPaddleWidth;
+ // Aplicar límites
+ const minWidth = W/10;
+ const maxWidth = W/3;
+ paddle.width = Math.max(minWidth, Math.min(maxWidth, paddle.width));
+ paddle.baseWidth = paddle.width;
+ paddle.y=H-CONFIG.paddleBottomDistance-paddle.height;
+ paddle.x=(W-paddle.width)/2;paddle.targetX=paddle.x;
+ 
+ createBalls();
+ startScreen.classList.add("hidden");configScreen.classList.add("hidden");pauseScreen.classList.add("hidden");
+ gameOverScreen.classList.add("hidden");goalMessage.style.display="none";
+ initAudio();
+ 
+ // Iniciar generación de power-ups (cada 8-12 segundos)
+ powerupTimerId = setInterval(() => {
+  if(running && !paused && !gameOver) spawnPowerup();
+ }, 8000 + Math.random() * 4000);
+ 
+ requestAnimationFrame(gameLoop);
+}
+
+function goal(){
+ if(!running||gameOver)return;
+ let points = scoreMultiplier;
+ score+=points;scoreValue.textContent=score;
+ soundGoal();vibrate(100);goalMessage.style.display="block";
+ if(score>=maxScore){
+  running=false;gameOver=true;
+  if(powerupTimerId){clearInterval(powerupTimerId);powerupTimerId=null;}
+  setTimeout(()=>{goalMessage.style.display="none";finalText.textContent="HAS CONSEGUIDO "+score+" TANTOS";gameOverScreen.classList.remove("hidden");soundGameOver()},1000);
+  return;
+ }
+ running=false;
+ setTimeout(()=>{if(gameOver)return;createBalls();goalMessage.style.display="none";running=true;requestAnimationFrame(gameLoop)},1000);
+}
+
+function paddleCollision(){
+ if(ball.vy<=0)return;
+ const paddleTop=paddle.y,ballBottom=ball.y+ball.radius;
+ if(ballBottom>=paddleTop&&ballBottom<=paddleTop+paddle.height+10&&ball.x>=paddle.x&&ball.x<=paddle.x+paddle.width){
+  const hitPosition=(ball.x-(paddle.x+paddle.width/2))/(paddle.width/2);
+  const normalized=Math.max(-1,Math.min(1,hitPosition));
+  const maxAngle=Math.PI/4;
+  const angle=normalized*maxAngle;
+  ball.speed=Math.min(ball.speed+CONFIG.speedIncrease,10);
+  ball.vx=Math.sin(angle)*ball.speed;ball.vy=-Math.cos(angle)*ball.speed;
+  ball.y=paddleTop-ball.radius-1;rebounds++;reboundValue.textContent=rebounds;soundPaddle();vibrate(15);
+ }
+}
+
+function update(){
+ paddle.x+=(paddle.targetX-paddle.x)*.35;
+ if(paddle.x<0)paddle.x=0;
+ if(paddle.x+paddle.width>W)paddle.x=W-paddle.width;
+
+ // Actualizar power-ups
+ updatePowerups();
+
+ for(let i=balls.length-1;i>=0;i--){
+  const b=balls[i];
+  loadBall(b);
+
+  ball.x+=ball.vx;ball.y+=ball.vy;
+
+  if(ball.x-ball.radius<=CONFIG.border){
+   ball.x=CONFIG.border+ball.radius;ball.vx=Math.abs(ball.vx);soundWall();
+  }
+  if(ball.x+ball.radius>=W-CONFIG.border){
+   ball.x=W-CONFIG.border-ball.radius;ball.vx=-Math.abs(ball.vx);soundWall();
+  }
+  if(ball.y-ball.radius<=CONFIG.border){
+   ball.y=CONFIG.border+ball.radius;ball.vy=Math.abs(ball.vy);soundWall();
+  }
+
+  paddleCollision();
+
+  if(ball.y-ball.radius>H){
+   balls.splice(i,1);
+  } else {
+   saveBall(b);
+  }
+ }
+
+ if(balls.length===0) goal();
+}
+
+function draw(){
+ ctx.fillStyle="#000";ctx.fillRect(0,0,W,H);ctx.fillStyle="#fff";
+ ctx.fillRect(0,0,W,CONFIG.border);
+ ctx.fillRect(0,0,CONFIG.border,H);
+ ctx.fillRect(W-CONFIG.border,0,CONFIG.border,H);
+ 
+ // Dibujar barra
+ ctx.fillRect(paddle.x,paddle.y,paddle.width,paddle.height);
+
+ // Dibujar bolas
+ for(const b of balls){
+  ctx.beginPath();
+  ctx.arc(b.x,b.y,b.radius,0,Math.PI*2);
+  ctx.fill();
+ }
+
+ // Dibujar power-ups
+ for(const p of powerups){
+  ctx.fillStyle = p.type.color;
+  ctx.fillRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size);
+  ctx.fillStyle = '#fff';
+  ctx.font = (p.size * 0.6) + 'px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(p.type.emoji, p.x, p.y);
+  // Borde
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(p.x-p.size/2, p.y-p.size/2, p.size, p.size);
+ }
+
+ ctx.globalAlpha=.18;
+ for(let y=15;y<H-20;y+=22)ctx.fillRect(W/2-1,y,2,7);
+ ctx.globalAlpha=1;
+}
+
+function gameLoop(){
+ if(!running){draw();return} if(paused){draw();return}
+ update();draw();requestAnimationFrame(gameLoop);
+}
+
+function movePaddle(clientX){
+ const rect=canvas.getBoundingClientRect(),x=clientX-rect.left;
+ paddle.targetX=x-paddle.width/2;
+ if(paddle.targetX<0)paddle.targetX=0;
+ if(paddle.targetX+paddle.width>W)paddle.targetX=W-paddle.width;
+}
+
+canvas.addEventListener("touchstart",e=>{e.preventDefault();if(e.touches.length)movePaddle(e.touches[0].clientX)},{passive:false});
+canvas.addEventListener("touchmove",e=>{e.preventDefault();if(e.touches.length)movePaddle(e.touches[0].clientX)},{passive:false});
+canvas.addEventListener("mousemove",e=>movePaddle(e.clientX));
+
+let lastTap=0;
+canvas.addEventListener("touchend",()=>{const now=Date.now();if(now-lastTap<300)togglePause();lastTap=now});
+
+function togglePause(){
+ if(!running&&!paused)return;paused=!paused;
+ if(paused)pauseScreen.classList.remove("hidden");
+ else{pauseScreen.classList.add("hidden");requestAnimationFrame(gameLoop)}
+}
+
+// Eventos de configuración
+speedInput.addEventListener("input",function(){
+ speedDisplay.textContent=this.value;
+});
+ballsInput.addEventListener("input",function(){
+ ballsDisplay.textContent=this.value;
+});
+paddleWidthInput.addEventListener("input",function(){
+ paddleWidthDisplay.textContent=this.value;
+});
+
+configButton.addEventListener("click",function(e){
+ e.preventDefault();
+ e.stopPropagation();
+ speedInput.value=selectedSpeed;
+ ballsInput.value=selectedBalls;
+ paddleWidthInput.value=selectedPaddleWidth;
+ speedDisplay.textContent=selectedSpeed;
+ ballsDisplay.textContent=selectedBalls;
+ paddleWidthDisplay.textContent=selectedPaddleWidth;
+ startScreen.classList.add("hidden");
+ configScreen.classList.remove("hidden");
+});
+
+saveConfigButton.addEventListener("click",function(){
+ selectedSpeed=Number(speedInput.value);
+ selectedBalls=Number(ballsInput.value);
+ selectedPaddleWidth=Number(paddleWidthInput.value);
+ configScreen.classList.add("hidden");
+ startScreen.classList.remove("hidden");
+});
+
+cancelConfigButton.addEventListener("click",function(){
+ configScreen.classList.add("hidden");
+ startScreen.classList.remove("hidden");
+});
+
+startButton.addEventListener("click",newGame);
+resumeButton.addEventListener("click",togglePause);
+restartButton.addEventListener("click",function(){
+ gameOverScreen.classList.add("hidden");
+ newGame();
+});
+
+document.addEventListener("touchmove",e=>e.preventDefault(),{passive:false});
+document.addEventListener("gesturestart",e=>e.preventDefault());
+
+resizeCanvas();paddle.width=W/selectedPaddleWidth;
+// Aplicar límites
+const minWidth = W/10;
+const maxWidth = W/3;
+paddle.width = Math.max(minWidth, Math.min(maxWidth, paddle.width));
+paddle.baseWidth = paddle.width;
+paddle.y=H-CONFIG.paddleBottomDistance-paddle.height;
+paddle.x=(W-paddle.width)/2;paddle.targetX=paddle.x;createBalls();draw();
+</script>
+</body>
+</html>

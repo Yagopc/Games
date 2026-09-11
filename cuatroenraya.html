@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conecta 4: Humano (🔴) vs IA (🟢) - Perfecta</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #1e3c4f, #0f2a36);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+        .game-card {
+            background: #2d5f7e;
+            padding: 30px 20px 25px 20px;
+            border-radius: 60px 60px 30px 30px;
+            box-shadow: 0 30px 30px rgba(0,0,0,0.5), inset 0 -5px 5px rgba(0,0,0,0.3), inset 0 5px 10px rgba(255,255,255,0.3);
+            border-bottom: 8px solid #1d4155;
+        }
+        h1 {
+            text-align: center;
+            color: #faeac9;
+            text-shadow: 3px 3px 0 #1a3a47;
+            font-weight: 600;
+            font-size: 2.5rem;
+            letter-spacing: 3px;
+            margin-top: -15px;
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+        .turn-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            background: #1f4757;
+            border-radius: 100px;
+            padding: 10px 20px;
+            margin: 10px 20px 20px 20px;
+            border: 2px solid #faeac9;
+            color: white;
+            font-weight: bold;
+            font-size: 1.3rem;
+        }
+        .player-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 5px 15px;
+            border-radius: 40px;
+            background: #2e5f6b;
+        }
+        .red-dot, .green-dot {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            box-shadow: inset -4px -4px 5px rgba(0,0,0,0.3), inset 2px 2px 5px rgba(255,255,255,0.5);
+        }
+        .red-dot { background: radial-gradient(circle at 35% 35%, #ff8a8a, #c04040); }
+        .green-dot { background: radial-gradient(circle at 35% 35%, #9bff9e, #2f7a3a); }
+        .turn-highlight {
+            background: #faeac9;
+            color: #1f4757;
+            padding: 5px 15px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+        }
+        .board {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            background: #f5d7a7;
+            padding: 20px 15px;
+            border-radius: 40px 40px 15px 15px;
+            border: 5px solid #c99f6e;
+            box-shadow: inset 0 0 0 2px #b3804d, 0 10px 15px rgba(0,0,0,0.4);
+        }
+        .cell {
+            width: 4.5rem;
+            height: 4.5rem;
+            background: #2b4b5e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset -3px -3px 5px #1e3340, inset 3px 3px 8px #5f8da0, 0 5px 0 #0e2a33;
+            transition: all 0.1s;
+        }
+        .cell.red::after {
+            content: '';
+            display: block;
+            width: 85%;
+            height: 85%;
+            background: radial-gradient(circle at 35% 35%, #ff8a8a, #b33c3c);
+            border-radius: 50%;
+            box-shadow: inset -3px -3px 5px #712525, inset 3px 3px 8px #ffc1c1;
+        }
+        .cell.green::after {
+            content: '';
+            display: block;
+            width: 85%;
+            height: 85%;
+            background: radial-gradient(circle at 35% 35%, #adffaa, #2d8842);
+            border-radius: 50%;
+            box-shadow: inset -3px -3px 5px #1f5825, inset 3px 3px 8px #d4ffb0;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            margin: 25px 10px 10px 10px;
+        }
+        .col-btn {
+            width: 4.2rem;
+            height: 4.2rem;
+            font-size: 2rem;
+            font-weight: bold;
+            background: #fedb9f;
+            border: none;
+            border-radius: 30px 30px 10px 10px;
+            color: #392f20;
+            cursor: pointer;
+            box-shadow: 0 7px 0 #b47d47, 0 8px 12px black;
+            transition: 0.05s linear;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .col-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 #b47d47, 0 5px 10px black;
+        }
+        .col-btn:disabled {
+            opacity: 0.5;
+            transform: translateY(4px);
+            box-shadow: 0 3px 0 #7a613f;
+            pointer-events: none;
+        }
+        .reset-btn {
+            background: #ffcf9a;
+            border: none;
+            padding: 12px 35px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 40px;
+            margin-top: 15px;
+            box-shadow: 0 7px 0 #a5713c, 0 5px 15px black;
+            cursor: pointer;
+            color: #1d3f4a;
+            transition: 0.08s;
+            width: fit-content;
+        }
+        .reset-btn:active {
+            transform: translateY(5px);
+            box-shadow: 0 2px 0 #a5713c, 0 5px 15px black;
+        }
+        .message {
+            text-align: center;
+            font-size: 1.5rem;
+            min-height: 3rem;
+            color: #faeac9;
+            font-weight: 600;
+            text-shadow: 2px 2px 0 #17323f;
+            margin: 10px 0 5px;
+        }
+        footer {
+            text-align: center;
+            color: #abccd1;
+            margin-top: 10px;
+        }
+        @media (max-width: 650px) {
+            .cell { width: 3rem; height: 3rem; }
+            .col-btn { width: 3rem; height: 3rem; font-size: 1.6rem; }
+            .board { gap: 5px; }
+        }
+    </style>
+</head>
+<body>
+<div class="game-card">
+    <h1>⚡ 4 EN RAYA ⚡</h1>
+    <div class="turn-indicator">
+        <div class="player-badge"><span class="red-dot"></span> TÚ</div>
+        <div class="turn-highlight" id="turnDisplay">🔴 TU TURNO</div>
+        <div class="player-badge"><span class="green-dot"></span> IA</div>
+    </div>
+    <div class="board-wrapper">
+        <div class="board" id="board"></div>
+        <div class="controls" id="columnButtons"></div>
+    </div>
+    <div class="message" id="message"></div>
+    <button class="reset-btn" id="reset">🔄 REINICIAR</button>
+    <footer>🔴 humano · 🟢 IA (minimax + alfa-beta)</footer>
+</div>
+<script>
+    (function() {
+        // Constantes
+        const FILAS = 6;
+        const COLUMNAS = 7;
+        const VACIO = 0;
+        const HUMANO = 1;    // Rojo
+        const IA = 2;        // Verde
+
+        // Estado del juego
+        let tablero = Array(FILAS).fill().map(() => Array(COLUMNAS).fill(VACIO));
+        let turnoHumano = true; // true = humano, false = IA
+        let juegoTerminado = false;
+
+        // Elementos DOM
+        const boardEl = document.getElementById('board');
+        const columnBtnsEl = document.getElementById('columnButtons');
+        const turnDisplay = document.getElementById('turnDisplay');
+        const messageEl = document.getElementById('message');
+
+        // Inicializar vista del tablero
+        function renderizarTablero() {
+            boardEl.innerHTML = '';
+            for (let f = 0; f < FILAS; f++) {
+                for (let c = 0; c < COLUMNAS; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    if (tablero[f][c] === HUMANO) cell.classList.add('red');
+                    else if (tablero[f][c] === IA) cell.classList.add('green');
+                    boardEl.appendChild(cell);
+                }
+            }
+        }
+
+        // Crear botones de columna
+        function crearBotones() {
+            columnBtnsEl.innerHTML = '';
+            for (let c = 0; c < COLUMNAS; c++) {
+                const btn = document.createElement('button');
+                btn.className = 'col-btn';
+                btn.textContent = '▼';
+                btn.dataset.col = c;
+                btn.addEventListener('click', (e) => {
+                    if (!turnoHumano || juegoTerminado) return;
+                    const col = parseInt(e.currentTarget.dataset.col);
+                    realizarJugadaHumano(col);
+                });
+                columnBtnsEl.appendChild(btn);
+            }
+        }
+
+        // Actualizar estado de botones (des/habilitar según turno y disponibilidad)
+        function actualizarBotones() {
+            const btns = document.querySelectorAll('.col-btn');
+            btns.forEach((btn, col) => {
+                if (!turnoHumano || juegoTerminado || columnaLlena(col)) {
+                    btn.disabled = true;
+                } else {
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        // Comprobar si una columna está llena
+        function columnaLlena(col) {
+            return tablero[0][col] !== VACIO;
+        }
+
+        // Encontrar la primera fila vacía en una columna (retorna -1 si llena)
+        function filaDisponible(col) {
+            for (let f = FILAS - 1; f >= 0; f--) {
+                if (tablero[f][col] === VACIO) return f;
+            }
+            return -1;
+        }
+
+        // Colocar ficha (efecto secundario en tablero)
+        function colocarFicha(col, jugador) {
+            const fila = filaDisponible(col);
+            if (fila === -1) return false;
+            tablero[fila][col] = jugador;
+            return true;
+        }
+
+        // Retirar ficha (para deshacer jugadas en IA)
+        function quitarFicha(col) {
+            for (let f = 0; f < FILAS; f++) {
+                if (tablero[f][col] !== VACIO) {
+                    tablero[f][col] = VACIO;
+                    return;
+                }
+            }
+        }
+
+        // Detectar ganador (retorna HUMANO, IA, o 0 si no hay)
+        function comprobarGanador() {
+            // Direcciones: horizontal, vertical, diagonal (\) y diagonal (/)
+            const direcciones = [[1,0], [0,1], [1,1], [1,-1]];
+            for (let f = 0; f < FILAS; f++) {
+                for (let c = 0; c < COLUMNAS; c++) {
+                    const jugador = tablero[f][c];
+                    if (jugador === VACIO) continue;
+                    for (let [df, dc] of direcciones) {
+                        let cont = 1;
+                        for (let paso = 1; paso < 4; paso++) {
+                            const nf = f + df * paso;
+                            const nc = c + dc * paso;
+                            if (nf < 0 || nf >= FILAS || nc < 0 || nc >= COLUMNAS || tablero[nf][nc] !== jugador) break;
+                            cont++;
+                        }
+                        if (cont >= 4) return jugador; // HUMANO o IA
+                    }
+                }
+            }
+            return VACIO;
+        }
+
+        // Comprobar si hay empate (tablero lleno)
+        function hayEmpate() {
+            for (let c = 0; c < COLUMNAS; c++) {
+                if (!columnaLlena(c)) return false;
+            }
+            return true;
+        }
+
+        // --- FUNCIÓN HEURÍSTICA (evaluación IA) ---
+        function evaluarPosicion(jugador) {
+            let puntuacion = 0;
+            const oponente = (jugador === IA) ? HUMANO : IA;
+
+            // Centrarse en ventanas de 4 (líneas posibles)
+            for (let f = 0; f < FILAS; f++) {
+                for (let c = 0; c < COLUMNAS; c++) {
+                    // Direcciones: derecha, abajo, diagonal abajo-derecha, diagonal abajo-izquierda
+                    const direcciones = [[1,0], [0,1], [1,1], [1,-1]];
+                    for (let [df, dc] of direcciones) {
+                        let ventana = [];
+                        for (let paso = 0; paso < 4; paso++) {
+                            const nf = f + df * paso;
+                            const nc = c + dc * paso;
+                            if (nf >= FILAS || nc < 0 || nc >= COLUMNAS) break;
+                            ventana.push(tablero[nf][nc]);
+                        }
+                        if (ventana.length === 4) {
+                            puntuacion += puntuarVentana(ventana, jugador, oponente);
+                        }
+                    }
+                }
+            }
+            return puntuacion;
+        }
+
+        function puntuarVentana(ventana, jugador, oponente) {
+            let countJug = ventana.filter(v => v === jugador).length;
+            let countOpo = ventana.filter(v => v === oponente).length;
+            let countVac = ventana.filter(v => v === VACIO).length;
+
+            if (countJug === 4) return 100000;   // Ganar
+            if (countOpo === 4) return -90000;    // Evitar que el oponente gane (prioridad altísima)
+            if (countJug === 3 && countVac === 1) return 5000;  // Amenaza directa
+            if (countOpo === 3 && countVac === 1) return -4500; // Bloquear amenaza rival
+            if (countJug === 2 && countVac === 2) return 500;
+            if (countOpo === 2 && countVac === 2) return -400;
+            return 0;
+        }
+
+        // Algoritmo Minimax con poda alfa-beta (maximiza IA, minimiza humano)
+        function minimax(profundidad, alfa, beta, maximizando) {
+            const ganador = comprobarGanador();
+            if (ganador === IA) return 100000 - profundidad;  // Prefiere ganar rápido
+            if (ganador === HUMANO) return -100000 + profundidad; // Evita que humano gane
+            if (hayEmpate() || profundidad === 0) return evaluarPosicion(IA) - evaluarPosicion(HUMANO); // Heurística relativa
+
+            if (maximizando) {
+                let maxEval = -Infinity;
+                for (let c = 0; c < COLUMNAS; c++) {
+                    if (!columnaLlena(c)) {
+                        colocarFicha(c, IA);
+                        let eval = minimax(profundidad - 1, alfa, beta, false);
+                        quitarFicha(c);
+                        maxEval = Math.max(maxEval, eval);
+                        alfa = Math.max(alfa, eval);
+                        if (beta <= alfa) break; // Poda
+                    }
+                }
+                return maxEval;
+            } else {
+                let minEval = Infinity;
+                for (let c = 0; c < COLUMNAS; c++) {
+                    if (!columnaLlena(c)) {
+                        colocarFicha(c, HUMANO);
+                        let eval = minimax(profundidad - 1, alfa, beta, true);
+                        quitarFicha(c);
+                        minEval = Math.min(minEval, eval);
+                        beta = Math.min(beta, eval);
+                        if (beta <= alfa) break;
+                    }
+                }
+                return minEval;
+            }
+        }
+
+        // Obtener mejor columna para IA (usa minimax con profundidad 7 para ser fuerte)
+        function mejorMovimientoIA() {
+            let mejorCol = -1;
+            let mejorValor = -Infinity;
+            for (let c = 0; c < COLUMNAS; c++) {
+                if (!columnaLlena(c)) {
+                    colocarFicha(c, IA);
+                    let valorMov = minimax(6, -Infinity, Infinity, false); // profundidad 6 (ajustable)
+                    quitarFicha(c);
+                    if (valorMov > mejorValor) {
+                        mejorValor = valorMov;
+                        mejorCol = c;
+                    }
+                }
+            }
+            return mejorCol;
+        }
+
+        // Lógica tras cada movimiento (actualizar UI, comprobar fin, cambiar turno)
+        function despuesDeJugada() {
+            renderizarTablero();
+            const ganador = comprobarGanador();
+            const empate = hayEmpate();
+
+            if (ganador === HUMANO) {
+                juegoTerminado = true;
+                messageEl.innerText = '🎉 ¡GANASTE! 🎉';
+                turnDisplay.innerText = '🏆 VICTORIA';
+            } else if (ganador === IA) {
+                juegoTerminado = true;
+                messageEl.innerText = '🤖 GANA LA IA... 🤖';
+                turnDisplay.innerText = '💀 DERROTA';
+            } else if (empate) {
+                juegoTerminado = true;
+                messageEl.innerText = '🤝 EMPATE 🤝';
+                turnDisplay.innerText = '✨ NADIE GANA';
+            } else {
+                // Cambiar turno
+                turnoHumano = !turnoHumano;
+                if (turnoHumano) {
+                    turnDisplay.innerText = '🔴 TU TURNO';
+                } else {
+                    turnDisplay.innerText = '🟢 IA PIENSA...';
+                    actualizarBotones();
+                    setTimeout(jugadaIA, 200); // pequeña pausa para sensación realista
+                }
+            }
+            actualizarBotones();
+
+            // Si el juego terminó, deshabilitar botones
+            if (juegoTerminado) actualizarBotones();
+        }
+
+        // Jugada del humano
+        function realizarJugadaHumano(col) {
+            if (!turnoHumano || juegoTerminado || columnaLlena(col)) return;
+
+            colocarFicha(col, HUMANO);
+            despuesDeJugada();
+        }
+
+        // Jugada de la IA
+        function jugadaIA() {
+            if (juegoTerminado || turnoHumano) return; // seguridad
+
+            const col = mejorMovimientoIA();
+            if (col !== -1) {
+                colocarFicha(col, IA);
+                despuesDeJugada();
+            } else {
+                // Si no hay movimiento (tablero lleno) comprobar empate
+                if (hayEmpate()) {
+                    juegoTerminado = true;
+                    messageEl.innerText = '🤝 EMPATE 🤝';
+                    turnDisplay.innerText = '✨ NADIE GANA';
+                    renderizarTablero();
+                    actualizarBotones();
+                }
+            }
+        }
+
+        // Reiniciar juego
+        function reiniciarJuego() {
+            tablero = Array(FILAS).fill().map(() => Array(COLUMNAS).fill(VACIO));
+            turnoHumano = true; // humano empieza
+            juegoTerminado = false;
+            messageEl.innerText = '';
+            turnDisplay.innerText = '🔴 TU TURNO';
+            renderizarTablero();
+            actualizarBotones();
+        }
+
+        // Inicialización
+        function init() {
+            renderizarTablero();
+            crearBotones();
+            actualizarBotones();
+            document.getElementById('reset').addEventListener('click', reiniciarJuego);
+        }
+
+        init();
+    })();
+</script>
+</body>
+</html>

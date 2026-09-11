@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Juego de Parejas - Memoria</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1a2f44, #0d1b2a);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+            padding: 12px;
+            margin: 0;
+            touch-action: manipulation;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(8px);
+            border-radius: 40px;
+            padding: 20px 16px 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.7), inset 0 2px 4px rgba(255, 255, 255, 0.08);
+            max-width: 500px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+
+        h1 {
+            text-align: center;
+            color: #f2e9d0;
+            font-weight: 600;
+            letter-spacing: 2px;
+            font-size: 1.8rem;
+            text-shadow: 0 4px 8px #00000066;
+            margin-top: -4px;
+            margin-bottom: 14px;
+            word-break: break-word;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1f3650;
+            padding: 12px 18px;
+            border-radius: 50px;
+            margin-bottom: 20px;
+            color: #f0efe7;
+            box-shadow: inset 0 4px 6px #0b1a2b, 0 8px 12px #00000044;
+            flex-wrap: wrap;
+            gap: 8px 12px;
+        }
+
+        .pairs-left {
+            background: #0f1f31;
+            padding: 5px 16px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: inset 0 -2px 0 #6a8bb0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pairs-left span {
+            color: #ffe484;
+            font-size: 1.3rem;
+        }
+
+        #resetBtn {
+            background: #e7b42c;
+            border: none;
+            color: #1d2c3f;
+            font-weight: 700;
+            font-size: 1rem;
+            padding: 7px 22px;
+            border-radius: 40px;
+            cursor: pointer;
+            box-shadow: 0 5px 0 #7f621a, 0 8px 14px #00000044;
+            transition: 0.06s linear;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            touch-action: manipulation;
+        }
+
+        #resetBtn:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #7f621a, 0 8px 14px #00000044;
+        }
+
+        /* Grid 5x4 */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            justify-content: center;
+            margin: 4px 0 6px;
+        }
+
+        .card {
+            aspect-ratio: 1 / 1;
+            background: #2c4b6e;
+            border-radius: 18px;
+            box-shadow: 0 8px 0 #102233, 0 6px 14px #00000066;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #f5f0e3;
+            cursor: pointer;
+            transition: all 0.1s ease;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+            text-shadow: 0 2px 6px #00000077;
+            background-image: radial-gradient(circle at 30% 30%, #4b6f96, #1e3550);
+            border: 2px solid #7d9fc7;
+            touch-action: manipulation;
+            position: relative;
+        }
+
+        .card:active:not(.matched):not(.flipped) {
+            transform: scale(0.92);
+            box-shadow: 0 4px 0 #102233;
+        }
+
+        /* Estados de la carta */
+        .card.flipped {
+            background: #f2e9d0;
+            background-image: none;
+            box-shadow: 0 4px 0 #8f7c5a, 0 8px 16px #00000055;
+            color: #1f2c3e;
+            border-color: #f5eac0;
+            transform: scale(0.96);
+        }
+
+        .card.matched {
+            background: #1f8b4c;
+            box-shadow: 0 0 0 2px #b0e0b0, 0 4px 0 #0d4a28;
+            border-color: #91d6a0;
+            color: #d4ffd4;
+            transform: scale(0.94);
+            cursor: default;
+            opacity: 0.7;
+            pointer-events: none;
+            background-image: none;
+        }
+
+        /* Mostrar emojis en cartas volteadas */
+        .card.flipped .card-content {
+            display: flex !important;
+        }
+
+        /* Ocultar emojis en cartas normales */
+        .card:not(.flipped):not(.matched) .card-content {
+            display: none !important;
+        }
+
+        /* Ocultar contenido en cartas emparejadas (mostrar checkmark) */
+        .card.matched .card-content {
+            display: none !important;
+        }
+
+        /* Checkmark para cartas emparejadas */
+        .card.matched::after {
+            content: "✓";
+            font-size: 2.2rem;
+            opacity: 0.9;
+            color: #d4ffd4;
+            text-shadow: 0 2px 4px #00000044;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+        }
+
+        .card-content {
+            display: none;
+            font-size: 2.8rem;
+            line-height: 1;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* win message */
+        .win-message {
+            text-align: center;
+            background: #d4b483;
+            color: #1a2b3a;
+            font-weight: bold;
+            font-size: 1.6rem;
+            padding: 14px 12px;
+            border-radius: 60px;
+            margin: 20px 0 5px;
+            letter-spacing: 1px;
+            box-shadow: inset 0 -4px 0 #826a44, 0 8px 20px #00000055;
+            display: none;
+        }
+
+        .win-message.show {
+            display: block;
+            animation: pop 0.4s ease;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* responsive móvil */
+        @media (max-width: 480px) {
+            .game-container { padding: 14px 10px 18px; }
+            .grid { gap: 8px; }
+            .card { border-radius: 14px; font-size: 2rem; }
+            .card-content { font-size: 2.2rem; }
+            .status-bar { padding: 10px 14px; font-size: 0.9rem; }
+            h1 { font-size: 1.5rem; }
+            #resetBtn { font-size: 0.9rem; padding: 6px 18px; }
+        }
+
+        @media (max-width: 380px) {
+            .grid { gap: 5px; }
+            .card { border-radius: 10px; }
+            .card-content { font-size: 1.8rem; }
+            .card.matched::after { font-size: 1.6rem; }
+        }
+
+        @media (max-height: 700px) {
+            .game-container { padding: 12px 8px 14px; }
+            .grid { gap: 6px; }
+            .card { border-radius: 12px; }
+            .card-content { font-size: 2rem; }
+            .status-bar { padding: 8px 12px; margin-bottom: 12px; }
+            h1 { font-size: 1.3rem; margin-bottom: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>🧠 MEMORIA</h1>
+        <div class="status-bar">
+            <div class="pairs-left">
+                <span>🃏</span> Parejas: <strong id="pairsCount">10</strong>
+            </div>
+            <button id="resetBtn">⟳ Reiniciar</button>
+        </div>
+
+        <div class="grid" id="gridContainer"></div>
+
+        <div class="win-message" id="winMessage">🎉 ¡Ganaste! 🎉</div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            const EMOJIS = ["🐶", "🐱", "🐭", "🐹", "🐰", "🦊", "🐻", "🐼", "🐨", "🐯"];
+            const TOTAL_CARDS = 20;
+            const PAIRS = 10;
+
+            let cards = [];
+            let firstCard = null;
+            let secondCard = null;
+            let lockBoard = false;
+            let timeoutId = null;
+            let pairsMatched = 0;
+
+            const grid = document.getElementById('gridContainer');
+            const pairsSpan = document.getElementById('pairsCount');
+            const winMessage = document.getElementById('winMessage');
+
+            function shuffleArray(arr) {
+                for (let i = arr.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [arr[i], arr[j]] = [arr[j], arr[i]];
+                }
+                return arr;
+            }
+
+            function buildDeck() {
+                let deck = [];
+                EMOJIS.forEach((emoji) => {
+                    deck.push({ emoji, matched: false, flipped: false });
+                    deck.push({ emoji, matched: false, flipped: false });
+                });
+                return shuffleArray(deck);
+            }
+
+            function updatePairsCounter() {
+                const remaining = PAIRS - pairsMatched;
+                pairsSpan.textContent = remaining;
+                if (remaining === 0) {
+                    winMessage.classList.add('show');
+                } else {
+                    winMessage.classList.remove('show');
+                }
+            }
+
+            function resetGameState() {
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+                // Resetear las cartas seleccionadas
+                if (firstCard) {
+                    const el = firstCard.element;
+                    if (el && !el.classList.contains('matched')) {
+                        el.classList.remove('flipped');
+                    }
+                    firstCard = null;
+                }
+                if (secondCard) {
+                    const el = secondCard.element;
+                    if (el && !el.classList.contains('matched')) {
+                        el.classList.remove('flipped');
+                    }
+                    secondCard = null;
+                }
+                lockBoard = false;
+            }
+
+            function renderBoard() {
+                grid.innerHTML = '';
+                cards.forEach((card, index) => {
+                    const cardDiv = document.createElement('div');
+                    cardDiv.className = 'card';
+                    cardDiv.dataset.index = index;
+
+                    // Contenido de la carta (el emoji)
+                    const content = document.createElement('span');
+                    content.className = 'card-content';
+                    content.textContent = card.emoji;
+                    cardDiv.appendChild(content);
+
+                    if (card.matched) {
+                        cardDiv.classList.add('matched');
+                    } else if (card.flipped) {
+                        cardDiv.classList.add('flipped');
+                    }
+
+                    cardDiv.addEventListener('click', cardClickHandler);
+                    grid.appendChild(cardDiv);
+                });
+
+                updatePairsCounter();
+            }
+
+            function cardClickHandler(e) {
+                const element = e.currentTarget;
+                const index = parseInt(element.dataset.index, 10);
+                const cardData = cards[index];
+
+                // Validaciones
+                if (lockBoard) return;
+                if (cardData.matched) return;
+                if (cardData.flipped) return;
+                if (firstCard && secondCard) return;
+
+                // Si no hay primera carta seleccionada
+                if (!firstCard) {
+                    // Voltear carta
+                    cardData.flipped = true;
+                    element.classList.add('flipped');
+                    firstCard = { index, element };
+                    return;
+                }
+
+                // Si es la segunda carta (y no es la misma)
+                if (firstCard && !secondCard) {
+                    if (firstCard.index === index) return;
+
+                    // Voltear segunda carta
+                    cardData.flipped = true;
+                    element.classList.add('flipped');
+                    secondCard = { index, element };
+
+                    // Bloquear tablero mientras se comprueba
+                    lockBoard = true;
+
+                    // Comprobar si son iguales
+                    const firstEmoji = cards[firstCard.index].emoji;
+                    const secondEmoji = cards[secondCard.index].emoji;
+
+                    if (firstEmoji === secondEmoji) {
+                        // ¡ACERTASTE!
+                        cards[firstCard.index].matched = true;
+                        cards[secondCard.index].matched = true;
+
+                        const el1 = firstCard.element;
+                        const el2 = secondCard.element;
+                        el1.classList.remove('flipped');
+                        el1.classList.add('matched');
+                        el2.classList.remove('flipped');
+                        el2.classList.add('matched');
+
+                        pairsMatched++;
+                        updatePairsCounter();
+
+                        // Limpiar selecciones
+                        firstCard = null;
+                        secondCard = null;
+                        lockBoard = false;
+                    } else {
+                        // No coinciden - ocultar después de 700ms
+                        if (timeoutId) clearTimeout(timeoutId);
+                        timeoutId = setTimeout(() => {
+                            // Guardar referencias antes de limpiar
+                            const firstIdx = firstCard ? firstCard.index : null;
+                            const secondIdx = secondCard ? secondCard.index : null;
+                            
+                            // Ocultar primera carta si no está matched
+                            if (firstCard && !cards[firstIdx].matched) {
+                                cards[firstIdx].flipped = false;
+                                firstCard.element.classList.remove('flipped');
+                            }
+                            // Ocultar segunda carta si no está matched
+                            if (secondCard && !cards[secondIdx].matched) {
+                                cards[secondIdx].flipped = false;
+                                secondCard.element.classList.remove('flipped');
+                            }
+                            
+                            firstCard = null;
+                            secondCard = null;
+                            lockBoard = false;
+                            timeoutId = null;
+                        }, 700);
+                    }
+                }
+            }
+
+            function initGame() {
+                if (timeoutId) {
+                    clearTimeout(timeoutId);
+                    timeoutId = null;
+                }
+
+                // Resetear estado
+                firstCard = null;
+                secondCard = null;
+                lockBoard = false;
+                pairsMatched = 0;
+
+                // Crear nuevo mazo
+                cards = buildDeck();
+                
+                // Renderizar
+                renderBoard();
+                winMessage.classList.remove('show');
+                updatePairsCounter();
+            }
+
+            // Event listeners
+            document.getElementById('resetBtn').addEventListener('click', initGame);
+
+            // Iniciar juego
+            initGame();
+
+        })();
+    </script>
+</body>
+</html>

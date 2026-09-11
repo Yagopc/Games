@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FROGGER - Completo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: #02140c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            touch-action: manipulation;
+            padding: 10px;
+        }
+        
+        .game-container {
+            background: #02140c;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #6dffb1;
+            box-shadow: 0 0 30px rgba(109, 255, 177, 0.15);
+            max-width: 420px;
+            width: 100%;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 5px 8px 5px;
+            color: #d4ffe8;
+            font-size: 14px;
+        }
+        
+        .lives {
+            display: flex;
+            gap: 4px;
+            font-size: 20px;
+        }
+        
+        .score {
+            color: #ffd166;
+            font-weight: bold;
+        }
+        
+        .status-text {
+            color: #6dffb1;
+            font-size: 12px;
+        }
+        
+        canvas {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 400/500;
+            background: #02140c;
+            border: 2px solid #6dffb1;
+            border-radius: 5px;
+            touch-action: none;
+            display: block;
+            image-rendering: pixelated;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 55px);
+            gap: 5px;
+            margin-top: 10px;
+            max-width: 280px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .controls button {
+            background: #073b25;
+            border: 2px solid #6dffb1;
+            border-radius: 8px;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: all 0.05s;
+        }
+        
+        .controls button:active {
+            transform: scale(0.95);
+            background: #ffd166;
+            color: #02140c;
+        }
+        
+        .btn-up { grid-column: 2; grid-row: 1; }
+        .btn-left { grid-column: 1; grid-row: 2; }
+        .btn-down { grid-column: 2; grid-row: 2; }
+        .btn-right { grid-column: 3; grid-row: 2; }
+        
+        .info {
+            color: #d4ffe8;
+            text-align: center;
+            font-size: 11px;
+            margin-top: 8px;
+            font-family: monospace;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="lives" id="livesDisplay">❤️❤️❤️</div>
+            <div class="score">🏆 <span id="scoreDisplay">0</span></div>
+            <div class="status-text" id="statusText">▶ Juego</div>
+        </div>
+        
+        <canvas id="gameCanvas" width="400" height="500"></canvas>
+        
+        <div class="controls">
+            <button class="btn-up" data-dir="up">▲</button>
+            <button class="btn-left" data-dir="left">◀</button>
+            <button class="btn-down" data-dir="down">▼</button>
+            <button class="btn-right" data-dir="right">▶</button>
+        </div>
+        
+        <div class="info">
+            🐸 Mueve la rana · Evita los coches · Llega a la meta
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        // FROGGER - CON MONIGOTE DE RANA ORIGINAL
+        // ============================================
+        
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = 400;
+        const H = 500;
+        
+        // ============================================
+        // CONSTANTES
+        // ============================================
+        const FROG_SIZE = 20;
+        const MOVE_STEP = 10;
+        const START_X = 40;
+        const START_Y = 460;
+        const MAX_LIVES = 3;
+        
+        // Carretera
+        const ROAD_START = 100;
+        const ROAD_END = 220;
+        const ROAD_HEIGHT = ROAD_END - ROAD_START;
+        const NUM_CARS = 5;
+        const LANE_HEIGHT = ROAD_HEIGHT / NUM_CARS;
+        
+        // Meta
+        const GOAL_Y = 40;
+        
+        // ============================================
+        // AUDIO
+        // ============================================
+        const AudioManager = {
+            ctx: null,
+            muted: false,
+            
+            init() {
+                try {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch(e) {
+                    console.log('Audio no disponible');
+                }
+            },
+            
+            playTone(freq, duration, type = 'square', gain = 0.12) {
+                if (!this.ctx || this.muted) return;
+                try {
+                    if (this.ctx.state === 'suspended') this.ctx.resume();
+                    const osc = this.ctx.createOscillator();
+                    const gainNode = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gainNode.gain.setValueAtTime(0, this.ctx.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(gain, this.ctx.currentTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gainNode);
+                    gainNode.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            },
+            
+            hop() { this.playTone(600, 0.06, 'square', 0.08); },
+            squish() { this.playTone(150, 0.3, 'sawtooth', 0.15); },
+            win() { 
+                this.playTone(700, 0.08, 'sine', 0.12);
+                setTimeout(() => { if (!this.muted && this.ctx) this.playTone(900, 0.12, 'sine', 0.1); }, 100);
+                setTimeout(() => { if (!this.muted && this.ctx) this.playTone(1100, 0.15, 'sine', 0.08); }, 250);
+            },
+            gameOver() {
+                this.playTone(300, 0.4, 'sawtooth', 0.12);
+                setTimeout(() => { if (!this.muted && this.ctx) this.playTone(200, 0.5, 'sawtooth', 0.1); }, 200);
+            }
+        };
+        
+        // ============================================
+        // ESTADO DEL JUEGO
+        // ============================================
+        let gameRunning = true;
+        let gameOver = false;
+        let gameWon = false;
+        let frameCount = 0;
+        let lives = MAX_LIVES;
+        let score = 0;
+        let particles = [];
+        
+        // ============================================
+        // LA RANA
+        // ============================================
+        const frog = {
+            x: START_X,
+            y: START_Y,
+            size: FROG_SIZE
+        };
+        
+        // ============================================
+        // LOS COCHES
+        // ============================================
+        const CAR_COLORS = ['#ff5e7a', '#ff9b3d', '#ffd166', '#ff5cc8', '#6dffb1'];
+        const cars = [];
+        
+        function createCars() {
+            cars.length = 0;
+            for (let i = 0; i < NUM_CARS; i++) {
+                const laneY = ROAD_START + (i * LANE_HEIGHT) + (LANE_HEIGHT / 2);
+                const speed = (Math.random() > 0.5 ? 1 : -1) * (1.5 + Math.random() * 1.5);
+                const x = Math.random() * (W - 40);
+                
+                cars.push({
+                    x: x,
+                    y: laneY - 11,
+                    width: 40,
+                    height: 22,
+                    speed: speed,
+                    color: CAR_COLORS[i % CAR_COLORS.length],
+                    lane: i
+                });
+            }
+        }
+        
+        // ============================================
+        // PARTÍCULAS
+        // ============================================
+        function emitParticles(x, y, color, count = 20) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3 + 0.5;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 1,
+                    life: 20 + Math.random() * 20,
+                    maxLife: 40,
+                    color: color,
+                    size: 2 + Math.random() * 3
+                });
+            }
+        }
+        
+        // ============================================
+        // FUNCIONES DEL JUEGO
+        // ============================================
+        
+        function resetGame() {
+            frog.x = START_X;
+            frog.y = START_Y;
+            lives = MAX_LIVES;
+            score = 0;
+            gameOver = false;
+            gameWon = false;
+            particles = [];
+            createCars();
+            updateUI();
+            document.getElementById('statusText').textContent = '▶ Jugando';
+            document.getElementById('statusText').style.color = '#6dffb1';
+        }
+        
+        function moveFrog(direction) {
+            if (gameOver || gameWon) {
+                resetGame();
+                return;
+            }
+            
+            let newX = frog.x;
+            let newY = frog.y;
+            
+            switch(direction) {
+                case 'up': newY = Math.max(0, frog.y - MOVE_STEP); break;
+                case 'down': newY = Math.min(H - FROG_SIZE, frog.y + MOVE_STEP); break;
+                case 'left': newX = Math.max(0, frog.x - MOVE_STEP); break;
+                case 'right': newX = Math.min(W - FROG_SIZE, frog.x + MOVE_STEP); break;
+                default: return;
+            }
+            
+            if (newX === frog.x && newY === frog.y) return;
+            
+            frog.x = newX;
+            frog.y = newY;
+            
+            AudioManager.hop();
+            emitParticles(frog.x + FROG_SIZE/2, frog.y + FROG_SIZE/2, '#6dffb1', 5);
+            
+            checkCollision();
+            checkGoal();
+        }
+        
+        // ============================================
+        // COLISIÓN - MISMA LÓGICA QUE FUNCIONA
+        // ============================================
+        function checkCollision() {
+            if (gameOver || gameWon) return;
+            
+            const frogCenterX = frog.x + frog.size / 2;
+            const frogCenterY = frog.y + frog.size / 2;
+            
+            for (let car of cars) {
+                const carLeft = car.x;
+                const carRight = car.x + car.width;
+                const carTop = car.y;
+                const carBottom = car.y + car.height;
+                
+                const hitX = frogCenterX >= carLeft && frogCenterX <= carRight;
+                const hitY = frogCenterY >= carTop && frogCenterY <= carBottom;
+                
+                if (hitX && hitY) {
+                    loseLife();
+                    return;
+                }
+            }
+        }
+        
+        function checkGoal() {
+            if (gameOver || gameWon) return;
+            
+            if (frog.y < GOAL_Y) {
+                gameWon = true;
+                score += 100;
+                AudioManager.win();
+                emitParticles(frog.x + FROG_SIZE/2, frog.y + FROG_SIZE/2, '#ffd166', 40);
+                document.getElementById('statusText').textContent = '🎉 ¡GANASTE!';
+                document.getElementById('statusText').style.color = '#ffd166';
+                updateUI();
+            }
+        }
+        
+        function loseLife() {
+            lives--;
+            AudioManager.squish();
+            emitParticles(frog.x + FROG_SIZE/2, frog.y + FROG_SIZE/2, '#ff5e7a', 30);
+            
+            if (lives <= 0) {
+                gameOver = true;
+                AudioManager.gameOver();
+                document.getElementById('statusText').textContent = '💀 GAME OVER';
+                document.getElementById('statusText').style.color = '#ff5e7a';
+            } else {
+                frog.x = START_X;
+                frog.y = START_Y;
+                document.getElementById('statusText').textContent = `❤️ ${lives} vidas restantes`;
+            }
+            updateUI();
+        }
+        
+        // ============================================
+        // ACTUALIZAR
+        // ============================================
+        function update() {
+            if (gameOver || gameWon) {
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.05;
+                    p.life--;
+                    if (p.life <= 0) particles.splice(i, 1);
+                }
+                return;
+            }
+            
+            frameCount++;
+            
+            for (let car of cars) {
+                car.x += car.speed;
+                if (car.x > W + 20) car.x = -car.width - 20;
+                if (car.x < -car.width - 20) car.x = W + 20;
+            }
+            
+            checkCollision();
+            checkGoal();
+            
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.05;
+                p.life--;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+        
+        // ============================================
+        // DIBUJAR - CON MONIGOTE DE RANA ORIGINAL
+        // ============================================
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            
+            // --- FONDO ---
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+            bgGrad.addColorStop(0, '#1a4a2a');
+            bgGrad.addColorStop(0.2, '#0a2a1a');
+            bgGrad.addColorStop(1, '#02140c');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, W, H);
+            
+            // --- ZONA DE META ---
+            const goalGrad = ctx.createLinearGradient(0, 0, 0, GOAL_Y + 20);
+            goalGrad.addColorStop(0, '#9be36b');
+            goalGrad.addColorStop(1, '#4a8a3a');
+            ctx.fillStyle = goalGrad;
+            ctx.fillRect(0, 0, W, GOAL_Y + 20);
+            
+            // Flores decorativas
+            for (let i = 0; i < 8; i++) {
+                const fx = 30 + i * 50;
+                const fy = 10 + Math.sin(i * 1.2) * 5;
+                ctx.fillStyle = ['#ff6b8a', '#ffd166', '#ff8a5c', '#ff6b8a', '#ffd166'][i % 5];
+                ctx.beginPath();
+                ctx.arc(fx, fy, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#4a8a3a';
+                ctx.fillRect(fx - 1, fy + 4, 2, 4);
+            }
+            
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.font = 'bold 14px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🏁 META', W / 2, 20);
+            
+            // --- CÉSPED ---
+            for (let y = GOAL_Y + 20; y < ROAD_START; y += 20) {
+                ctx.fillStyle = (Math.floor(y / 20) % 2 === 0) ? '#2a7a3a' : '#3a8a4a';
+                ctx.fillRect(0, y, W, 20);
+            }
+            
+            // --- CARRETERA ---
+            const roadGrad = ctx.createLinearGradient(0, ROAD_START, 0, ROAD_END);
+            roadGrad.addColorStop(0, '#2a2a2a');
+            roadGrad.addColorStop(0.5, '#3a3a3a');
+            roadGrad.addColorStop(1, '#2a2a2a');
+            ctx.fillStyle = roadGrad;
+            ctx.fillRect(0, ROAD_START, W, ROAD_HEIGHT);
+            
+            // Líneas divisorias
+            ctx.strokeStyle = 'rgba(255, 230, 100, 0.35)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([8, 12]);
+            for (let i = 1; i < NUM_CARS; i++) {
+                const y = ROAD_START + (i * LANE_HEIGHT);
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+                ctx.stroke();
+            }
+            ctx.setLineDash([]);
+            
+            // Bordes
+            ctx.strokeStyle = 'rgba(255, 230, 100, 0.2)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, ROAD_START);
+            ctx.lineTo(W, ROAD_START);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, ROAD_END);
+            ctx.lineTo(W, ROAD_END);
+            ctx.stroke();
+            
+            // --- CÉSPED (abajo) ---
+            for (let y = ROAD_END; y < H; y += 20) {
+                ctx.fillStyle = (Math.floor(y / 20) % 2 === 0) ? '#3a8a4a' : '#2a7a3a';
+                ctx.fillRect(0, y, W, 20);
+            }
+            
+            // --- DIBUJAR COCHES ---
+            for (let car of cars) {
+                const cx = car.x;
+                const cy = car.y;
+                const cw = car.width;
+                const ch = car.height;
+                
+                ctx.shadowColor = car.color;
+                ctx.shadowBlur = 8;
+                
+                const grad = ctx.createLinearGradient(cx, cy, cx, cy + ch);
+                grad.addColorStop(0, car.color);
+                grad.addColorStop(1, '#1a1a1a');
+                ctx.fillStyle = grad;
+                
+                const r = 4;
+                ctx.beginPath();
+                ctx.moveTo(cx + r, cy);
+                ctx.lineTo(cx + cw - r, cy);
+                ctx.quadraticCurveTo(cx + cw, cy, cx + cw, cy + r);
+                ctx.lineTo(cx + cw, cy + ch - r);
+                ctx.quadraticCurveTo(cx + cw, cy + ch, cx + cw - r, cy + ch);
+                ctx.lineTo(cx + r, cy + ch);
+                ctx.quadraticCurveTo(cx, cy + ch, cx, cy + ch - r);
+                ctx.lineTo(cx, cy + r);
+                ctx.quadraticCurveTo(cx, cy, cx + r, cy);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(180, 220, 255, 0.25)';
+                ctx.fillRect(cx + 8, cy + 3, 8, 6);
+                ctx.fillRect(cx + 24, cy + 3, 8, 6);
+                
+                ctx.fillStyle = 'rgba(255, 255, 200, 0.6)';
+                if (car.speed > 0) {
+                    ctx.fillRect(cx + cw - 6, cy + 2, 4, 4);
+                    ctx.fillRect(cx + cw - 6, cy + ch - 6, 4, 4);
+                } else {
+                    ctx.fillRect(cx + 2, cy + 2, 4, 4);
+                    ctx.fillRect(cx + 2, cy + ch - 6, 4, 4);
+                }
+            }
+            
+            // ============================================
+            // MONIGOTE DE RANA ORIGINAL (con patas)
+            // ============================================
+            const fx = frog.x;
+            const fy = frog.y;
+            const fs = frog.size;
+            const centerX = fx + fs / 2;
+            const centerY = fy + fs / 2;
+            const radius = fs / 2;
+            
+            // Sombra de la rana
+            ctx.shadowColor = '#6dffb1';
+            ctx.shadowBlur = 15;
+            
+            // Cuerpo de la rana (círculo base)
+            const frogGrad = ctx.createRadialGradient(
+                centerX - 2, centerY - 2, 2,
+                centerX, centerY, radius
+            );
+            frogGrad.addColorStop(0, '#b8ffd8');
+            frogGrad.addColorStop(0.3, '#6dffb1');
+            frogGrad.addColorStop(0.7, '#4ad88a');
+            frogGrad.addColorStop(1, '#2e8a4e');
+            ctx.fillStyle = frogGrad;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+            
+            // Ojos grandes (como en el monigote original)
+            const eyeOffset = radius * 0.3;
+            const eyeRadius = radius * 0.28;
+            
+            // Blanco de los ojos
+            ctx.fillStyle = 'white';
+            ctx.beginPath();
+            ctx.arc(centerX - eyeOffset - 1, centerY - eyeOffset - 2, eyeRadius, 0, Math.PI * 2);
+            ctx.arc(centerX + eyeOffset + 1, centerY - eyeOffset - 2, eyeRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pupilas
+            ctx.fillStyle = '#1a1a1a';
+            const pupilRadius = eyeRadius * 0.5;
+            ctx.beginPath();
+            ctx.arc(centerX - eyeOffset - 1 + 1.5, centerY - eyeOffset - 2 - 1, pupilRadius, 0, Math.PI * 2);
+            ctx.arc(centerX + eyeOffset + 1 + 1.5, centerY - eyeOffset - 2 - 1, pupilRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Brillos en los ojos
+            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+            ctx.beginPath();
+            ctx.arc(centerX - eyeOffset - 1 + 3, centerY - eyeOffset - 2 - 3, 1.5, 0, Math.PI * 2);
+            ctx.arc(centerX + eyeOffset + 1 + 3, centerY - eyeOffset - 2 - 3, 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Sonrisa
+            ctx.strokeStyle = '#1a5a2a';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY + 2, radius * 0.25, 0.1, Math.PI - 0.1);
+            ctx.stroke();
+            
+            // ============================================
+            // PATAS DE LA RANA (como en el monigote original)
+            // ============================================
+            ctx.strokeStyle = '#2e8a4e';
+            ctx.lineWidth = 2.5;
+            
+            // Pata izquierda (con forma de pata)
+            ctx.beginPath();
+            ctx.moveTo(fx + 3, fy + fs - 4);
+            ctx.lineTo(fx - 5, fy + fs + 2);
+            ctx.stroke();
+            // Dedos de la pata izquierda
+            ctx.beginPath();
+            ctx.arc(fx - 5, fy + fs + 2, 3, 0, Math.PI * 2);
+            ctx.fill();
+            // Dedos pequeños
+            ctx.fillStyle = '#2e8a4e';
+            ctx.beginPath();
+            ctx.arc(fx - 8, fy + fs + 4, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(fx - 3, fy + fs + 5, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pata derecha
+            ctx.fillStyle = '#2e8a4e';
+            ctx.beginPath();
+            ctx.moveTo(fx + fs - 3, fy + fs - 4);
+            ctx.lineTo(fx + fs + 5, fy + fs + 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(fx + fs + 5, fy + fs + 2, 3, 0, Math.PI * 2);
+            ctx.fill();
+            // Dedos de la pata derecha
+            ctx.beginPath();
+            ctx.arc(fx + fs + 8, fy + fs + 4, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(fx + fs + 3, fy + fs + 5, 2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Brazos (patas delanteras)
+            ctx.strokeStyle = '#2e8a4e';
+            ctx.lineWidth = 2;
+            // Brazo izquierdo
+            ctx.beginPath();
+            ctx.moveTo(fx + 4, fy + 5);
+            ctx.lineTo(fx - 2, fy + 12);
+            ctx.stroke();
+            // Brazo derecho
+            ctx.beginPath();
+            ctx.moveTo(fx + fs - 4, fy + 5);
+            ctx.lineTo(fx + fs + 2, fy + 12);
+            ctx.stroke();
+            
+            // --- PARTÍCULAS ---
+            for (let p of particles) {
+                const alpha = p.life / p.maxLife;
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = p.color;
+                const s = p.size;
+                ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
+            }
+            ctx.globalAlpha = 1;
+            
+            // --- GAME OVER / WIN ---
+            if (gameOver) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+                ctx.fillRect(0, 0, W, H);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 15;
+                ctx.font = 'bold 32px monospace';
+                ctx.fillStyle = '#ff5e7a';
+                ctx.fillText('💀 GAME OVER', W/2, H/2 - 20);
+                ctx.font = '16px monospace';
+                ctx.fillStyle = '#ffd166';
+                ctx.fillText(`Puntuación: ${score}`, W/2, H/2 + 30);
+                ctx.shadowBlur = 0;
+            }
+            
+            if (gameWon) {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+                ctx.fillRect(0, 0, W, H);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                ctx.shadowBlur = 15;
+                ctx.font = 'bold 32px monospace';
+                ctx.fillStyle = '#ffd166';
+                ctx.fillText('🎉 ¡GANASTE!', W/2, H/2 - 20);
+                ctx.font = '16px monospace';
+                ctx.fillStyle = '#6dffb1';
+                ctx.fillText(`Puntuación: ${score}`, W/2, H/2 + 30);
+                ctx.shadowBlur = 0;
+            }
+        }
+        
+        // ============================================
+        // UI UPDATE
+        // ============================================
+        function updateUI() {
+            const livesDisplay = document.getElementById('livesDisplay');
+            livesDisplay.textContent = '❤️'.repeat(lives) + '🖤'.repeat(MAX_LIVES - lives);
+            document.getElementById('scoreDisplay').textContent = score;
+        }
+        
+        // ============================================
+        // LOOP PRINCIPAL
+        // ============================================
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // ============================================
+        // EVENTOS
+        // ============================================
+        document.addEventListener('keydown', (e) => {
+            const directionMap = {
+                'ArrowUp': 'up', 'ArrowDown': 'down',
+                'ArrowLeft': 'left', 'ArrowRight': 'right',
+                'w': 'up', 'W': 'up',
+                's': 'down', 'S': 'down',
+                'a': 'left', 'A': 'left',
+                'd': 'right', 'D': 'right'
+            };
+            
+            if (directionMap[e.key]) {
+                e.preventDefault();
+                moveFrog(directionMap[e.key]);
+            }
+        });
+        
+        document.querySelectorAll('[data-dir]').forEach(btn => {
+            const dir = btn.dataset.dir;
+            const handler = (e) => {
+                e.preventDefault();
+                moveFrog(dir);
+            };
+            btn.addEventListener('pointerdown', handler);
+            btn.addEventListener('touchstart', handler, { passive: false });
+        });
+        
+        // ============================================
+        // INICIALIZAR
+        // ============================================
+        AudioManager.init();
+        createCars();
+        updateUI();
+        gameLoop();
+        
+        console.log('🐸 FROGGER - Con monigote de rana original');
+        console.log('✅ La forma visual NO afecta a la colisión');
+        console.log('✅ La colisión usa el centro de la rana');
+    </script>
+</body>
+</html>

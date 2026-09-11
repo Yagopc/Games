@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorador de Archivos HTML - Localhost:8000</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .server-info {
+            background: #f8f9fa;
+            padding: 15px 30px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .server-url {
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+            }
+        }
+
+        .status-text {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 4px solid #c33;
+        }
+
+        .success-message {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .files-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .file-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .file-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .file-button:active {
+            transform: translateY(0);
+        }
+
+        .file-icon {
+            font-size: 1.5em;
+        }
+
+        .file-name {
+            flex: 1;
+            font-weight: 500;
+            word-break: break-all;
+        }
+
+        .file-count {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+        }
+
+        .no-files {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+            font-size: 1.1em;
+        }
+
+        .refresh-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn:hover {
+            background: #5a67d8;
+            transform: scale(1.05);
+        }
+
+        footer {
+            background: #f8f9fa;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            font-size: 0.85em;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .files-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .server-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📁 Explorador de Archivos HTML</h1>
+            <p>Selecciona un archivo para visualizarlo en el navegador</p>
+        </div>
+        
+        <div class="server-info">
+            <div class="server-url">
+                🌐 Servidor: http://localhost:8000/games
+            </div>
+            <div class="status">
+                <div class="status-indicator"></div>
+                <span class="status-text">Conectando al servidor...</span>
+            </div>
+            <button class="refresh-btn" onclick="loadFiles()">
+                🔄 Actualizar lista
+            </button>
+        </div>
+        
+        <div class="content" id="content">
+            <div class="loading">
+                <div class="spinner"></div>
+                <p>Cargando archivos HTML...</p>
+                <p style="font-size: 0.9em; margin-top: 10px;">Asegúrate de que el servidor esté ejecutándose en http://localhost:8000</p>
+            </div>
+        </div>
+        
+        <footer>
+            💡 Tip: Para iniciar el servidor, ejecuta: <strong>python -m http.server 8000</strong> o <strong>npx http-server -p 8000</strong> en la carpeta con tus archivos HTML
+        </footer>
+    </div>
+
+    <script>
+        const SERVER_URL = 'http://localhost:8000/games';
+        
+        async function loadFiles() {
+            const contentDiv = document.getElementById('content');
+            const statusText = document.querySelector('.status-text');
+            
+            // Mostrar loading
+            contentDiv.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <p>Buscando archivos HTML...</p>
+                    <p style="font-size: 0.9em; margin-top: 10px;">Escaneando http://localhost:8000</p>
+                </div>
+            `;
+            
+            statusText.textContent = 'Conectando al servidor...';
+            
+            try {
+                // Intentar obtener el listado de archivos del servidor
+                const files = await fetchFileList();
+                
+                if (files.length === 0) {
+                    contentDiv.innerHTML = `
+                        <div class="no-files">
+                            📭 No se encontraron archivos HTML en el servidor
+                            <br><br>
+                            <small>Asegúrate de tener archivos .html en la carpeta del servidor</small>
+                            <br><br>
+                            <button class="refresh-btn" onclick="loadFiles()" style="margin-top: 20px;">
+                                🔄 Reintentar
+                            </button>
+                        </div>
+                    `;
+                    statusText.textContent = 'No se encontraron archivos HTML';
+                } else {
+                    displayFiles(files);
+                    statusText.textContent = `✅ ${files.length} archivo(s) HTML encontrado(s)`;
+                }
+                
+            } catch (error) {
+                console.error('Error al cargar archivos:', error);
+                
+                let errorMessage = '';
+                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                    errorMessage = `
+                        <div class="error-message">
+                            <strong>❌ Error de conexión:</strong><br>
+                            No se pudo conectar al servidor en ${SERVER_URL}<br><br>
+                            <strong>Posibles soluciones:</strong><br>
+                            • Verifica que el servidor esté ejecutándose correctamente<br>
+                            • Ejecuta en la terminal: <strong>python -m http.server 8000</strong><br>
+                            • Asegúrate de estar en el puerto 8000<br>
+                            • Revisa que no haya un firewall bloqueando la conexión<br><br>
+                            <button class="refresh-btn" onclick="loadFiles()">🔄 Reintentar</button>
+                        </div>
+                    `;
+                } else {
+                    errorMessage = `
+                        <div class="error-message">
+                            <strong>⚠️ Error:</strong> ${error.message}<br><br>
+                            <button class="refresh-btn" onclick="loadFiles()">🔄 Reintentar</button>
+                        </div>
+                    `;
+                }
+                
+                contentDiv.innerHTML = errorMessage;
+                statusText.textContent = 'Error de conexión';
+            }
+        }
+        
+        async function fetchFileList() {
+            // Método 1: Intentar obtener el listado a través de un endpoint específico
+            // Nota: Esto asume que el servidor permite listar directorios
+            
+            try {
+                // Intentar obtener el listado de archivos desde el servidor
+                // Usamos un fetch a la raíz del servidor para obtener el listado
+                const response = await fetch(SERVER_URL + '/', {
+                    method: 'GET',
+                    mode: 'cors',
+                    headers: {
+                        'Accept': 'text/html'
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const htmlText = await response.text();
+                
+                // Analizar el HTML del listado de directorios
+                const files = parseDirectoryListing(htmlText);
+                
+                if (files.length > 0) {
+                    return files;
+                }
+                
+                // Si no se encontraron archivos por el método estándar, probar con archivos predefinidos
+                return await tryAlternativeMethod();
+                
+            } catch (error) {
+                console.log('Método estándar falló, intentando método alternativo:', error);
+                return await tryAlternativeMethod();
+            }
+        }
+        
+        function parseDirectoryListing(htmlText) {
+            const files = [];
+            
+            // Patrones comunes para detectar archivos en el listado de directorios
+            // Python HTTP server, Node http-server, etc.
+            const linkRegex = /href="([^"]*\.html?)"/gi;
+            let match;
+            
+            while ((match = linkRegex.exec(htmlText)) !== null) {
+                let fileName = match[1];
+                // Decodificar caracteres especiales en la URL
+                fileName = decodeURIComponent(fileName);
+                
+                // Evitar duplicados y archivos de navegación
+                if (fileName && 
+                    fileName !== '../' && 
+                    fileName !== './' &&
+                    fileName !== '..' &&
+                    !files.includes(fileName) &&
+                    (fileName.endsWith('.html') || fileName.endsWith('.htm'))) {
+                    files.push(fileName);
+                }
+            }
+            
+            return files;
+        }
+        
+        async function tryAlternativeMethod() {
+            // Método alternativo: Intentar acceder a archivos comunes
+            const commonFiles = [
+                'index.html', 'home.html', 'main.html', 'inicio.html',
+                'about.html', 'contacto.html', 'servicios.html', 'productos.html'
+            ];
+            
+            const existingFiles = [];
+            
+            for (const fileName of commonFiles) {
+                try {
+                    const response = await fetch(`${SERVER_URL}/${fileName}`, {
+                        method: 'HEAD',
+                        mode: 'no-cors'
+                    });
+                    // Si no hay error, asumimos que el archivo existe
+                    existingFiles.push(fileName);
+                } catch (error) {
+                    // El archivo no existe o no se puede acceder
+                    console.log(`${fileName} no encontrado`);
+                }
+            }
+            
+            // Si aún no encontramos archivos, permitir que el usuario especifique manualmente
+            if (existingFiles.length === 0) {
+                // Ofrecer opción de agregar archivos manualmente
+                showManualInput();
+            }
+            
+            return existingFiles;
+        }
+        
+        function showManualInput() {
+            const contentDiv = document.getElementById('content');
+            const manualInputHTML = `
+                <div style="background: #f0f0f0; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                    <h3>📝 No se pudo detectar automáticamente los archivos</h3>
+                    <p>Puedes ingresar manualmente los nombres de los archivos HTML que deseas abrir:</p>
+                    <div id="manualFiles">
+                        <input type="text" id="fileNameInput" placeholder="nombre-del-archivo.html" style="padding: 10px; width: 70%; margin-right: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <button onclick="addManualFile()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">➕ Agregar</button>
+                    </div>
+                    <div id="manualFileList" style="margin-top: 20px;"></div>
+                    <button onclick="loadManualFiles()" style="margin-top: 15px; padding: 10px 20px; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer;">📂 Cargar archivos manuales</button>
+                </div>
+            `;
+            contentDiv.innerHTML = manualInputHTML + contentDiv.innerHTML;
+            
+            // Inicializar lista de archivos manuales
+            if (!window.manualFilesArray) {
+                window.manualFilesArray = [];
+            }
+            updateManualFileList();
+        }
+        
+        function addManualFile() {
+            const input = document.getElementById('fileNameInput');
+            const fileName = input.value.trim();
+            
+            if (fileName && (fileName.endsWith('.html') || fileName.endsWith('.htm'))) {
+                if (!window.manualFilesArray.includes(fileName)) {
+                    window.manualFilesArray.push(fileName);
+                    updateManualFileList();
+                    input.value = '';
+                } else {
+                    alert('Este archivo ya ha sido agregado');
+                }
+            } else {
+                alert('Por favor, ingresa un nombre de archivo válido con extensión .html o .htm');
+            }
+        }
+        
+        function updateManualFileList() {
+            const listDiv = document.getElementById('manualFileList');
+            if (listDiv) {
+                if (window.manualFilesArray.length === 0) {
+                    listDiv.innerHTML = '<p style="color: #999;">No hay archivos agregados aún</p>';
+                } else {
+                    listDiv.innerHTML = `
+                        <strong>Archivos agregados:</strong>
+                        <ul style="margin-top: 10px;">
+                            ${window.manualFilesArray.map(f => `<li>${f} <button onclick="removeManualFile('${f}')" style="margin-left: 10px; background: #f44336; color: white; border: none; border-radius: 3px; padding: 2px 8px; cursor: pointer;">Eliminar</button></li>`).join('')}
+                        </ul>
+                    `;
+                }
+            }
+        }
+        
+        function removeManualFile(fileName) {
+            const index = window.manualFilesArray.indexOf(fileName);
+            if (index > -1) {
+                window.manualFilesArray.splice(index, 1);
+                updateManualFileList();
+            }
+        }
+        
+        function loadManualFiles() {
+            if (window.manualFilesArray && window.manualFilesArray.length > 0) {
+                displayFiles(window.manualFilesArray);
+                document.querySelector('.status-text').textContent = `📁 ${window.manualFilesArray.length} archivo(s) cargado(s) manualmente`;
+            } else {
+                alert('No hay archivos manuales para cargar');
+            }
+        }
+        
+        function displayFiles(files) {
+            const contentDiv = document.getElementById('content');
+            
+            const filesHTML = `
+                <div class="success-message">
+                    ✅ Se encontraron ${files.length} archivo(s) HTML
+                </div>
+                <div class="files-grid">
+                    ${files.map(file => `
+                        <button class="file-button" onclick="openFile('${escapeHtml(file)}')">
+                            <span class="file-icon">📄</span>
+                            <span class="file-name">${escapeHtml(file)}</span>
+                            <span class="file-count">HTML</span>
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+            
+            contentDiv.innerHTML = filesHTML;
+        }
+        
+        function openFile(fileName) {
+            const fileUrl = `${SERVER_URL}/${encodeURIComponent(fileName)}`;
+            console.log(`Abriendo archivo: ${fileUrl}`);
+            
+            // Abrir en una nueva pestaña
+            window.open(fileUrl, '_blank');
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Función para verificar si el servidor está accesible
+        async function checkServerStatus() {
+            try {
+                const response = await fetch(SERVER_URL + '/', {
+                    method: 'HEAD',
+                    mode: 'no-cors'
+                });
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+        
+        // Inicializar al cargar la página
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFiles();
+            
+            // Actualizar automáticamente cada 30 segundos
+            setInterval(() => {
+                if (document.hasFocus()) {
+                    loadFiles();
+                }
+            }, 30000);
+        });
+        
+        // Exponer funciones globalmente
+        window.loadFiles = loadFiles;
+        window.openFile = openFile;
+        window.addManualFile = addManualFile;
+        window.removeManualFile = removeManualFile;
+        window.loadManualFiles = loadManualFiles;
+    </script>
+</body>
+</html>

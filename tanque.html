@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Tanques</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: black;
+            touch-action: none;
+            font-family: Arial, sans-serif;
+            user-select: none;
+        }
+        canvas {
+            display: block;
+            background: url('fondotan.jpg') no-repeat center center;
+            background-size: cover;
+            touch-action: none;
+        }
+        /* Zona de controles: abajo a la izquierda. Esta zona queda fuera del campo de juego. */
+        #ui-controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 330px;
+            height: 210px;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-end;
+            gap: 12px;
+            padding: 10px;
+            box-sizing: border-box;
+            pointer-events: none;
+            z-index: 50;
+        }
+        #ui-controls button {
+            pointer-events: auto;
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 12px;
+            color: white;
+            text-shadow: 0 0 5px rgba(0,0,0,0.7);
+            backdrop-filter: blur(4px);
+            cursor: pointer;
+            user-select: none;
+            touch-action: none;
+            transition: all 0.2s;
+        }
+        #ui-controls button:active {
+            background: rgba(255, 255, 255, 0.5);
+            transform: scale(0.95);
+        }
+        
+        /* Joystick circular */
+        #joystick-container {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            flex: 0 0 auto;
+            pointer-events: auto;
+            touch-action: none;
+        }
+        #joystick-base {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            touch-action: none;
+        }
+        #joystick-knob {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.2) 100%);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            transition: none;
+            box-shadow: 0 0 20px rgba(255,255,255,0.2);
+            touch-action: none;
+        }
+        #joystick-center-dot {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+        /* Direcciones indicadoras */
+        .direction-indicator {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 18px;
+            pointer-events: none;
+        }
+        .dir-up { top: 8px; left: 50%; transform: translateX(-50%); }
+        .dir-down { bottom: 8px; left: 50%; transform: translateX(-50%); }
+        .dir-left { left: 8px; top: 50%; transform: translateY(-50%); }
+        .dir-right { right: 8px; top: 50%; transform: translateY(-50%); }
+        
+        #joystick-container.active #joystick-base {
+            border-color: rgba(255, 200, 0, 0.5);
+            box-shadow: 0 0 30px rgba(255, 200, 0, 0.2);
+        }
+        #joystick-container.active #joystick-knob {
+            background: radial-gradient(circle, rgba(255, 200, 0, 0.8) 0%, rgba(255, 200, 0, 0.3) 100%);
+            border-color: rgba(255, 200, 0, 0.6);
+        }
+
+        #ui-controls .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+            align-self: flex-end;
+        }
+        #ui-controls .menu-buttons button {
+            pointer-events: auto;
+            width: 80px;
+            height: 40px;
+            font-size: 14px;
+            background: rgba(0, 100, 200, 0.4);
+            border: 2px solid rgba(0, 150, 255, 0.6);
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+        }
+        #ui-controls .menu-buttons button:active {
+            background: rgba(0, 150, 255, 0.6);
+        }
+        #ui-controls .menu-buttons .start-btn {
+            background: rgba(0, 200, 100, 0.4);
+            border-color: rgba(0, 255, 150, 0.6);
+        }
+        #ui-controls .menu-buttons .start-btn:active {
+            background: rgba(0, 255, 150, 0.6);
+        }
+        #ui-controls .menu-buttons .config-btn {
+            background: rgba(200, 100, 0, 0.4);
+            border-color: rgba(255, 150, 0, 0.6);
+        }
+        #ui-controls .menu-buttons .config-btn:active {
+            background: rgba(255, 150, 0, 0.6);
+        }
+        
+        /* Modal de configuración */
+        #config-modal {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 30px;
+            color: white;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            min-width: 300px;
+        }
+        #config-modal h2 {
+            color: #FFD700;
+            margin-top: 0;
+        }
+        #config-modal .level-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        #config-modal .level-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #config-modal .level-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        #config-modal .level-btn.active {
+            background: #FFD700;
+            color: black;
+            border-color: #FFD700;
+            transform: scale(1.1);
+        }
+        #config-modal .close-btn {
+            margin-top: 20px;
+            padding: 10px 30px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #config-modal .close-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        #config-modal .level-info {
+            color: #aaa;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 600px) {
+            #ui-controls {
+                width: 285px;
+                height: 175px;
+                gap: 8px;
+            }
+            #ui-controls .menu-buttons button {
+                width: 60px;
+                height: 35px;
+                font-size: 11px;
+            }
+            #joystick-container {
+                width: 140px;
+                height: 140px;
+            }
+            #joystick-knob {
+                width: 40px;
+                height: 40px;
+            }
+        }
+        @media (max-width: 400px) {
+            #joystick-container {
+                width: 110px;
+                height: 110px;
+            }
+            #joystick-knob {
+                width: 32px;
+                height: 32px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- Modal de configuración -->
+    <div id="config-modal">
+        <h2>⚙️ CONFIGURACIÓN</h2>
+        <p>Selecciona el nivel de dificultad:</p>
+        <div class="level-selector" id="levelSelector">
+            <button class="level-btn active" data-level="1">1</button>
+            <button class="level-btn" data-level="2">2</button>
+            <button class="level-btn" data-level="3">3</button>
+            <button class="level-btn" data-level="4">4</button>
+        </div>
+        <div class="level-info" id="levelInfo">Nivel 1: 1 enemigo</div>
+        <button class="close-btn" id="closeConfig">✓ ACEPTAR</button>
+    </div>
+    
+    <!-- Controles UI -->
+    <div id="ui-controls">
+        <div class="menu-buttons">
+            <button class="start-btn" id="startBtn">▶ INICIO</button>
+            <button class="config-btn" id="configBtn">⚙️ NIVEL</button>
+            <button class="start-btn" id="resetBtn" style="background: rgba(200, 50, 50, 0.4); border-color: rgba(255, 100, 100, 0.6);">🔄 REINICIAR</button>
+        </div>
+        
+        <!-- Joystick circular -->
+        <div id="joystick-container">
+            <div id="joystick-base">
+                <div class="direction-indicator dir-up">▲</div>
+                <div class="direction-indicator dir-down">▼</div>
+                <div class="direction-indicator dir-left">◀</div>
+                <div class="direction-indicator dir-right">▶</div>
+                <div id="joystick-knob"></div>
+                <div id="joystick-center-dot"></div>
+            </div>
+        </div>
+        
+        <div style="width: 80px;"></div> <!-- Espaciador -->
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // --- JOYSTICK ---
+        const joystickContainer = document.getElementById('joystick-container');
+        const joystickBase = document.getElementById('joystick-base');
+        const joystickKnob = document.getElementById('joystick-knob');
+        let joystickActive = false;
+        let joystickX = 0;
+        let joystickY = 0;
+        const JOYSTICK_DEADZONE = 0.15;
+
+        function getJoystickPosition(clientX, clientY) {
+            const rect = joystickBase.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            const radius = rect.width / 2;
+            
+            let dx = (clientX - centerX) / radius;
+            let dy = (clientY - centerY) / radius;
+            
+            // Limitar al círculo
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance > 1) {
+                dx /= distance;
+                dy /= distance;
+            }
+            
+            return { x: dx, y: dy };
+        }
+
+        function updateJoystickKnob(clientX, clientY) {
+            const rect = joystickBase.getBoundingClientRect();
+            const radius = rect.width / 2;
+            const pos = getJoystickPosition(clientX, clientY);
+            
+            // Aplicar deadzone
+            const distance = Math.sqrt(pos.x * pos.x + pos.y * pos.y);
+            if (distance < JOYSTICK_DEADZONE) {
+                joystickX = 0;
+                joystickY = 0;
+                joystickKnob.style.transform = 'translate(-50%, -50%)';
+                joystickContainer.classList.remove('active');
+                return;
+            }
+            
+            joystickX = pos.x;
+            joystickY = pos.y;
+            
+            // Mover el knob
+            const knobX = pos.x * radius * 0.7;
+            const knobY = pos.y * radius * 0.7;
+            joystickKnob.style.transform = `translate(calc(-50% + ${knobX}px), calc(-50% + ${knobY}px))`;
+            joystickContainer.classList.add('active');
+        }
+
+        function resetJoystick() {
+            joystickActive = false;
+            joystickX = 0;
+            joystickY = 0;
+            joystickKnob.style.transform = 'translate(-50%, -50%)';
+            joystickContainer.classList.remove('active');
+        }
+
+        // Eventos del joystick
+        joystickBase.addEventListener('mousedown', (e) => {
+            joystickActive = true;
+            updateJoystickKnob(e.clientX, e.clientY);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (joystickActive) {
+                updateJoystickKnob(e.clientX, e.clientY);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (joystickActive) {
+                resetJoystick();
+            }
+        });
+
+        joystickBase.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            joystickActive = true;
+            const touch = e.touches[0];
+            updateJoystickKnob(touch.clientX, touch.clientY);
+        }, {passive: false});
+
+        document.addEventListener('touchmove', (e) => {
+            if (joystickActive) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                updateJoystickKnob(touch.clientX, touch.clientY);
+            }
+        }, {passive: false});
+
+        document.addEventListener('touchend', (e) => {
+            if (joystickActive) {
+                resetJoystick();
+            }
+        }, {passive: false});
+
+        // --- SONIDOS (opcionales) ---
+        const fondoSound = new Audio('fondo.mp3');
+        fondoSound.loop = true;
+        fondoSound.volume = 0.5;
+        
+        function playDisparo() {
+            const sound = new Audio('disparo.mp3');
+            sound.volume = 0.3;
+            sound.play().catch(e => {});
+        }
+        function playExplosion() {
+            const sound = new Audio('explosion.mp3');
+            sound.volume = 0.4;
+            sound.play().catch(e => {});
+        }
+        function playBackgroundMusic() {
+            fondoSound.play().catch(error => {
+                document.addEventListener('click', function initMusic() {
+                    fondoSound.play().catch(e => {});
+                    document.removeEventListener('click', initMusic);
+                }, { once: true });
+            });
+        }
+
+        // --- ESTADO DEL JUEGO ---
+        let gameOver = false;
+        let gameStarted = false;
+        let gameWon = false;
+        let score = 0;
+        let enemyCount = 1;
+        let gameRunning = true;
+
+        // --- OBJETOS ---
+        const TANK_SIZE = 20;
+        const ship = {
+            x: canvas.width / 2,
+            y: canvas.height / 2,
+            size: TANK_SIZE,
+            rotation: 0,
+            speed: 1.5,
+            hits: 0,        // 0 = sin daño, 1 = dañado
+            maxHits: 2
+        };
+
+        // Cargar imagen del tanque
+        const tankImage = new Image();
+        tankImage.src = 'tanque.png';
+        tankImage.onerror = () => console.log("Error cargando tanque.png");
+
+        const bulletImage = new Image();
+        bulletImage.src = 'misil.png';
+        bulletImage.onerror = () => console.log("Error cargando misil.png");
+
+        // Animación de impacto
+        const ballGif = new Image();
+        ballGif.src = 'ball.gif';
+        ballGif.onerror = () => console.log("Error cargando ball.gif");
+
+        let impactEffects = [];
+
+        function createImpactEffect(x, y, size) {
+            impactEffects.push({
+                x, y,
+                size: size * 1.8,
+                created: performance.now(),
+                duration: 650
+            });
+        }
+
+        function drawImpactEffects() {
+            const now = performance.now();
+
+            for (let i = impactEffects.length - 1; i >= 0; i--) {
+                const fx = impactEffects[i];
+                const elapsed = now - fx.created;
+
+                if (elapsed >= fx.duration) {
+                    impactEffects.splice(i, 1);
+                    continue;
+                }
+
+                if (ballGif.complete && ballGif.naturalWidth > 0) {
+                    const alpha = 1 - (elapsed / fx.duration);
+                    ctx.save();
+                    ctx.globalAlpha = Math.max(0, alpha);
+                    ctx.drawImage(
+                        ballGif,
+                        fx.x - fx.size / 2,
+                        fx.y - fx.size / 2,
+                        fx.size,
+                        fx.size
+                    );
+                    ctx.restore();
+                }
+            }
+        }
+
+        // Arrays
+        let bullets = [];
+        let enemyBullets = [];
+        let enemies = [];
+        let obstacles = [];
+
+        // --- CONTROLES TECLADO ---
+        const keys = {
+            up: false,
+            down: false,
+            left: false,
+            right: false
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp') { e.preventDefault(); keys.up = true; }
+            if (e.key === 'ArrowDown') { e.preventDefault(); keys.down = true; }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); keys.left = true; }
+            if (e.key === 'ArrowRight') { e.preventDefault(); keys.right = true; }
+            if (e.key === ' ' || e.key === 'Space') {
+                e.preventDefault();
+                if (gameStarted && !gameOver && !gameWon) shootFromShip();
+            }
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowUp') { e.preventDefault(); keys.up = false; }
+            if (e.key === 'ArrowDown') { e.preventDefault(); keys.down = false; }
+            if (e.key === 'ArrowLeft') { e.preventDefault(); keys.left = false; }
+            if (e.key === 'ArrowRight') { e.preventDefault(); keys.right = false; }
+        });
+
+        // --- FUNCIONES DE DISPARO ---
+        function shoot(x, y, angle, isEnemy = false) {
+            const speed = isEnemy ? 2.5 : 5;
+            const bullet = {
+                x: x,
+                y: y,
+                speedX: speed * Math.cos(angle),
+                speedY: speed * Math.sin(angle),
+                angle: angle,
+                isEnemy: isEnemy,
+                size: isEnemy ? 6 : 8
+            };
+            if (isEnemy) {
+                enemyBullets.push(bullet);
+            } else {
+                bullets.push(bullet);
+                playDisparo();
+            }
+        }
+
+        // Control de disparo del jugador (solo uno por pulsación)
+        let canShoot = true;
+        function shootFromShip() {
+            if (!canShoot) return;
+            const angle = ship.rotation - Math.PI/2;
+            const bx = ship.x + ship.size * Math.cos(angle);
+            const by = ship.y + ship.size * Math.sin(angle);
+            shoot(bx, by, angle, false);
+            canShoot = false;
+            // Reiniciar después de un breve retraso para evitar disparos múltiples
+            setTimeout(() => { canShoot = true; }, 150);
+        }
+
+        // --- FUNCIONES DE COLISIÓN ---
+        function isInsideControlZone(x, y, radius = 0) {
+            const zoneWidth = Math.min(330, canvas.width);
+            const zoneHeight = Math.min(210, canvas.height);
+            return x - radius < zoneWidth && y + radius > canvas.height - zoneHeight;
+        }
+
+        function isInsideObstacle(x, y, radius = 0) {
+            for (let o of obstacles) {
+                if (x > o.x - o.half - radius && x < o.x + o.half + radius &&
+                    y > o.y - o.half - radius && y < o.y + o.half + radius) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function isOverlappingWithObstacle(x, y, size) {
+            const half = size;
+            for (let o of obstacles) {
+                if (x + half > o.x - o.half && x - half < o.x + o.half &&
+                    y + half > o.y - o.half && y - half < o.y + o.half) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function isOverlappingWithEnemy(x, y, size, excludeIndex = -1) {
+            for (let i = 0; i < enemies.length; i++) {
+                if (i === excludeIndex) continue;
+                const en = enemies[i];
+                if (Math.hypot(x - en.x, y - en.y) < size + en.size) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // --- CREAR OBSTÁCULOS ---
+        function createObstacles(count = 5) {
+            obstacles = [];
+            let attempts = 0;
+            let placed = 0;
+            while (placed < count && attempts < 1000) {
+                attempts++;
+                const size = 30 + Math.random() * 40;
+                const x = 50 + Math.random() * (canvas.width - 100);
+                const y = 50 + Math.random() * (canvas.height - 100);
+                
+                if (Math.hypot(x - ship.x, y - ship.y) < size/2 + ship.size + 50) continue;
+                
+                let overlap = false;
+                for (let o of obstacles) {
+                    if (Math.hypot(x - o.x, y - o.y) < size/2 + o.size/2 + 10) {
+                        overlap = true;
+                        break;
+                    }
+                }
+                if (!overlap) {
+                    obstacles.push({
+                        x, y,
+                        size: size,
+                        half: size/2
+                    });
+                    placed++;
+                }
+            }
+        }
+
+        // --- CREAR ENEMIGOS ---
+        function createEnemy() {
+            let x, y;
+            let attempts = 0;
+            do {
+                const side = Math.floor(Math.random() * 4);
+                if (side === 0) { x = 30 + Math.random() * 100; y = Math.random() * canvas.height; }
+                else if (side === 1) { x = canvas.width - 30 - Math.random() * 100; y = Math.random() * canvas.height; }
+                else if (side === 2) { x = Math.random() * canvas.width; y = 30 + Math.random() * 100; }
+                else { x = Math.random() * canvas.width; y = canvas.height - 30 - Math.random() * 100; }
+                attempts++;
+            } while ((Math.hypot(x - ship.x, y - ship.y) < 200 || 
+                     isOverlappingWithObstacle(x, y, TANK_SIZE) ||
+                     isOverlappingWithEnemy(x, y, TANK_SIZE)) && attempts < 50);
+
+            const speed = 0.3 + Math.random() * 0.5;
+            const angle = Math.random() * 2 * Math.PI;
+            enemies.push({
+                x, y,
+                size: TANK_SIZE,
+                speedX: speed * Math.cos(angle),
+                speedY: speed * Math.sin(angle),
+                rotation: angle + Math.PI/2,
+                shootTimer: Math.random() * 60,
+                shootInterval: 240, // 4 segundos a 60 fps
+                hp: 2,             // 2 golpes para destruir
+                hits: 0,           // 0 = sin daño, 1 = dañado
+                color: '#FF6666'   // rojo claro
+            });
+        }
+
+        // --- INICIALIZAR JUEGO ---
+        function initGame() {
+            gameOver = false;
+            gameWon = false;
+            gameRunning = true;
+            gameStarted = true;
+            score = 0;
+            bullets = [];
+            enemyBullets = [];
+            enemies = [];
+            impactEffects = [];
+            ship.x = canvas.width / 2;
+            ship.y = canvas.height / 2;
+            ship.rotation = 0;
+            ship.hits = 0;
+
+            createObstacles(5);
+            
+            const count = Math.min(enemyCount, 4);
+            for (let i = 0; i < count; i++) {
+                createEnemy();
+            }
+        }
+
+        // --- VERIFICAR VICTORIA ---
+        function checkVictory() {
+            if (enemies.length === 0 && gameStarted && !gameOver && !gameWon) {
+                gameWon = true;
+                setTimeout(() => {
+                    initGame();
+                    document.getElementById('startBtn').textContent = '▶ JUGANDO';
+                }, 2000);
+                return true;
+            }
+            return false;
+        }
+
+        // --- DIBUJAR ---
+        function drawShip() {
+            if (!tankImage.complete || tankImage.naturalWidth === 0) {
+                // Dibujo de respaldo
+                ctx.fillStyle = ship.hits === 0 ? '#00FF00' : '#006600';
+                ctx.beginPath();
+                ctx.arc(ship.x, ship.y, ship.size, 0, Math.PI*2);
+                ctx.fill();
+            } else {
+                // Aplicar filtro de oscurecimiento si tiene daño
+                ctx.save();
+                ctx.translate(ship.x, ship.y);
+                ctx.rotate(ship.rotation);
+                if (ship.hits === 1) {
+                    ctx.filter = 'brightness(0.4)';
+                }
+                ctx.drawImage(tankImage, -ship.size, -ship.size, ship.size*2, ship.size*2);
+                ctx.restore();
+            }
+            // Mostrar estado de daño encima del tanque
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${ship.hits}/${ship.maxHits}`, ship.x, ship.y - ship.size - 8);
+        }
+
+        function drawBullets() {
+            bullets.forEach(b => {
+                if (bulletImage.complete && bulletImage.naturalWidth > 0) {
+                    ctx.save();
+                    ctx.translate(b.x, b.y);
+                    ctx.rotate(b.angle);
+                    ctx.drawImage(bulletImage, -8, -16, 16, 32);
+                    ctx.restore();
+                } else {
+                    ctx.fillStyle = 'yellow';
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, 4, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            });
+            enemyBullets.forEach(b => {
+                ctx.save();
+                ctx.translate(b.x, b.y);
+                ctx.rotate(b.angle);
+                ctx.fillStyle = 'orange';
+                ctx.shadowColor = 'orange';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(0, 0, b.size, 0, Math.PI*2);
+                ctx.fill();
+                ctx.restore();
+            });
+        }
+
+        function drawEnemies() {
+            enemies.forEach(en => {
+                if (tankImage.complete && tankImage.naturalWidth > 0) {
+                    ctx.save();
+                    ctx.translate(en.x, en.y);
+                    ctx.rotate(en.rotation);
+                    // Cambiar tono según daño
+                    if (en.hits === 1) {
+                        ctx.filter = 'brightness(0.3)';
+                    } else {
+                        ctx.filter = 'hue-rotate(0deg) brightness(1)';
+                    }
+                    // Aplicar color rojo claro con tintado
+                    ctx.drawImage(tankImage, -en.size, -en.size, en.size*2, en.size*2);
+                    ctx.restore();
+                } else {
+                    ctx.fillStyle = en.hits === 0 ? '#FF6666' : '#660000';
+                    ctx.beginPath();
+                    ctx.arc(en.x, en.y, en.size, 0, Math.PI*2);
+                    ctx.fill();
+                }
+                // Mostrar estado de daño
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 10px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(`${en.hits}/${en.hp}`, en.x, en.y - en.size - 6);
+            });
+        }
+
+        function drawObstacles() {
+            ctx.fillStyle = 'rgba(100, 200, 255, 0.3)';
+            ctx.strokeStyle = 'rgba(100, 200, 255, 0.8)';
+            ctx.lineWidth = 2;
+            obstacles.forEach(o => {
+                ctx.fillRect(o.x - o.half, o.y - o.half, o.size, o.size);
+                ctx.strokeRect(o.x - o.half, o.y - o.half, o.size, o.size);
+            });
+        }
+
+        function drawScore() {
+            ctx.fillStyle = 'yellow';
+            ctx.font = "24px Arial";
+            ctx.textAlign = "left";
+            ctx.fillText("Enemigos: " + enemies.length + "/" + enemyCount, 20, 30);
+            ctx.fillText("Nivel: " + enemyCount, 20, 60);
+            if (!gameStarted) {
+                ctx.fillStyle = 'white';
+                ctx.font = "36px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("Presiona 'INICIO' para jugar", canvas.width/2, canvas.height/2);
+            }
+            if (gameWon) {
+                ctx.fillStyle = '#FFD700';
+                ctx.font = "48px Arial";
+                ctx.textAlign = "center";
+                ctx.fillText("🎉 ¡VICTORIA! 🎉", canvas.width/2, canvas.height/2 - 50);
+                ctx.font = "24px Arial";
+                ctx.fillText("¡Has eliminado a todos los enemigos!", canvas.width/2, canvas.height/2 + 10);
+                ctx.fillText("Comenzando nueva partida...", canvas.width/2, canvas.height/2 + 50);
+            }
+        }
+
+        function drawGameOver() {
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = 'white';
+            ctx.font = "48px Arial";
+            ctx.textAlign = "center";
+            ctx.fillText("💀 Game Over 💀", canvas.width/2, canvas.height/2 - 30);
+            ctx.font = "24px Arial";
+            ctx.fillText("Presiona el botón REINICIAR o INICIO", canvas.width/2, canvas.height/2 + 30);
+        }
+
+        // --- ACTUALIZAR ---
+        function updateShip() {
+            if (!gameStarted || gameOver || gameWon) return;
+            
+            let dx = 0, dy = 0;
+            
+            // Teclado
+            if (keys.up) dy = -ship.speed;
+            if (keys.down) dy = ship.speed;
+            if (keys.left) dx = -ship.speed;
+            if (keys.right) dx = ship.speed;
+            
+            // Joystick (prioridad sobre teclado si está activo)
+            if (joystickActive || Math.abs(joystickX) > JOYSTICK_DEADZONE || Math.abs(joystickY) > JOYSTICK_DEADZONE) {
+                dx = joystickX * ship.speed;
+                dy = joystickY * ship.speed;
+            }
+
+            if (dx !== 0 || dy !== 0) {
+                ship.rotation = Math.atan2(dy, dx) + Math.PI/2;
+                const newX = ship.x + dx;
+                const newY = ship.y + dy;
+                
+                if (newX > ship.size && newX < canvas.width - ship.size &&
+                    newY > ship.size && newY < canvas.height - ship.size) {
+                    if (!isInsideControlZone(newX, newY, ship.size) &&
+                        !isInsideObstacle(newX, newY, ship.size)) {
+                        ship.x = newX;
+                        ship.y = newY;
+                    }
+                }
+            }
+        }
+
+        function updateEnemies() {
+            if (!gameStarted || gameOver || gameWon) return;
+            
+            enemies.forEach((en, index) => {
+                if (Math.random() < 0.02) {
+                    const angle = Math.random() * 2 * Math.PI;
+                    const speed = 0.3 + Math.random() * 0.5;
+                    en.speedX = speed * Math.cos(angle);
+                    en.speedY = speed * Math.sin(angle);
+                }
+                
+                let newX = en.x + en.speedX;
+                let newY = en.y + en.speedY;
+                
+                if (newX < en.size || newX > canvas.width - en.size) {
+                    en.speedX *= -1;
+                    newX = en.x + en.speedX;
+                }
+                if (newY < en.size || newY > canvas.height - en.size) {
+                    en.speedY *= -1;
+                    newY = en.y + en.speedY;
+                }
+                
+                if (!isInsideObstacle(newX, newY, en.size)) {
+                    en.x = newX;
+                    en.y = newY;
+                } else {
+                    en.speedX *= -1;
+                    en.speedY *= -1;
+                }
+                
+                en.rotation = Math.atan2(en.speedY, en.speedX) + Math.PI/2;
+
+                en.shootTimer++;
+                // Disparo enemigo cada 4 segundos (240 frames a 60fps)
+                if (en.shootTimer >= en.shootInterval) {
+                    en.shootTimer = 0;
+                    const angle = Math.atan2(ship.y - en.y, ship.x - en.x);
+                    const bx = en.x + en.size * Math.cos(angle);
+                    const by = en.y + en.size * Math.sin(angle);
+                    shoot(bx, by, angle, true);
+                }
+
+                if (Math.hypot(en.x - ship.x, en.y - ship.y) < en.size + ship.size) {
+                    gameOver = true;
+                    gameRunning = false;
+                }
+            });
+        }
+
+        function updateBullets() {
+            if (!gameStarted || gameOver || gameWon) return;
+            
+            // Balas del jugador
+            for (let idx = bullets.length - 1; idx >= 0; idx--) {
+                const b = bullets[idx];
+                b.x += b.speedX;
+                b.y += b.speedY;
+                
+                if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+                    bullets.splice(idx, 1);
+                    continue;
+                }
+                
+                if (isInsideObstacle(b.x, b.y, 4)) {
+                    bullets.splice(idx, 1);
+                    continue;
+                }
+                
+                let hit = false;
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const en = enemies[i];
+                    if (Math.hypot(b.x - en.x, b.y - en.y) < en.size) {
+                        // Impacto: explosión + animación sobre el tanque alcanzado
+                        en.hits++;
+                        playExplosion();
+                        createImpactEffect(en.x, en.y, en.size);
+
+                        if (en.hits >= en.hp) {
+                            enemies.splice(i, 1);
+                            score++;
+                        }
+                        bullets.splice(idx, 1);
+                        hit = true;
+                        break;
+                    }
+                }
+                if (hit) continue;
+            }
+
+            // Balas enemigas
+            for (let idx = enemyBullets.length - 1; idx >= 0; idx--) {
+                const b = enemyBullets[idx];
+                b.x += b.speedX;
+                b.y += b.speedY;
+                
+                if (b.x < 0 || b.x > canvas.width || b.y < 0 || b.y > canvas.height) {
+                    enemyBullets.splice(idx, 1);
+                    continue;
+                }
+                
+                if (isInsideObstacle(b.x, b.y, 4)) {
+                    enemyBullets.splice(idx, 1);
+                    continue;
+                }
+                
+                if (Math.hypot(b.x - ship.x, b.y - ship.y) < ship.size) {
+                    // Impacto al jugador: explosión + animación sobre el tanque
+                    ship.hits++;
+                    playExplosion();
+                    createImpactEffect(ship.x, ship.y, ship.size);
+
+                    if (ship.hits >= ship.maxHits) {
+                        gameOver = true;
+                        gameRunning = false;
+                    }
+                    enemyBullets.splice(idx, 1);
+                }
+            }
+        }
+
+        // --- BUCLE PRINCIPAL ---
+        function gameLoop() {
+            if (gameOver && gameStarted) {
+                drawGameOver();
+                requestAnimationFrame(gameLoop);
+                return;
+            }
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (gameStarted && !gameOver && !gameWon) {
+                updateShip();
+                updateEnemies();
+                updateBullets();
+                checkVictory();
+            }
+
+            drawObstacles();
+            drawEnemies();
+            drawShip();
+            drawBullets();
+            drawImpactEffects();
+            drawScore();
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- EVENTOS UI ---
+        // Botón Inicio
+        document.getElementById('startBtn').addEventListener('click', () => {
+            if (!gameStarted || gameOver || gameWon) {
+                initGame();
+                document.getElementById('startBtn').textContent = '▶ JUGANDO';
+            }
+        });
+        
+        // Botón Reiniciar
+        document.getElementById('resetBtn').addEventListener('click', () => {
+            if (gameStarted) {
+                gameOver = true;
+            }
+            initGame();
+            document.getElementById('startBtn').textContent = '▶ JUGANDO';
+        });
+        
+        // Botón Configuración
+        document.getElementById('configBtn').addEventListener('click', () => {
+            document.getElementById('config-modal').style.display = 'block';
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.level) === enemyCount);
+            });
+            updateLevelInfo(enemyCount);
+        });
+        
+        // Configuración de niveles
+        document.querySelectorAll('.level-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const level = parseInt(btn.dataset.level);
+                updateLevelInfo(level);
+            });
+        });
+        
+        function updateLevelInfo(level) {
+            const info = document.getElementById('levelInfo');
+            const enemyNames = ['', '1 enemigo', '2 enemigos', '3 enemigos', '4 enemigos'];
+            info.textContent = `Nivel ${level}: ${enemyNames[level]}`;
+        }
+        
+        // Cerrar configuración
+        document.getElementById('closeConfig').addEventListener('click', () => {
+            const activeBtn = document.querySelector('.level-btn.active');
+            if (activeBtn) {
+                enemyCount = parseInt(activeBtn.dataset.level);
+                document.getElementById('config-modal').style.display = 'none';
+                if (gameStarted) {
+                    gameOver = true;
+                    initGame();
+                    document.getElementById('startBtn').textContent = '▶ JUGANDO';
+                }
+            }
+        });
+
+        // Click en canvas para disparar
+        canvas.addEventListener("click", (e) => {
+            if (!gameStarted || gameOver || gameWon) return;
+            const rect = canvas.getBoundingClientRect();
+            const targetX = e.clientX - rect.left;
+            const targetY = e.clientY - rect.top;
+            const angle = Math.atan2(targetY - ship.y, targetX - ship.x);
+            ship.rotation = angle + Math.PI/2;
+            shootFromShip();
+        });
+
+        canvas.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            if (!gameStarted || gameOver || gameWon) return;
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const targetX = touch.clientX - rect.left;
+            const targetY = touch.clientY - rect.top;
+            const angle = Math.atan2(targetY - ship.y, targetX - ship.x);
+            ship.rotation = angle + Math.PI/2;
+            shootFromShip();
+        }, {passive: false});
+
+        // --- INICIAR ---
+        gameStarted = false;
+        initGame();
+        gameStarted = false;
+        gameLoop();
+        playBackgroundMusic();
+
+        window.addEventListener("resize", () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>

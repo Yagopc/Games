@@ -3,33 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hundir la Flota - IA con S√≠mbolos</title>
+    <title>Hundir la Flota - IA Avanzada</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        .ship-info {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 6px 0;
-  font-family: sans-serif;
-}
-
-.ship {
-  display: flex;
-}
-
-.cell {
-  width: 22px;
-  height: 22px;
-  background: linear-gradient(145deg, #5fa9ff, #1f5fa8);
-  border: 2px solid #0b3d75;
-  border-radius: 4px;
-  box-shadow: inset 0 0 4px rgba(255,255,255,0.5);
-}
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -93,92 +73,48 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 24px;
+            font-size: 18px;
             transition: all 0.3s ease;
-            position: relative;
         }
-.cell.ship {
-    background: linear-gradient(135deg, #777, #333);
-    border: 2px solid #111;
-    box-shadow: inset 0 0 6px rgba(255,255,255,0.2);
-}
 
-.cell.ship::before {
-    content: "";
-    position: absolute;
-    inset: 6px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 4px;
-}
-
-.cell.ship.front {
-    border-top-left-radius: 16px;
-    border-bottom-left-radius: 16px;
-}
-
-.cell.ship.back {
-    border-top-right-radius: 16px;
-    border-bottom-right-radius: 16px;
-}
-
-.cell.ship.vertical.front {
-    border-radius: 16px 16px 4px 4px;
-}
-
-.cell.ship.vertical.back {
-    border-radius: 4px 4px 16px 16px;
-}
         .cell:hover {
             background: #5ba0f2;
             transform: scale(1.1);
         }
 
+        .cell.ship {
+            background: #666;
+        }
+
         .cell.hit {
             background: #ff4444;
-        }
-
-        .cell.hit::after {
-            content: 'üí•';
-            position: absolute;
-            font-size: 20px;
             color: white;
-            text-shadow: 1px 1px 2px black;
-        }
-
-        .cell.sunk {
-            background: #8b0000;
-            filter: brightness(0.7);
-        }
-
-        .cell.sunk::after {
-            content: 'üíÄ';
-            position: absolute;
-            font-size: 20px;
-            color: white;
-            text-shadow: 1px 1px 2px black;
         }
 
         .cell.miss {
             background: #87ceeb;
+            color: #003366;
         }
 
-        .cell.miss::after {
-            content: '‚Ä¢';
-            position: absolute;
-            font-size: 30px;
-            color: #003366;
+        .cell.sunk {
+            background: #8b0000;
+            color: white;
         }
 
         .cell.auto-miss {
             background: #b0c4de;
+            color: #003366;
             opacity: 0.7;
         }
 
-        .cell.auto-miss::after {
-            content: '‚Ä¢';
-            position: absolute;
-            font-size: 30px;
-            color: #003366;
+        .cell.target {
+            background: #ffd700;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
         .controls {
@@ -217,6 +153,11 @@
             color: #003366;
         }
 
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+
         .info {
             background: rgba(0,0,0,0.3);
             padding: 15px;
@@ -241,7 +182,6 @@
             background: rgba(255,255,255,0.2);
             padding: 5px 10px;
             border-radius: 5px;
-            font-size: 18px;
         }
 
         .hidden {
@@ -260,6 +200,17 @@
             z-index: 1000;
         }
 
+        .debug-info {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(0,0,0,0.7);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 200px;
+        }
+
         @media (max-width: 900px) {
             .board {
                 grid-template-columns: repeat(10, 30px);
@@ -268,66 +219,37 @@
             .cell {
                 width: 30px;
                 height: 30px;
-                font-size: 18px;
+                font-size: 14px;
             }
         }
     </style>
 </head>
 <body>
-    <div class="sound-toggle" onclick="toggleSound()" id="soundToggle">üîä</div>
-
+    <div class="sound-toggle" onclick="toggleSound()" id="soundToggle"></div>
+    
     <div class="container">
-        <h1>‚öì Hundir la Flota - IA con S√≠mbolos ‚öì</h1>
-
+        <h1> Hundir la Flota - IA Avanzada </h1>
+        
         <div class="controls" id="setupControls">
             <div class="status" id="setupStatus">Coloca tus barcos</div>
             <div class="direction-buttons">
-                <button onclick="setDirection('horizontal')" id="btnHorizontal" class="active">Horizontal ‚û°Ô∏è</button>
-                <button onclick="setDirection('vertical')" id="btnVertical">Vertical ‚¨áÔ∏è</button>
+                <button onclick="setDirection('horizontal')" id="btnHorizontal" class="active">Horizontal </button>
+                <button onclick="setDirection('vertical')" id="btnVertical">Vertical </button>
             </div>
             <div class="info">
                 <p>Barco actual: <span id="currentShip">Portaaviones (4 casillas)</span></p>
                 <p>Barcos restantes: <span id="shipsRemaining">10</span></p>
             </div>
             <div class="ships-list">
-                <div class="ship-info">
-  1 casilla:
-  <div class="ship">
-    <div class="cell"></div>
-  </div>
-</div>
-
-<div class="ship-info">
-  2 casillas:
-  <div class="ship">
-    <div class="cell"></div>
-    <div class="cell"></div>
-  </div>
-</div>
-
-<div class="ship-info">
-  3 casillas:
-  <div class="ship">
-    <div class="cell"></div>
-    <div class="cell"></div>
-    <div class="cell"></div>
-  </div>
-</div>
-
-<div class="ship-info">
-  4 casillas:
-  <div class="ship">
-    <div class="cell"></div>
-    <div class="cell"></div>
-    <div class="cell"></div>
-    <div class="cell"></div>
-  </div>
-</div>
+                <div class="ship-info">1x 4 casillas</div>
+                <div class="ship-info">2x 3 casillas</div>
+                <div class="ship-info">3x 2 casillas</div>
+                <div class="ship-info">4x 1 casilla</div>
             </div>
         </div>
 
         <div class="controls hidden" id="gameControls">
-            <div class="status" id="gameStatus">¬°Comienza el juego! Tu turno</div>
+            <div class="status" id="gameStatus">°Comienza el juego! Tu turno</div>
             <div class="info">
                 <p>Tus barcos restantes: <span id="playerShips">10</span> | Barcos enemigos restantes: <span id="enemyShips">10</span></p>
                 <p style="font-size: 0.9em; margin-top: 5px; color: #b0c4de;">IA enemiga: Inteligencia avanzada con rastreo de barcos</p>
@@ -336,19 +258,19 @@
 
         <div class="game-section">
             <div class="board-container">
-                <div class="board-title">üéØ Tablero Enemigo (Dispara aqu√≠)</div>
+                <div class="board-title"> Tablero Enemigo (Dispara aquÌ)</div>
                 <div class="board" id="enemyBoard"></div>
             </div>
-
+            
             <div class="board-container">
-                <div class="board-title">üö¢ Tu Tablero</div>
+                <div class="board-title"> Tu Tablero</div>
                 <div class="board" id="playerBoard"></div>
             </div>
         </div>
     </div>
 
     <script>
-        // Configuraci√≥n del juego
+        // ConfiguraciÛn del juego
         const BOARD_SIZE = 10;
         const SHIPS_CONFIG = [
             { size: 4, count: 1, name: 'Portaaviones' },
@@ -369,14 +291,14 @@
         let isPlayerTurn = true;
         let soundEnabled = true;
 
-        // IA del enemigo
+        // IA del enemigo - Estado de rastreo
         let aiState = {
-            mode: 'hunt',
-            hits: [],
-            direction: null,
-            lastHit: null,
-            firstHit: null,
-            tryDirections: []
+            mode: 'hunt', // 'hunt' (b˙squeda) o 'target' (caza)
+            hits: [], // Lista de impactos no resueltos
+            direction: null, // 'horizontal' o 'vertical' cuando se detecta direcciÛn
+            lastHit: null, // ⁄ltimo impacto
+            firstHit: null, // Primer impacto del barco actual
+            tryDirections: [] // Direcciones pendientes por probar
         };
 
         // Gestor de sonidos
@@ -384,7 +306,6 @@
             agua: new Audio('Agua.mp3'),
             tocado: new Audio('tocado.mp3'),
             hundido: new Audio('hundido.mp3'),
-            disparo: new Audio('disparo.mp3'),
             win: new Audio('win.mp3'),
             pierdes: new Audio('pierdes.mp3')
         };
@@ -404,19 +325,19 @@
 
         function toggleSound() {
             soundEnabled = !soundEnabled;
-            document.getElementById('soundToggle').textContent = soundEnabled ? 'üîä' : 'üîá';
+            document.getElementById('soundToggle').textContent = soundEnabled ? '' : '';
         }
 
         function initBoards() {
             const playerContainer = document.getElementById('playerBoard');
             const enemyContainer = document.getElementById('enemyBoard');
-
+            
             playerContainer.innerHTML = '';
             enemyContainer.innerHTML = '';
-
+            
             playerBoard = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
             enemyBoard = Array(BOARD_SIZE).fill(null).map(() => Array(BOARD_SIZE).fill(null));
-
+            
             for (let row = 0; row < BOARD_SIZE; row++) {
                 for (let col = 0; col < BOARD_SIZE; col++) {
                     const cell = document.createElement('div');
@@ -427,7 +348,7 @@
                     playerContainer.appendChild(cell);
                 }
             }
-
+            
             for (let row = 0; row < BOARD_SIZE; row++) {
                 for (let col = 0; col < BOARD_SIZE; col++) {
                     const cell = document.createElement('div');
@@ -453,12 +374,12 @@
         function updateShipInfo() {
             if (currentShipIndex < shipsToPlace.length) {
                 const ship = shipsToPlace[currentShipIndex];
-                document.getElementById('currentShip').textContent =
+                document.getElementById('currentShip').textContent = 
                     `${ship.name} (${ship.size} casillas)`;
-                document.getElementById('shipsRemaining').textContent =
+                document.getElementById('shipsRemaining').textContent = 
                     shipsToPlace.length - currentShipIndex;
             } else {
-                document.getElementById('currentShip').textContent = '¬°Todos colocados!';
+                document.getElementById('currentShip').textContent = '°Todos colocados!';
                 document.getElementById('shipsRemaining').textContent = '0';
             }
         }
@@ -471,15 +392,15 @@
 
         function canPlaceShip(board, row, col, size, direction) {
             const cells = [];
-
+            
             for (let i = 0; i < size; i++) {
                 const r = direction === 'horizontal' ? row : row + i;
                 const c = direction === 'horizontal' ? col + i : col;
-
+                
                 if (r >= BOARD_SIZE || c >= BOARD_SIZE) return null;
                 cells.push({row: r, col: c});
             }
-
+            
             for (const cell of cells) {
                 for (let dr = -1; dr <= 1; dr++) {
                     for (let dc = -1; dc <= 1; dc++) {
@@ -491,71 +412,58 @@
                     }
                 }
             }
-
+            
             return cells;
         }
 
-        
-
         function handlePlayerBoardClick(row, col) {
             if (gameState !== 'setup' || currentShipIndex >= shipsToPlace.length) return;
-
+            
             const ship = shipsToPlace[currentShipIndex];
             const cells = canPlaceShip(playerBoard, row, col, ship.size, currentDirection);
-
+            
             if (cells) {
                 const shipId = playerShips.length;
                 playerShips.push({ cells: cells, hits: 0, size: ship.size });
-
-                for (let i = 0; i < cells.length; i++) {
-                    const cell = cells[i];
+                
+                for (const cell of cells) {
                     playerBoard[cell.row][cell.col] = shipId;
                     const cellElement = document.querySelector(`#playerBoard .cell[data-row="${cell.row}"][data-col="${cell.col}"]`);
-                    
                     cellElement.classList.add('ship');
-
-if (i === 0) cellElement.classList.add('front');
-if (i === ship.size - 1) cellElement.classList.add('back');
-
-if (currentDirection === 'vertical') {
-    cellElement.classList.add('vertical');
-}
                 }
-
+                
                 currentShipIndex++;
                 updateShipInfo();
-
+                
                 if (currentShipIndex >= shipsToPlace.length) {
                     finishSetup();
                 }
             } else {
                 const cellElement = document.querySelector(`#playerBoard .cell[data-row="${row}"][data-col="${col}"]`);
-                cellElement.style.backgroundColor = '#ff4444';
-                setTimeout(() => {
-                    cellElement.style.backgroundColor = '';
-                }, 300);
+                cellElement.classList.add('invalid');
+                setTimeout(() => cellElement.classList.remove('invalid'), 500);
             }
         }
 
         function placeEnemyShips() {
             enemyShips = [];
-
+            
             for (const config of SHIPS_CONFIG) {
                 for (let i = 0; i < config.count; i++) {
                     let placed = false;
                     let attempts = 0;
-
+                    
                     while (!placed && attempts < 100) {
                         const row = Math.floor(Math.random() * BOARD_SIZE);
                         const col = Math.floor(Math.random() * BOARD_SIZE);
                         const direction = Math.random() > 0.5 ? 'horizontal' : 'vertical';
-
+                        
                         const cells = canPlaceShip(enemyBoard, row, col, config.size, direction);
-
+                        
                         if (cells) {
                             const shipId = enemyShips.length;
                             enemyShips.push({ cells: cells, hits: 0, size: config.size });
-
+                            
                             for (const cell of cells) {
                                 enemyBoard[cell.row][cell.col] = shipId;
                             }
@@ -577,29 +485,31 @@ if (currentDirection === 'vertical') {
 
         function markSurroundingWater(ship, boardId, board) {
             const cellsToMark = new Set();
-
+            
             for (const cell of ship.cells) {
                 for (let dr = -1; dr <= 1; dr++) {
                     for (let dc = -1; dc <= 1; dc++) {
                         const nr = cell.row + dr;
                         const nc = cell.col + dc;
-
+                        
                         if (nr >= 0 && nr < BOARD_SIZE && nc >= 0 && nc < BOARD_SIZE) {
                             const isPartOfShip = ship.cells.some(c => c.row === nr && c.col === nc);
-                            if (!isPartOfShip && board[nr][nc] !== 'miss' && board[nr][nc] !== 'hit' && board[nr][nc] !== 'sunk') {
+                            if (!isPartOfShip) {
                                 cellsToMark.add(`${nr},${nc}`);
                             }
                         }
                     }
                 }
             }
-
+            
             cellsToMark.forEach(coord => {
                 const [row, col] = coord.split(',').map(Number);
-                board[row][col] = 'miss';
-                const cellElement = document.querySelector(`#${boardId} .cell[data-row="${row}"][data-col="${col}"]`);
-                if (cellElement && !cellElement.classList.contains('hit') && !cellElement.classList.contains('sunk')) {
+                
+                if (board[row][col] !== 'hit' && board[row][col] !== 'miss' && board[row][col] !== 'sunk') {
+                    board[row][col] = 'miss';
+                    const cellElement = document.querySelector(`#${boardId} .cell[data-row="${row}"][data-col="${col}"]`);
                     cellElement.classList.add('auto-miss');
+                    cellElement.textContent = 'ï';
                 }
             });
         }
@@ -607,21 +517,21 @@ if (currentDirection === 'vertical') {
         function handleEnemyBoardClick(row, col) {
             if (gameState !== 'playing' || !isPlayerTurn) return;
             if (enemyBoard[row][col] === 'hit' || enemyBoard[row][col] === 'miss' || enemyBoard[row][col] === 'sunk') return;
-
-            playSound('disparo');
-
+            
+   
+            
             const cellElement = document.querySelector(`#enemyBoard .cell[data-row="${row}"][data-col="${col}"]`);
-
+            
             if (typeof enemyBoard[row][col] === 'number') {
                 setTimeout(() => playSound('tocado'), 200);
-
+                
                 const shipId = enemyBoard[row][col];
                 enemyBoard[row][col] = 'hit';
                 cellElement.classList.add('hit');
-                cellElement.textContent = '';
-
+                cellElement.textContent = '';
+                
                 enemyShips[shipId].hits++;
-
+                
                 if (enemyShips[shipId].hits === enemyShips[shipId].size) {
                     setTimeout(() => playSound('hundido'), 400);
                     markSunkShip(enemyShips[shipId], 'enemyBoard', enemyBoard);
@@ -632,12 +542,13 @@ if (currentDirection === 'vertical') {
                 setTimeout(() => playSound('agua'), 200);
                 enemyBoard[row][col] = 'miss';
                 cellElement.classList.add('miss');
-
+                cellElement.textContent = 'ï';
+                
                 isPlayerTurn = false;
                 document.getElementById('gameStatus').textContent = 'Turno del enemigo...';
                 setTimeout(enemyTurn, 1500);
             }
-
+            
             updateGameStatus();
         }
 
@@ -646,12 +557,13 @@ if (currentDirection === 'vertical') {
                 const cellElement = document.querySelector(`#${boardId} .cell[data-row="${cell.row}"][data-col="${cell.col}"]`);
                 cellElement.classList.remove('hit');
                 cellElement.classList.add('sunk');
-                cellElement.textContent = '';
+                cellElement.textContent = '';
                 board[cell.row][cell.col] = 'sunk';
             }
         }
 
-        // IA del enemigo (funciones simplificadas)
+        // ========== IA AVANZADA ==========
+
         function isValidCell(row, col) {
             return row >= 0 && row < BOARD_SIZE && col >= 0 && col < BOARD_SIZE;
         }
@@ -664,125 +576,216 @@ if (currentDirection === 'vertical') {
 
         function getAdjacentCells(row, col) {
             return [
-                {row: row-1, col: col},
-                {row: row+1, col: col},
-                {row: row, col: col-1},
-                {row: row, col: col+1}
+                {row: row-1, col: col, dir: 'up'},
+                {row: row+1, col: col, dir: 'down'},
+                {row: row, col: col-1, dir: 'left'},
+                {row: row, col: col+1, dir: 'right'}
             ];
         }
 
+        // Encontrar el siguiente disparo inteligente de la IA
         function findNextShot() {
+            // Modo CAZA: Tenemos impactos pendientes
             if (aiState.mode === 'target' && aiState.hits.length > 0) {
+                
+                // Si solo tenemos 1 impacto, probar las 4 direcciones
                 if (aiState.hits.length === 1) {
                     const hit = aiState.hits[0];
                     const adjacent = getAdjacentCells(hit.row, hit.col);
+                    
+                    // Filtrar celdas v·lidas y no probadas
                     const valid = adjacent.filter(cell => isCellAvailable(playerBoard, cell.row, cell.col));
+                    
                     if (valid.length > 0) {
-                        return valid[Math.floor(Math.random() * valid.length)];
+                        // Elegir aleatoriamente entre las v·lidas para variar
+                        const choice = valid[Math.floor(Math.random() * valid.length)];
+                        return {row: choice.row, col: choice.col};
                     }
                 }
-
+                
+                // Si tenemos 2+ impactos, determinar direcciÛn y seguir la lÌnea
                 if (aiState.hits.length >= 2) {
+                    // Determinar si es horizontal o vertical
                     const first = aiState.hits[0];
                     const last = aiState.hits[aiState.hits.length - 1];
+                    
                     const isHorizontal = first.row === last.row;
-
+                    const isVertical = first.col === last.col;
+                    
                     if (isHorizontal) {
+                        // Buscar a izquierda y derecha
                         const row = first.row;
                         const cols = aiState.hits.map(h => h.col).sort((a,b) => a-b);
-                        if (isCellAvailable(playerBoard, row, cols[0] - 1)) {
-                            return {row: row, col: cols[0] - 1};
+                        const minCol = cols[0];
+                        const maxCol = cols[cols.length - 1];
+                        
+                        // Probar izquierda primero
+                        if (isCellAvailable(playerBoard, row, minCol - 1)) {
+                            return {row: row, col: minCol - 1};
                         }
-                        if (isCellAvailable(playerBoard, row, cols[cols.length-1] + 1)) {
-                            return {row: row, col: cols[cols.length-1] + 1};
+                        // Luego derecha
+                        if (isCellAvailable(playerBoard, row, maxCol + 1)) {
+                            return {row: row, col: maxCol + 1};
                         }
-                    } else {
+                    } else if (isVertical) {
+                        // Buscar arriba y abajo
                         const col = first.col;
                         const rows = aiState.hits.map(h => h.row).sort((a,b) => a-b);
-                        if (isCellAvailable(playerBoard, rows[0] - 1, col)) {
-                            return {row: rows[0] - 1, col: col};
+                        const minRow = rows[0];
+                        const maxRow = rows[rows.length - 1];
+                        
+                        // Probar arriba primero
+                        if (isCellAvailable(playerBoard, minRow - 1, col)) {
+                            return {row: minRow - 1, col: col};
                         }
-                        if (isCellAvailable(playerBoard, rows[rows.length-1] + 1, col)) {
-                            return {row: rows[rows.length-1] + 1, col: col};
+                        // Luego abajo
+                        if (isCellAvailable(playerBoard, maxRow + 1, col)) {
+                            return {row: maxRow + 1, col: col};
                         }
+                    }
+                }
+                
+                // Si no encontramos celda en la direcciÛn actual, volver a modo caza con el primer hit
+                if (aiState.hits.length > 1) {
+                    // Quiz·s hay otro barco tocado, probar desde el primer hit
+                    const first = aiState.hits[0];
+                    const adjacent = getAdjacentCells(first.row, first.col);
+                    const valid = adjacent.filter(cell => isCellAvailable(playerBoard, cell.row, cell.col));
+                    if (valid.length > 0) {
+                        return {row: valid[0].row, col: valid[0].col};
                     }
                 }
             }
+            
+            // Modo B⁄SQUEDA: PatrÛn de ajedrez optimizado
             return findHuntShot();
         }
 
         function findHuntShot() {
-            for (let row = 0; row < BOARD_SIZE; row++) {
-                for (let col = 0; col < BOARD_SIZE; col++) {
-                    if (isCellAvailable(playerBoard, row, col) && (row + col) % 2 === 0) {
-                        return {row, col};
-                    }
-                }
-            }
+            // Estrategia de ajedrez: disparar en patrÛn (row + col) % 2 === 0 primero
+            // Priorizar celdas donde (row + col) % 2 === 0 (casillas negras del ajedrez)
+            const parityCells = [];
+            const otherCells = [];
+            
             for (let row = 0; row < BOARD_SIZE; row++) {
                 for (let col = 0; col < BOARD_SIZE; col++) {
                     if (isCellAvailable(playerBoard, row, col)) {
-                        return {row, col};
+                        if ((row + col) % 2 === 0) {
+                            parityCells.push({row, col});
+                        } else {
+                            otherCells.push({row, col});
+                        }
                     }
                 }
             }
+            
+            // Primero usar celdas de paridad (m·s eficiente para encontrar barcos)
+            const candidates = parityCells.length > 0 ? parityCells : otherCells;
+            
+            if (candidates.length > 0) {
+                return candidates[Math.floor(Math.random() * candidates.length)];
+            }
+            
             return null;
         }
 
+        // Actualizar estado de la IA despuÈs de un disparo
         function updateAIState(row, col, isHit, isSunk) {
             if (isSunk) {
+                // Barco hundido, limpiar hits relacionados y volver a b˙squeda
                 aiState.hits = [];
                 aiState.mode = 'hunt';
+                aiState.direction = null;
                 return;
             }
+            
             if (isHit) {
+                // Nuevo impacto
                 aiState.hits.push({row, col});
                 aiState.mode = 'target';
+                aiState.lastHit = {row, col};
+                
+                if (aiState.hits.length === 1) {
+                    aiState.firstHit = {row, col};
+                }
+                
+                // Determinar direcciÛn si tenemos 2+ impactos
+                if (aiState.hits.length >= 2) {
+                    const first = aiState.hits[0];
+                    const last = aiState.hits[aiState.hits.length - 1];
+                    
+                    if (first.row === last.row) {
+                        aiState.direction = 'horizontal';
+                    } else if (first.col === last.col) {
+                        aiState.direction = 'vertical';
+                    }
+                }
+            } else {
+                // Agua - si est·bamos en modo target, quiz·s necesitemos cambiar direcciÛn
+                // No hacemos nada especial, el algoritmo de findNextShot se encarga
             }
         }
 
         function enemyTurn() {
             if (gameState !== 'playing') return;
-
+            
             const target = findNextShot();
-            if (!target) return;
-
+            
+            if (!target) {
+                console.log('IA: No hay celdas disponibles');
+                return;
+            }
+            
             const {row, col} = target;
-            playSound('disparo');
+            
+
             
             const cellElement = document.querySelector(`#playerBoard .cell[data-row="${row}"][data-col="${col}"]`);
-
+            
             setTimeout(() => {
                 if (typeof playerBoard[row][col] === 'number') {
+                    // IMPACTO
                     playSound('tocado');
+                    
                     const shipId = playerBoard[row][col];
                     playerBoard[row][col] = 'hit';
+                    cellElement.classList.remove('ship');
                     cellElement.classList.add('hit');
-                    cellElement.textContent = '';
+                    cellElement.textContent = '';
                     
                     playerShips[shipId].hits++;
                     const isSunk = playerShips[shipId].hits === playerShips[shipId].size;
-
+                    
+                    // Actualizar estado de la IA
                     updateAIState(row, col, true, isSunk);
-
+                    
                     if (isSunk) {
                         setTimeout(() => playSound('hundido'), 400);
                         markSunkShip(playerShips[shipId], 'playerBoard', playerBoard);
                         markSurroundingWater(playerShips[shipId], 'playerBoard', playerBoard);
                         checkWin();
+                        
+                        // Si el barco se hundiÛ, la IA ya reseteÛ su estado en updateAIState
                     }
-
+                    
+                    // La IA sigue disparando porque acertÛ
                     setTimeout(enemyTurn, 1500);
+                    
                 } else {
+                    // AGUA
                     playSound('agua');
                     playerBoard[row][col] = 'miss';
                     cellElement.classList.add('miss');
-
+                    cellElement.textContent = 'ï';
+                    
+                    // Actualizar estado de la IA
                     updateAIState(row, col, false, false);
-
+                    
+                    // Cambiar turno al jugador
                     isPlayerTurn = true;
-                    document.getElementById('gameStatus').textContent = '¬°Tu turno! Dispara en el tablero enemigo';
+                    document.getElementById('gameStatus').textContent = '°Tu turno! Dispara en el tablero enemigo';
                 }
+                
                 updateGameStatus();
             }, 300);
         }
@@ -790,6 +793,7 @@ if (currentDirection === 'vertical') {
         function updateGameStatus() {
             const playerAlive = playerShips.filter(s => s.hits < s.size).length;
             const enemyAlive = enemyShips.filter(s => s.hits < s.size).length;
+            
             document.getElementById('playerShips').textContent = playerAlive;
             document.getElementById('enemyShips').textContent = enemyAlive;
         }
@@ -797,16 +801,16 @@ if (currentDirection === 'vertical') {
         function checkWin() {
             const playerAlive = playerShips.filter(s => s.hits < s.size).length;
             const enemyAlive = enemyShips.filter(s => s.hits < s.size).length;
-
+            
             if (enemyAlive === 0) {
                 gameState = 'ended';
                 setTimeout(() => playSound('win'), 500);
-                document.getElementById('gameStatus').textContent = 'üèÜ ¬°Has ganado!';
+                document.getElementById('gameStatus').textContent = ' °Has ganado! Todos los barcos enemigos hundidos';
                 document.getElementById('gameStatus').style.color = '#ffd700';
             } else if (playerAlive === 0) {
                 gameState = 'ended';
                 setTimeout(() => playSound('pierdes'), 500);
-                document.getElementById('gameStatus').textContent = 'üíÄ Has perdido';
+                document.getElementById('gameStatus').textContent = ' Has perdido. Tu flota ha sido destruida';
                 document.getElementById('gameStatus').style.color = '#ff4444';
             }
         }

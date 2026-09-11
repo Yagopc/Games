@@ -16,8 +16,8 @@
 
         #game-container {
             padding: 20px;
-            background: url('fondoh.jpg') no-repeat center center fixed; /* Fondo del juego */
-            background-size: cover; /* Asegura que la imagen cubra todo el fondo */
+            background: url('fondo.jpg') no-repeat center center fixed; /* fondo.jpg del juego */
+            background-size: cover; /* Asegura que la imagen cubra todo el fondo.jpg */
             min-height: 100vh; /* Asegura que ocupe toda la pantalla */
         }
 
@@ -148,16 +148,16 @@
 
         function forceBackgroundImageLoad() {
             const bgImage = new Image();
-            bgImage.src = 'fondoh.jpg';
+            bgImage.src = 'fondo.jpg';
 
             bgImage.onload = function () {
-                gameContainer.style.backgroundImage = "url('fondoh.jpg')";
-                console.log('Fondo cargado correctamente.');
+                gameContainer.style.backgroundImage = "url('fondo.jpg')";
+                console.log('fondo.jpg cargado correctamente.');
             };
 
             bgImage.onerror = function () {
-                console.error('Error al cargar la imagen de fondo.');
-                alert('Error: La imagen de fondo no se pudo cargar.');
+                console.error('Error al cargar la imagen de fondo.jpg.');
+                alert('Error: La imagen de fondo.jpg no se pudo cargar.');
             };
         }
 

@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Racer - Juego de Coches</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0a0a0a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            background: #1a1a2e;
+            display: block;
+        }
+
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 20px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #score {
+            font-weight: bold;
+            color: #00ffff;
+        }
+
+        #speed {
+            margin-top: 10px;
+            color: #ff00ff;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fff;
+            display: none;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #ff0066;
+            box-shadow: 0 0 30px rgba(255, 0, 102, 0.5);
+        }
+
+        #gameOver h2 {
+            font-size: 48px;
+            color: #ff0066;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        #finalScore {
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: #00ffff;
+        }
+
+        button {
+            background: linear-gradient(45deg, #ff0066, #ff00ff);
+            border: none;
+            color: white;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 30px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 2px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 10px;
+        }
+
+        button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 30px rgba(255, 0, 255, 0.6);
+        }
+
+        .settings-btn {
+            background: linear-gradient(45deg, #00ffff, #0066ff);
+        }
+
+        #startScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fff;
+            z-index: 20;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #00ffff;
+        }
+
+        #startScreen h1 {
+            font-size: 56px;
+            background: linear-gradient(45deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+
+        .controls {
+            margin: 20px 0;
+            color: #aaa;
+            font-size: 16px;
+        }
+
+        .key {
+            display: inline-block;
+            background: #333;
+            padding: 5px 15px;
+            border-radius: 5px;
+            margin: 0 5px;
+            border: 1px solid #555;
+        }
+
+        #highScore {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #ffd700;
+            font-size: 20px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+        }
+
+        #settingsDialog {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #fff;
+            z-index: 30;
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #00ffff;
+            display: none;
+            min-width: 300px;
+        }
+
+        #settingsDialog h2 {
+            font-size: 32px;
+            color: #00ffff;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .setting-item {
+            margin: 20px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 18px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #333;
+            transition: .3s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background: linear-gradient(45deg, #00ffff, #0066ff);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .settings-buttons {
+            margin-top: 30px;
+        }
+
+        .save-btn {
+            background: linear-gradient(45deg, #00ffff, #0066ff);
+        }
+
+        .close-btn {
+            background: linear-gradient(45deg, #666, #333);
+        }
+
+        #soundStatus {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: #00ff00;
+            font-size: 12px;
+            z-index: 40;
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="400" height="600"></canvas>
+        
+        <div id="ui">
+            <div>Puntuación: <span id="score">0</span></div>
+            <div id="speed">Velocidad: <span id="speedValue">1</span>x</div>
+        </div>
+
+        <div id="highScore">Récord: <span id="highScoreValue">0</span></div>
+        <div id="soundStatus">🔊 Cargando sonidos...</div>
+
+        <div id="startScreen">
+            <h1>Neon Racer</h1>
+            <div class="controls">
+                Usa <span class="key">←</span> <span class="key">→</span> o <span class="key">A</span> <span class="key">D</span> para moverte<br>
+                Esquiva los coches azules • Recoge monedas doradas
+            </div>
+            <button onclick="startGame()">Iniciar Carrera</button>
+            <button onclick="openSettings()" class="settings-btn">⚙️ Configuración</button>
+        </div>
+
+        <div id="gameOver">
+            <h2>¡Game Over!</h2>
+            <div id="finalScore">Puntuación: 0</div>
+            <button onclick="restartGame()">Jugar de Nuevo</button>
+            <button onclick="showStartScreen()" class="settings-btn">Menú Principal</button>
+        </div>
+
+        <div id="settingsDialog">
+            <h2>Configuración</h2>
+            <div class="setting-item">
+                <span>🎵 Música de fondo</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="musicEnabled" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>🔊 Efectos de sonido</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="sfxEnabled" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>🔄 Efecto cambio</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="turnEnabled" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="setting-item">
+                <span>💰 Efecto bonus</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="bonusEnabled" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+            <div class="settings-buttons">
+                <button onclick="saveSettings()" class="save-btn">Guardar</button>
+                <button onclick="closeSettings()" class="close-btn">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Variables del juego
+        let gameRunning = false;
+        let score = 0;
+        let gameSpeed = 3;
+        let speedMultiplier = 1;
+        let frameCount = 0;
+        let highScore = localStorage.getItem('neonRacerHighScore') || 0;
+        document.getElementById('highScoreValue').textContent = highScore;
+
+        // Sistema de sonido
+        const sounds = {
+            motor: null,
+            turn: null,
+            bonus: null,
+            music: null
+        };
+
+        let soundsLoaded = 0;
+        const totalSounds = 4;
+
+        // Configuración de sonido
+        let soundSettings = {
+            musicEnabled: true,
+            sfxEnabled: true,
+            turnEnabled: true,
+            bonusEnabled: true
+        };
+
+        // Cargar configuración guardada
+        const savedSettings = localStorage.getItem('neonRacerSoundSettings');
+        if (savedSettings) {
+            soundSettings = JSON.parse(savedSettings);
+            document.getElementById('musicEnabled').checked = soundSettings.musicEnabled;
+            document.getElementById('sfxEnabled').checked = soundSettings.sfxEnabled;
+            document.getElementById('turnEnabled').checked = soundSettings.turnEnabled;
+            document.getElementById('bonusEnabled').checked = soundSettings.bonusEnabled;
+        }
+
+        // Función para crear sonido con manejo de errores
+        function createSound(src, volume, loop = false) {
+            return new Promise((resolve, reject) => {
+                const audio = new Audio();
+                
+                // Configurar eventos
+                audio.addEventListener('canplaythrough', () => {
+                    console.log(`Sonido cargado: ${src}`);
+                    soundsLoaded++;
+                    updateSoundStatus();
+                    resolve(audio);
+                }, { once: true });
+                
+                audio.addEventListener('error', (e) => {
+                    console.error(`Error cargando sonido ${src}:`, e);
+                    soundsLoaded++;
+                    updateSoundStatus();
+                    // Resolvemos con null para no romper la promesa
+                    resolve(null);
+                });
+                
+                // Configurar propiedades
+                audio.src = src;
+                audio.loop = loop;
+                audio.volume = volume;
+                audio.load();
+            });
+        }
+
+        // Actualizar estado de sonidos en UI
+        function updateSoundStatus() {
+            const status = document.getElementById('soundStatus');
+            if (soundsLoaded === totalSounds) {
+                status.innerHTML = '🔊 Sonidos listos';
+                status.style.color = '#00ff00';
+            } else {
+                status.innerHTML = `⏳ Cargando sonidos: ${soundsLoaded}/${totalSounds}`;
+            }
+        }
+
+        // Inicializar todos los sonidos
+        async function initSounds() {
+            try {
+                // Cargar todos los sonidos en paralelo
+                const [motor, turn, bonus, music] = await Promise.all([
+                    createSound('motor.mp3', 0.3, true),
+                    createSound('cambio.mp3', 0.5, false),
+                    createSound('bonus.mp3', 0.6, false),
+                    createSound('musicars.mp3', 0.2, true)
+                ]);
+                
+                sounds.motor = motor;
+                sounds.turn = turn;
+                sounds.bonus = bonus;
+                sounds.music = music;
+                
+                console.log('Sistema de sonido inicializado');
+                
+            } catch (e) {
+                console.error('Error en inicialización de sonidos:', e);
+                document.getElementById('soundStatus').innerHTML = '⚠️ Error en sonidos';
+            }
+        }
+
+        // Reproducir sonido
+        function playSound(soundName) {
+            if (!soundSettings.sfxEnabled) return;
+            
+            const sound = sounds[soundName];
+            if (!sound) return;
+            
+            try {
+                switch(soundName) {
+                    case 'turn':
+                        if (!soundSettings.turnEnabled) return;
+                        sound.currentTime = 0;
+                        sound.play().catch(e => console.log('Error reproduciendo turn'));
+                        break;
+                    case 'bonus':
+                        if (!soundSettings.bonusEnabled) return;
+                        sound.currentTime = 0;
+                        sound.play().catch(e => console.log('Error reproduciendo bonus'));
+                        break;
+                }
+            } catch (e) {
+                console.log(`Error reproduciendo ${soundName}:`, e);
+            }
+        }
+
+        // Controlar música de fondo
+        function toggleBackgroundMusic(play) {
+            if (!sounds.music) return;
+            
+            try {
+                if (play && soundSettings.musicEnabled) {
+                    sounds.music.play().catch(e => console.log('Error reproduciendo música'));
+                } else {
+                    sounds.music.pause();
+                    sounds.music.currentTime = 0;
+                }
+            } catch (e) {
+                console.log('Error controlando música:', e);
+            }
+        }
+
+        // Controlar motor
+        function toggleEngine(play) {
+            if (!sounds.motor || !soundSettings.sfxEnabled) return;
+            
+            try {
+                if (play && gameRunning) {
+                    sounds.motor.play().catch(e => console.log('Error reproduciendo motor'));
+                } else {
+                    sounds.motor.pause();
+                    sounds.motor.currentTime = 0;
+                }
+            } catch (e) {
+                console.log('Error controlando motor:', e);
+            }
+        }
+
+        // Jugador
+        const player = {
+            x: canvas.width / 2 - 20,
+            y: canvas.height - 120,
+            width: 40,
+            height: 70,
+            speed: 5,
+            color: '#ff0066',
+            lastX: canvas.width / 2 - 20
+        };
+
+        // Controles
+        const keys = {};
+        let mouseX = player.x;
+
+        // Obstáculos y monedas
+        let obstacles = [];
+        let coins = [];
+        let particles = [];
+        let roadMarkers = [];
+
+        // Inicializar marcadores de carretera
+        for (let i = 0; i < 6; i++) {
+            roadMarkers.push({
+                y: i * 120,
+                height: 60
+            });
+        }
+
+        // Event listeners
+        document.addEventListener('keydown', (e) => {
+            const oldX = player.x;
+            keys[e.key] = true;
+            
+            // Detectar cambio de dirección
+            if (gameRunning && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'a' || e.key === 'A' || e.key === 'd' || e.key === 'D')) {
+                setTimeout(() => {
+                    if (Math.abs(player.x - oldX) > 1) {
+                        playSound('turn');
+                    }
+                }, 10);
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left - player.width / 2;
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.touches[0].clientX - rect.left - player.width / 2;
+        });
+
+        // Clase Partícula
+        class Particle {
+            constructor(x, y, color, speed) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = speed + Math.random() * 2;
+                this.life = 1;
+                this.decay = 0.02;
+                this.color = color;
+                this.size = Math.random() * 4 + 2;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.life -= this.decay;
+                this.size *= 0.98;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // Crear efecto de humo/estela
+        function createExhaust() {
+            if (frameCount % 3 === 0) {
+                particles.push(new Particle(
+                    player.x + player.width / 2 + (Math.random() - 0.5) * 10,
+                    player.y + player.height,
+                    `rgba(0, 255, 255, ${0.5 + Math.random() * 0.5})`,
+                    2
+                ));
+            }
+        }
+
+        // Crear explosión
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 20; i++) {
+                particles.push(new Particle(
+                    x, y, color, -Math.random() * 3
+                ));
+            }
+        }
+
+        // Dibujar coche
+        function drawCar(x, y, width, height, color, isPlayer = false) {
+            ctx.save();
+            
+            // Sombra
+            ctx.fillStyle = 'rgba(0,0,0,0.3)';
+            ctx.fillRect(x + 5, y + 5, width, height);
+
+            // Cuerpo principal
+            ctx.fillStyle = color;
+            ctx.shadowBlur = isPlayer ? 20 : 0;
+            ctx.shadowColor = color;
+            
+            // Forma del coche
+            ctx.beginPath();
+            ctx.roundRect(x, y, width, height, 8);
+            ctx.fill();
+
+            // Detalles del coche
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.fillRect(x + 5, y + 10, width - 10, 15);
+            ctx.fillRect(x + 5, y + height - 25, width - 10, 15);
+
+            // Luces
+            ctx.fillStyle = '#ffff00';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#ffff00';
+            ctx.fillRect(x + 3, y + height - 5, 8, 5);
+            ctx.fillRect(x + width - 11, y + height - 5, 8, 5);
+
+            if (isPlayer) {
+                ctx.fillStyle = '#ff0000';
+                ctx.shadowColor = '#ff0000';
+                ctx.fillRect(x + 3, y, 8, 5);
+                ctx.fillRect(x + width - 11, y, 8, 5);
+            }
+
+            ctx.restore();
+        }
+
+        // Dibujar moneda
+        function drawCoin(coin) {
+            ctx.save();
+            ctx.translate(coin.x + coin.size/2, coin.y + coin.size/2);
+            ctx.rotate(coin.rotation);
+            
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#ffd700';
+            
+            ctx.fillStyle = '#ffd700';
+            ctx.beginPath();
+            ctx.arc(0, 0, coin.size/2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#ffed4e';
+            ctx.beginPath();
+            ctx.arc(0, 0, coin.size/3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#b8860b';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('$', 0, 1);
+            
+            ctx.restore();
+        }
+
+        // Actualizar juego
+        function update() {
+            if (!gameRunning) return;
+
+            frameCount++;
+            score += Math.floor(gameSpeed / 2);
+            
+            if (score > 0 && score % 500 === 0) {
+                speedMultiplier += 0.1;
+                gameSpeed = 3 * speedMultiplier;
+            }
+
+            document.getElementById('score').textContent = score;
+            document.getElementById('speedValue').textContent = speedMultiplier.toFixed(1);
+
+            // Guardar posición anterior para detectar cambios
+            const oldX = player.x;
+
+            // Movimiento del jugador
+            if (keys['ArrowLeft'] || keys['a'] || keys['A']) {
+                player.x -= player.speed;
+            }
+            if (keys['ArrowRight'] || keys['d'] || keys['D']) {
+                player.x += player.speed;
+            }
+            
+            const targetX = Math.max(0, Math.min(canvas.width - player.width, mouseX));
+            player.x += (targetX - player.x) * 0.1;
+
+            // Detectar cambio de dirección
+            if (Math.abs(player.x - oldX) > 2) {
+                playSound('turn');
+            }
+
+            player.x = Math.max(10, Math.min(canvas.width - player.width - 10, player.x));
+
+            createExhaust();
+
+            particles = particles.filter(p => {
+                p.update();
+                return p.life > 0;
+            });
+
+            roadMarkers.forEach(marker => {
+                marker.y += gameSpeed;
+                if (marker.y > canvas.height) {
+                    marker.y = -marker.height;
+                }
+            });
+
+            if (frameCount % Math.max(30, Math.floor(100 - speedMultiplier * 10)) === 0) {
+                const lanes = [40, 120, 200, 280];
+                const lane = lanes[Math.floor(Math.random() * lanes.length)];
+                obstacles.push({
+                    x: lane,
+                    y: -80,
+                    width: 40,
+                    height: 70,
+                    speed: gameSpeed * (0.8 + Math.random() * 0.4),
+                    color: `hsl(${Math.random() * 60 + 180}, 70%, 50%)`
+                });
+            }
+
+            if (frameCount % 150 === 0) {
+                coins.push({
+                    x: Math.random() * (canvas.width - 40) + 20,
+                    y: -30,
+                    size: 30,
+                    rotation: 0,
+                    speed: gameSpeed
+                });
+            }
+
+            obstacles = obstacles.filter(obs => {
+                obs.y += obs.speed;
+                
+                if (player.x < obs.x + obs.width - 5 &&
+                    player.x + player.width > obs.x + 5 &&
+                    player.y < obs.y + obs.height - 10 &&
+                    player.y + player.height > obs.y + 10) {
+                    gameOver();
+                    return false;
+                }
+                
+                return obs.y < canvas.height + 100;
+            });
+
+            coins = coins.filter(coin => {
+                coin.y += coin.speed;
+                coin.rotation += 0.05;
+                
+                const dx = (player.x + player.width/2) - (coin.x + coin.size/2);
+                const dy = (player.y + player.height/2) - (coin.y + coin.size/2);
+                const distance = Math.sqrt(dx*dx + dy*dy);
+                
+                if (distance < (player.width/2 + coin.size/2)) {
+                    score += 50;
+                    createExplosion(coin.x + coin.size/2, coin.y + coin.size/2, '#ffd700');
+                    playSound('bonus');
+                    return false;
+                }
+                
+                return coin.y < canvas.height + 50;
+            });
+        }
+
+        // Dibujar juego
+        function draw() {
+            ctx.fillStyle = '#0f0f23';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#1a1a2e';
+            ctx.fillRect(10, 0, canvas.width - 20, canvas.height);
+            
+            ctx.strokeStyle = '#00ffff';
+            ctx.lineWidth = 3;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#00ffff';
+            ctx.beginPath();
+            ctx.moveTo(15, 0);
+            ctx.lineTo(15, canvas.height);
+            ctx.moveTo(canvas.width - 15, 0);
+            ctx.lineTo(canvas.width - 15, canvas.height);
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            roadMarkers.forEach(marker => {
+                ctx.fillRect(canvas.width/2 - 3, marker.y, 6, marker.height);
+            });
+
+            particles.forEach(p => p.draw());
+            coins.forEach(coin => drawCoin(coin));
+            obstacles.forEach(obs => drawCar(obs.x, obs.y, obs.width, obs.height, obs.color));
+
+            if (gameRunning) {
+                drawCar(player.x, player.y, player.width, player.height, player.color, true);
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Funciones de interfaz
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            gameRunning = true;
+            resetGame();
+            toggleEngine(true);
+            toggleBackgroundMusic(true);
+        }
+
+        function restartGame() {
+            document.getElementById('gameOver').style.display = 'none';
+            gameRunning = true;
+            resetGame();
+            toggleEngine(true);
+            toggleBackgroundMusic(true);
+        }
+
+        function showStartScreen() {
+            document.getElementById('gameOver').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+            gameRunning = false;
+            toggleEngine(false);
+            toggleBackgroundMusic(false);
+        }
+
+        function resetGame() {
+            score = 0;
+            gameSpeed = 3;
+            speedMultiplier = 1;
+            frameCount = 0;
+            obstacles = [];
+            coins = [];
+            particles = [];
+            player.x = canvas.width / 2 - 20;
+            mouseX = player.x;
+        }
+
+        function gameOver() {
+            gameRunning = false;
+            createExplosion(player.x + player.width/2, player.y + player.height/2, '#ff0066');
+            
+            toggleEngine(false);
+            toggleBackgroundMusic(false);
+            
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('neonRacerHighScore', highScore);
+                document.getElementById('highScoreValue').textContent = highScore;
+            }
+            
+            document.getElementById('finalScore').textContent = `Puntuación: ${score}`;
+            document.getElementById('gameOver').style.display = 'block';
+        }
+
+        // Funciones de configuración
+        function openSettings() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('settingsDialog').style.display = 'block';
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsDialog').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+        }
+
+        function saveSettings() {
+            soundSettings = {
+                musicEnabled: document.getElementById('musicEnabled').checked,
+                sfxEnabled: document.getElementById('sfxEnabled').checked,
+                turnEnabled: document.getElementById('turnEnabled').checked,
+                bonusEnabled: document.getElementById('bonusEnabled').checked
+            };
+            
+            localStorage.setItem('neonRacerSoundSettings', JSON.stringify(soundSettings));
+            closeSettings();
+            
+            // Actualizar estado de la música si está sonando
+            if (gameRunning) {
+                toggleBackgroundMusic(true);
+            }
+        }
+
+        // Canvas roundRect helper
+        CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+            if (w < 2 * r) r = w / 2;
+            if (h < 2 * r) r = h / 2;
+            this.moveTo(x + r, y);
+            this.lineTo(x + w - r, y);
+            this.quadraticCurveTo(x + w, y, x + w, y + r);
+            this.lineTo(x + w, y + h - r);
+            this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            this.lineTo(x + r, y + h);
+            this.quadraticCurveTo(x, y + h, x, y + h - r);
+            this.lineTo(x, y + r);
+            this.quadraticCurveTo(x, y, x + r, y);
+            return this;
+        };
+
+        // Inicializar sonidos y empezar
+        initSounds();
+        gameLoop();
+    </script>
+</body>
+</html>

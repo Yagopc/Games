@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#000000">
+<title>Space Invaders</title>
+<style>
+  @font-face {
+    font-family: "PressStart2P";
+    src: url("PressStart2P.ttf");
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%; width: 100%;
+    margin: 0; padding: 0;
+    background: black;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-family: "PressStart2P", monospace;
+    position: fixed;
+    inset: 0;
+  }
+  #background-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+  }
+  #game-wrapper {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  #game-canvas {
+    display: block;
+    outline: 1px solid white;
+    background: black;
+    max-width: 100%;
+    max-height: 70vh;
+  }
+  #touch-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 600px;
+    padding: 10px 8px;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .touch-btn {
+    flex: 1;
+    height: 70px;
+    background: rgba(255,255,255,0.08);
+    border: 2px solid rgba(255,255,255,0.5);
+    border-radius: 12px;
+    color: white;
+    font-family: "PressStart2P", monospace;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: background 0.08s;
+  }
+  .touch-btn:active, .touch-btn.pressed {
+    background: rgba(255,255,255,0.35);
+  }
+  #btn-fire {
+    flex: 1.4;
+    background: rgba(255,80,80,0.15);
+    border-color: rgba(255,80,80,0.7);
+  }
+  #btn-fire:active, #btn-fire.pressed {
+    background: rgba(255,80,80,0.55);
+  }
+  #start-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.85);
+    color: white;
+    text-align: center;
+    padding: 20px;
+  }
+  #start-overlay h1 {
+    font-size: 22px;
+    line-height: 1.6;
+    margin-bottom: 30px;
+    letter-spacing: 2px;
+  }
+  #start-overlay button {
+    font-family: "PressStart2P", monospace;
+    font-size: 16px;
+    padding: 18px 28px;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: 2px solid white;
+    border-radius: 12px;
+    cursor: pointer;
+  }
+  #start-overlay button:active {
+    background: rgba(255,255,255,0.4);
+  }
+  #start-overlay .hint {
+    margin-top: 24px;
+    font-size: 10px;
+    opacity: 0.7;
+    line-height: 1.8;
+  }
+  @media (orientation: landscape) and (max-height: 500px) {
+    #game-canvas { max-height: 55vh; }
+    .touch-btn { height: 55px; font-size: 14px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="background-canvas"></canvas>
+
+<div id="game-wrapper">
+  <canvas id="game-canvas" width="400" height="640"></canvas>
+  <div id="touch-controls">
+    <div class="touch-btn" id="btn-left">◀</div>
+    <div class="touch-btn" id="btn-fire">FUEGO</div>
+    <div class="touch-btn" id="btn-right">▶</div>
+  </div>
+</div>
+
+<div id="start-overlay">
+  <h1>SPACE<br>INVADERS</h1>
+  <button id="btn-start">TOCA PARA JUGAR</button>
+  <div class="hint">◀ ▶ mover · FUEGO disparar</div>
+</div>
+
+<script>
+/* ============================================================
+   AJUSTE RESPONSIVE
+   ============================================================ */
+const gameCanvas = document.getElementById("game-canvas");
+const bgCanvas = document.getElementById("background-canvas");
+
+function resizeCanvases() {
+  bgCanvas.width = window.innerWidth;
+  bgCanvas.height = window.innerHeight;
+
+  const controls = document.getElementById("touch-controls");
+  const availW = window.innerWidth - 16;
+  const availH = window.innerHeight - controls.offsetHeight - 40;
+
+  let w = availW;
+  let h = w * 8 / 5;
+  if (h > availH) { h = availH; w = h * 5 / 8; }
+  if (w < 200) { w = 200; h = 320; }
+
+  gameCanvas.style.width = w + "px";
+  gameCanvas.style.height = h + "px";
+
+  if (typeof createStars === "function") createStars();
+}
+
+/* ============================================================
+   FONDO ANIMADO
+   ============================================================ */
+let backgroundContext = bgCanvas.getContext("2d");
+
+function drawText() {
+  backgroundContext.font = "18px 'PressStart2P', monospace";
+  backgroundContext.fillStyle = "rgba(255,255,255,0.15)";
+  backgroundContext.fillText("SPACE", bgCanvas.width / 2 - 45, bgCanvas.height - 60);
+  backgroundContext.fillText("INVADERS", bgCanvas.width / 2 - 72, bgCanvas.height - 30);
+}
+
+class Star {
+  constructor(x, y, dx, dy, radius) {
+    this.x = x; this.ogX = x; this.y = y; this.ogY = y;
+    this.dx = dx; this.dy = dy; this.radius = radius;
+  }
+  draw() {
+    backgroundContext.beginPath();
+    backgroundContext.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+    backgroundContext.fillStyle = "white";
+    backgroundContext.fill();
+  }
+  update() {
+    this.x += this.dx; this.y += this.dy;
+    if (this.x <= 0 || this.x >= bgCanvas.width || this.y <= 0 || this.y >= bgCanvas.height) {
+      this.x = this.ogX; this.y = this.ogY;
+    }
+    this.draw();
+  }
+}
+
+let stars = [];
+function createStars() {
+  stars = [];
+  const n = Math.min(150, Math.floor(bgCanvas.width * bgCanvas.height / 8000));
+  for (let i = 0; i < n; i++) {
+    let x = Math.floor(Math.random() * bgCanvas.width);
+    let y = Math.floor(Math.random() * bgCanvas.height);
+    let dx = Math.round(Math.random() * 4) - 2;
+    while (dx === 0) dx = Math.round(Math.random() * 2) - 1;
+    let dy = Math.round(Math.random() * 4) - 2;
+    while (dy === 0) dy = Math.round(Math.random() * 2) - 1;
+    stars.push(new Star(x, y, dx, dy, Math.ceil(Math.random() * 2)));
+  }
+}
+function drawStars() { for (let i = 0; i < stars.length; i++) stars[i].update(); }
+function drawPageBackground() {
+  backgroundContext.beginPath();
+  backgroundContext.rect(0, 0, bgCanvas.width, bgCanvas.height);
+  backgroundContext.fillStyle = "black";
+  backgroundContext.fill();
+  drawStars(); drawText();
+}
+function backgroundLoop() {
+  requestAnimationFrame(backgroundLoop);
+  drawPageBackground();
+}
+createStars();
+backgroundLoop();
+
+/* ============================================================
+   JUEGO
+   ============================================================ */
+const W = 400, H = 640;
+const canvas = gameCanvas;
+const context = canvas.getContext("2d");
+
+/* --- AUDIO --- */
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function beep(freq, duration, type = "square", vol = 0.08, slideTo = null) {
+  try {
+    const ctx = getAudioCtx();
+    if (ctx.state === "suspended") ctx.resume();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    if (slideTo !== null) osc.frequency.exponentialRampToValueAtTime(slideTo, ctx.currentTime + duration);
+    gain.gain.setValueAtTime(vol, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(); osc.stop(ctx.currentTime + duration);
+  } catch (e) {}
+}
+const sounds = {
+  explosion:     () => beep(120, 0.4, "sawtooth", 0.15, 30),
+  invaderKilled: () => beep(600, 0.15, "square", 0.1, 200),
+  shoot:         () => beep(900, 0.08, "square", 0.06, 400),
+  invaderHit:    () => beep(300, 0.1, "triangle", 0.08),
+  shieldHit:     () => beep(250, 0.05, "sawtooth", 0.05)
+};
+const enemySounds = [
+  () => beep(180, 0.06, "square", 0.05),
+  () => beep(200, 0.06, "square", 0.05),
+  () => beep(220, 0.06, "square", 0.05),
+  () => beep(240, 0.06, "square", 0.05)
+];
+
+/* --- SPRITES --- */
+function drawInvaderSprite(ctx, x, y, w, h, type, frame) {
+  ctx.save(); ctx.translate(x, y); ctx.fillStyle = "white";
+  const cx = w / 2, cy = h / 2, s = Math.min(w, h) / 10;
+  if (type === 0) {
+    ctx.fillRect(cx - 3*s, cy - 4*s, 6*s, 2*s); ctx.fillRect(cx - 4*s, cy - 2*s, 8*s, 2*s);
+    ctx.fillRect(cx - 2*s, cy, 4*s, 2*s); ctx.fillRect(cx - 5*s, cy + 2*s, 2*s, 2*s);
+    ctx.fillRect(cx + 3*s, cy + 2*s, 2*s, 2*s);
+    if (frame === 1) { ctx.fillRect(cx - 4*s, cy + 4*s, 2*s, 1*s); ctx.fillRect(cx + 2*s, cy + 4*s, 2*s, 1*s); }
+    else { ctx.fillRect(cx - 3*s, cy + 4*s, 2*s, 1*s); ctx.fillRect(cx + 1*s, cy + 4*s, 2*s, 1*s); }
+  } else if (type === 1) {
+    ctx.fillRect(cx - 4*s, cy - 4*s, 8*s, 2*s); ctx.fillRect(cx - 5*s, cy - 2*s, 10*s, 2*s);
+    ctx.fillRect(cx - 3*s, cy, 6*s, 2*s); ctx.fillRect(cx - 5*s, cy + 2*s, 2*s, 2*s);
+    ctx.fillRect(cx + 3*s, cy + 2*s, 2*s, 2*s); ctx.fillRect(cx - 2*s, cy + 2*s, 4*s, 2*s);
+    if (frame === 1) { ctx.fillRect(cx - 6*s, cy + 4*s, 2*s, 1*s); ctx.fillRect(cx + 4*s, cy + 4*s, 2*s, 1*s); }
+    else { ctx.fillRect(cx - 3*s, cy + 4*s, 2*s, 1*s); ctx.fillRect(cx + 1*s, cy + 4*s, 2*s, 1*s); }
+  } else {
+    ctx.fillRect(cx - 3*s, cy - 4*s, 6*s, 2*s); ctx.fillRect(cx - 4*s, cy - 2*s, 8*s, 2*s);
+    ctx.fillRect(cx - 2*s, cy, 4*s, 2*s); ctx.fillRect(cx - 4*s, cy + 2*s, 2*s, 2*s);
+    ctx.fillRect(cx + 2*s, cy + 2*s, 2*s, 2*s); ctx.fillRect(cx - 1*s, cy + 2*s, 2*s, 2*s);
+    if (frame === 1) { ctx.fillRect(cx - 5*s, cy + 4*s, 2*s, 1*s); ctx.fillRect(cx + 3*s, cy + 4*s, 2*s, 1*s); }
+    else { ctx.fillRect(cx - 2*s, cy + 4*s, 2*s, 1*s); ctx.fillRect(cx, cy + 4*s, 2*s, 1*s); }
+  }
+  ctx.restore();
+}
+function drawPlayerSprite(ctx, x, y, w, h) {
+  ctx.save(); ctx.translate(x, y); ctx.fillStyle = "#00ff00";
+  const cx = w / 2, s = w / 12;
+  ctx.fillRect(cx - 6*s, h - 3*s, 12*s, 2*s); ctx.fillRect(cx - 4*s, h - 5*s, 8*s, 2*s);
+  ctx.fillRect(cx - 2*s, h - 7*s, 4*s, 2*s); ctx.fillRect(cx - 1*s, h - 9*s, 2*s, 2*s);
+  ctx.fillStyle = "#00cc00"; ctx.fillRect(cx - 0.5*s, h - 10*s, 1*s, 1*s);
+  ctx.restore();
+}
+function drawExplosionSprite(ctx, x, y, w, h) {
+  ctx.save(); ctx.translate(x, y); ctx.fillStyle = "orange";
+  const cx = w/2, cy = h/2, s = w/10;
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2, r = (i % 2 === 0 ? 4 : 2) * s;
+    ctx.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "yellow"; ctx.beginPath(); ctx.arc(cx, cy, 1.5*s, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+}
+
+/* ============================================================
+   CONFIGURACIÓN
+   ============================================================
+   speed    : píxeles por frame (a 60 fps) del enjambre al empezar el nivel
+   accel    : cuánto se acelera como máximo (1.5 = hasta +150 % con 1 enemigo)
+   fire     : [mín, máx] frames entre disparos enemigos
+   maxShots : disparos enemigos simultáneos en pantalla
+*/
+const LEVELS = [
+  { speed: 0.45, accel: 1.5, fire: [70, 130], maxShots: 2 },
+  { speed: 0.65, accel: 1.5, fire: [55, 105], maxShots: 3 },
+  { speed: 0.85, accel: 1.5, fire: [40,  85], maxShots: 4 },
+];
+const ENEMY_TYPES = [
+  { hits: 1 },
+  { hits: 3 },
+  { hits: 2 },
+];
+const ENEMY_W = 26, ENEMY_H = 20;
+const COLS = 7, ROWS = 5;
+const H_GAP = 38, V_GAP = 30;
+const START_Y = 65;
+const STEP_DOWN = 10;      // lo que bajan al tocar el borde
+const SIDE_MARGIN = 6;
+const MARCH_DISTANCE = 10; // px que avanza el enjambre entre "pasos" (animación + sonido)
+const HUD_LINE = 45;
+
+/* --- ESTADO --- */
+let player = null;
+let enemies = [], enemyLasers = [], playerLasers = [], bunkers = [];
+let aliveCount = 0, totalEnemies = 0;
+let swarmDir = 1, marchAcc = 0, marchFrame = 0, marchTrack = 0;
+let enemyFireTimer = 0;
+let level = 1, score = 0;
+let gameStart = false, gameOver = false, gameWon = false, gamePaused = false;
+let pauseDelay = 0, nextLevelDelay = 0, endTicks = 0;
+let kLeft = false, kRight = false, tLeft = false, tRight = false, fireHeld = false;
+
+const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const hitRect = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+/* ============================================================
+   BÚNKERES: cada uno es UNA pieza entera (un dibujo sólido).
+   Al recibir un impacto se le "muerde" un trozo irregular.
+   ============================================================ */
+const BUNKER_W = 64, BUNKER_H = 48;
+
+class Bunker {
+  constructor(x, y) {
+    this.x = x; this.y = y; this.w = BUNKER_W; this.h = BUNKER_H;
+    this.cv = document.createElement("canvas");
+    this.cv.width = this.w; this.cv.height = this.h;
+    this.cx = this.cv.getContext("2d", { willReadFrequently: true });
+    this.drawShape();
+  }
+  drawShape() {
+    const c = this.cx, w = this.w, h = this.h;
+    const r = 14;   // esquinas superiores cortadas
+    const lw = 18;  // ancho de las "patas"
+    const nh = 16;  // alto del hueco inferior
+    c.fillStyle = "#00ff00";
+    c.beginPath();
+    c.moveTo(0, h);
+    c.lineTo(0, r); c.lineTo(r, 0);
+    c.lineTo(w - r, 0); c.lineTo(w, r);
+    c.lineTo(w, h);
+    c.lineTo(w - lw, h); c.lineTo(w - lw, h - nh);
+    c.lineTo(lw, h - nh); c.lineTo(lw, h);
+    c.closePath();
+    c.fill();
+  }
+  // Muerde un trozo irregular alrededor del punto de impacto
+  damage(px, py) {
+    const c = this.cx;
+    c.globalCompositeOperation = "destination-out";
+    c.beginPath(); c.arc(px, py, rand(5, 7), 0, Math.PI * 2); c.fill();
+    for (let i = 0; i < 7; i++) {
+      const ox = px + rand(-9, 9), oy = py + rand(-9, 9);
+      c.beginPath(); c.arc(ox, oy, 1.5 + Math.random() * 2.5, 0, Math.PI * 2); c.fill();
+    }
+    c.globalCompositeOperation = "source-over";
+  }
+  // Los enemigos que llegan hasta aquí se lo van comiendo
+  eraseRect(x, y, w, h) {
+    this.cx.clearRect(x - this.x, y - this.y, w, h);
+  }
+  // Devuelve true si el disparo toca un píxel sólido
+  hit(l, movingUp) {
+    const x0 = Math.max(l.x, this.x), y0 = Math.max(l.y, this.y);
+    const x1 = Math.min(l.x + l.w, this.x + this.w), y1 = Math.min(l.y + l.h, this.y + this.h);
+    if (x1 <= x0 || y1 <= y0) return false;
+    const ix = Math.floor(x0 - this.x), iy = Math.floor(y0 - this.y);
+    const iw = Math.max(1, Math.ceil(x1 - this.x) - ix), ih = Math.max(1, Math.ceil(y1 - this.y) - iy);
+    const d = this.cx.getImageData(ix, iy, iw, ih).data;
+    // Busca el primer píxel sólido en el sentido de avance del disparo
+    for (let k = 0; k < ih; k++) {
+      const row = movingUp ? ih - 1 - k : k;
+      for (let col = 0; col < iw; col++) {
+        if (d[(row * iw + col) * 4 + 3] > 128) {
+          this.damage(ix + col, iy + row);
+          sounds.shieldHit();
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  draw() { context.drawImage(this.cv, this.x, this.y); }
+}
+
+function createBunkers() {
+  bunkers = [];
+  const count = 4;
+  const spacing = (W - count * BUNKER_W) / (count + 1);
+  const y = H - 150;
+  for (let i = 0; i < count; i++) {
+    bunkers.push(new Bunker(Math.round(spacing + i * (BUNKER_W + spacing)), y));
+  }
+}
+
+/* ============================================================
+   ENEMIGOS Y ENJAMBRE
+   ============================================================ */
+function createEnemies() {
+  enemies = [];
+  const startX = (W - ((COLS - 1) * H_GAP + ENEMY_W)) / 2;
+  for (let i = 0; i < COLS; i++) {
+    for (let j = 0; j < ROWS; j++) {
+      const type = j % 3;
+      const hits = ENEMY_TYPES[type].hits;
+      enemies.push({
+        x: startX + i * H_GAP,
+        y: START_Y + j * V_GAP,
+        w: ENEMY_W, h: ENEMY_H,
+        col: i, type,
+        lives: Math.min(hits, level),
+        state: "alive",   // alive | dying | gone
+        timer: 0, flash: 0
+      });
+    }
+  }
+  totalEnemies = enemies.length;
+  aliveCount = enemies.length;
+}
+
+// Velocidad actual: arranca lenta y sube de forma suave según los enemigos eliminados
+function swarmSpeed() {
+  const cfg = LEVELS[level - 1];
+  const killed = (totalEnemies - aliveCount) / totalEnemies;
+  return cfg.speed * (1 + cfg.accel * killed);
+}
+
+function updateSwarm() {
+  const speed = swarmSpeed();
+  const dx = swarmDir * speed;
+  let minX = Infinity, maxX = -Infinity;
+  for (const e of enemies) {
+    if (e.state !== "alive") continue;
+    if (e.x < minX) minX = e.x;
+    if (e.x + e.w > maxX) maxX = e.x + e.w;
+  }
+  if (maxX + dx > W - SIDE_MARGIN || minX + dx < SIDE_MARGIN) {
+    // Toca el borde: TODO el grupo baja una vez y cambia de sentido
+    swarmDir *= -1;
+    for (const e of enemies) if (e.state === "alive") e.y += STEP_DOWN;
+  } else {
+    for (const e of enemies) if (e.state === "alive") e.x += dx;
+  }
+  // Animación y sonido ligados a la distancia recorrida (se aceleran solos)
+  marchAcc += speed;
+  if (marchAcc >= MARCH_DISTANCE) {
+    marchAcc = 0;
+    marchFrame = marchFrame ? 0 : 1;
+    enemySounds[marchTrack]();
+    marchTrack = (marchTrack + 1) % 4;
+  }
+}
+
+// Dispara el enemigo de más abajo de una columna al azar
+function enemyFire() {
+  const cfg = LEVELS[level - 1];
+  if (enemyLasers.length >= cfg.maxShots) return;
+  const bottoms = {};
+  for (const e of enemies) {
+    if (e.state !== "alive") continue;
+    if (!bottoms[e.col] || e.y > bottoms[e.col].y) bottoms[e.col] = e;
+  }
+  const list = Object.values(bottoms);
+  if (!list.length) return;
+  const e = list[rand(0, list.length - 1)];
+  enemyLasers.push({ x: Math.floor(e.x + e.w / 2) - 2, y: e.y + e.h, w: 4, h: 12, dy: 4 + level * 0.5 });
+}
+
+/* ============================================================
+   JUGADOR
+   ============================================================ */
+function createPlayer() {
+  const w = 30, h = 26;
+  return {
+    x: (W - w) / 2, y: H - h - 6, w, h,
+    speed: 6, lives: 5, exploding: false, explodingTick: 0
+  };
+}
+function playerFire() {
+  if (!player || gamePaused || gameOver || gameWon || !gameStart) return;
+  if (aliveCount === 0) return;
+  if (playerLasers.length >= 2) return;
+  playerLasers.push({ x: Math.floor(player.x + player.w / 2) - 2, y: player.y, w: 4, h: 12, dy: 9 });
+  sounds.shoot();
+}
+function loseLife() {
+  player.lives--;
+  player.exploding = true; player.explodingTick = 0;
+  score = Math.max(0, score - 500);
+  sounds.explosion();
+  playerLasers = []; enemyLasers = [];
+  if (player.lives <= 0) { player.lives = 0; gameOver = true; }
+  else { gamePaused = true; pauseDelay = 0; }
+}
+
+/* ============================================================
+   NIVELES
+   ============================================================ */
+function startLevel(n) {
+  level = n;
+  const cfg = LEVELS[n - 1];
+  createEnemies();
+  createBunkers();
+  swarmDir = 1; marchAcc = 0; marchFrame = 0; marchTrack = 0;
+  enemyLasers = []; playerLasers = [];
+  enemyFireTimer = rand(cfg.fire[0], cfg.fire[1]);
+  nextLevelDelay = 0;
+}
+
+function init() {
+  gameOver = false; gameWon = false; gamePaused = false;
+  score = 0; pauseDelay = 0; endTicks = 0;
+  player = createPlayer();
+  startLevel(1);
+}
+
+/* ============================================================
+   ACTUALIZACIÓN (lógica a 60 pasos por segundo fijos)
+   ============================================================ */
+function update() {
+  if (!player) return;
+  if (gameOver || gameWon) { endTicks++; return; }
+
+  // Temporizadores de explosión / parpadeo de enemigos
+  for (const e of enemies) {
+    if (e.state === "dying") { if (--e.timer <= 0) e.state = "gone"; }
+    if (e.flash > 0) e.flash--;
+  }
+
+  // Pausa tras perder una vida
+  if (gamePaused) {
+    player.explodingTick++;
+    if (++pauseDelay >= 90) {
+      pauseDelay = 0; gamePaused = false;
+      player.exploding = false; player.x = (W - player.w) / 2;
+    }
+    return;
+  }
+  if (player.exploding && ++player.explodingTick >= 25) player.exploding = false;
+
+  // Movimiento del jugador
+  const dir = ((kRight || tRight) ? 1 : 0) - ((kLeft || tLeft) ? 1 : 0);
+  player.x = Math.max(0, Math.min(W - player.w, player.x + dir * player.speed));
+
+  // Fin de nivel
+  if (aliveCount === 0) {
+    if (level >= LEVELS.length) { gameWon = true; return; }
+    if (++nextLevelDelay >= 150) startLevel(level + 1);
+  } else {
+    updateSwarm();
+    if (--enemyFireTimer <= 0) {
+      const cfg = LEVELS[level - 1];
+      enemyFire();
+      enemyFireTimer = rand(cfg.fire[0], cfg.fire[1]);
+    }
+  }
+
+  // Movimiento de los disparos
+  for (const l of playerLasers) l.y -= l.dy;
+  for (const l of enemyLasers) l.y += l.dy;
+  playerLasers = playerLasers.filter(l => l.y + l.h > HUD_LINE);
+  enemyLasers = enemyLasers.filter(l => l.y < H);
+
+  // Disparos del jugador contra enemigos y búnkeres
+  for (const l of playerLasers) {
+    for (const e of enemies) {
+      if (e.state !== "alive" || !hitRect(l, e)) continue;
+      l.dead = true; score += 100; e.lives--;
+      if (e.lives <= 0) {
+        e.state = "dying"; e.timer = 15; aliveCount--;
+        sounds.invaderKilled();
+      } else {
+        e.flash = 8; sounds.invaderHit();
+      }
+      break;
+    }
+    if (l.dead) continue;
+    for (const b of bunkers) {
+      if (b.hit(l, true)) { l.dead = true; break; }
+    }
+  }
+  playerLasers = playerLasers.filter(l => !l.dead);
+
+  // Disparos enemigos contra jugador y búnkeres
+  for (const l of enemyLasers) {
+    if (hitRect(l, player)) { l.dead = true; loseLife(); break; }
+    for (const b of bunkers) {
+      if (b.hit(l, false)) { l.dead = true; break; }
+    }
+  }
+  enemyLasers = enemyLasers.filter(l => !l.dead);
+
+  // Enemigos que llegan a los búnkeres los destruyen; si llegan al jugador, fin
+  for (const e of enemies) {
+    if (e.state !== "alive") continue;
+    for (const b of bunkers) if (hitRect(e, b)) b.eraseRect(e.x, e.y, e.w, e.h);
+    if (e.y + e.h >= player.y) {
+      gameOver = true; player.lives = 0; sounds.explosion();
+      break;
+    }
+  }
+}
+
+/* ============================================================
+   DIBUJO
+   ============================================================ */
+function drawRestart() {
+  context.font = "12px 'PressStart2P', monospace"; context.fillStyle = "white"; context.textAlign = "center";
+  context.fillText("Toca pantalla para reiniciar", W / 2, H / 2 + 80); context.textAlign = "left";
+}
+function drawLives() {
+  context.beginPath(); context.moveTo(0, HUD_LINE); context.lineTo(W, HUD_LINE); context.strokeStyle = "white"; context.stroke();
+  context.font = "11px 'PressStart2P', monospace"; context.fillStyle = "white"; context.fillText("Lives", W - 170, 28);
+  for (let i = 0; i < player.lives; i++) drawPlayerSprite(context, W - 120 + (i * 22), 8, 20, 20);
+}
+function drawScore() {
+  context.font = "11px 'PressStart2P', monospace"; context.fillStyle = "white"; context.fillText(`Score: ${score}`, 15, 28);
+}
+function centerText(text, size, dy = 0) {
+  context.font = `${size}px 'PressStart2P', monospace`; context.fillStyle = "white"; context.textAlign = "center";
+  context.fillText(text, W / 2, H / 2 + dy); context.textAlign = "left";
+}
+
+function render() {
+  context.fillStyle = "black"; context.fillRect(0, 0, W, H);
+  if (!player) return;
+
+  for (const b of bunkers) b.draw();
+
+  for (const e of enemies) {
+    if (e.state === "dying") drawExplosionSprite(context, e.x, e.y, e.w, e.h);
+    else if (e.state === "alive") {
+      if (e.flash > 0 && e.flash % 4 < 2) continue; // parpadeo al ser golpeado
+      drawInvaderSprite(context, e.x, e.y, e.w, e.h, e.type, marchFrame);
+    }
+  }
+
+  context.fillStyle = "#ffffff";
+  for (const l of playerLasers) context.fillRect(l.x, l.y, l.w, l.h);
+  context.fillStyle = "#ff4040";
+  for (const l of enemyLasers) context.fillRect(l.x, l.y, l.w, l.h);
+
+  if (player.exploding && player.explodingTick < 25) drawExplosionSprite(context, player.x, player.y, player.w, player.h);
+  else if (!gameOver) drawPlayerSprite(context, player.x, player.y, player.w, player.h);
+
+  drawScore(); drawLives();
+
+  if (gamePaused && !gameOver) centerText(`Lives: ${player.lives}`, 20);
+  if (aliveCount === 0 && !gameWon && level < LEVELS.length) centerText(`Level ${level + 1}`, 20);
+  if (gameWon) { centerText("You Win!!!", 24); drawRestart(); }
+  if (gameOver) { centerText("Game Over", 24); drawRestart(); }
+}
+
+/* --- BUCLE: lógica a paso fijo (60/s) para que la velocidad sea la misma en cualquier pantalla --- */
+const STEP_MS = 1000 / 60;
+let lastTime = 0, acc = 0;
+function gameLoop(ts) {
+  requestAnimationFrame(gameLoop);
+  if (!lastTime) lastTime = ts;
+  acc += Math.min(ts - lastTime, 100);
+  lastTime = ts;
+  while (acc >= STEP_MS) { update(); acc -= STEP_MS; }
+  render();
+}
+
+/* ============================================================
+   CONTROLES
+   ============================================================ */
+const btnLeft = document.getElementById("btn-left");
+const btnRight = document.getElementById("btn-right");
+const btnFire = document.getElementById("btn-fire");
+const startOverlay = document.getElementById("start-overlay");
+const btnStart = document.getElementById("btn-start");
+
+function canRestart() { return (gameOver || gameWon) && endTicks > 45; }
+
+function setupHold(el, onDown, onUp) {
+  el.addEventListener("touchstart", (e) => { e.preventDefault(); onDown(); }, { passive: false });
+  el.addEventListener("touchend", (e) => { e.preventDefault(); onUp(); }, { passive: false });
+  el.addEventListener("touchcancel", (e) => { e.preventDefault(); onUp(); }, { passive: false });
+  el.addEventListener("mousedown", (e) => { e.preventDefault(); onDown(); });
+  el.addEventListener("mouseup", (e) => { e.preventDefault(); onUp(); });
+  el.addEventListener("mouseleave", () => onUp());
+}
+setupHold(btnLeft,  () => { tLeft = true; },  () => { tLeft = false; });
+setupHold(btnRight, () => { tRight = true; }, () => { tRight = false; });
+setupHold(btnFire,
+  () => { if (canRestart()) { startGame(); return; } fireHeld = true; playerFire(); },
+  () => { fireHeld = false; });
+setInterval(() => { if (fireHeld) playerFire(); }, 200);
+
+function startGame() {
+  startOverlay.style.display = "none";
+  try { getAudioCtx().resume(); } catch (e) {}
+  if (!gameStart) {
+    gameStart = true; init(); lastTime = 0;
+    requestAnimationFrame(gameLoop);
+  } else if (gameOver || gameWon) {
+    init();
+  }
+}
+btnStart.addEventListener("click", startGame);
+btnStart.addEventListener("touchstart", (e) => { e.preventDefault(); startGame(); }, { passive: false });
+
+// Tocar el juego para reiniciar tras Game Over / You Win
+canvas.addEventListener("pointerdown", () => { if (canRestart()) startGame(); });
+
+document.addEventListener("keydown", (e) => {
+  if (e.code === "ArrowLeft" || e.code === "KeyA") kLeft = true;
+  else if (e.code === "ArrowRight" || e.code === "KeyD") kRight = true;
+  else if (e.code === "Space") {
+    e.preventDefault();
+    if (canRestart()) startGame(); else playerFire();
+  } else if (e.code === "Enter") {
+    if (startOverlay.style.display !== "none" || canRestart()) startGame();
+  }
+});
+document.addEventListener("keyup", (e) => {
+  if (e.code === "ArrowLeft" || e.code === "KeyA") kLeft = false;
+  else if (e.code === "ArrowRight" || e.code === "KeyD") kRight = false;
+});
+
+window.addEventListener("resize", resizeCanvases);
+window.addEventListener("orientationchange", () => { setTimeout(resizeCanvases, 200); });
+resizeCanvases();
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) { kLeft = kRight = tLeft = tRight = fireHeld = false; lastTime = 0; }
+});
+</script>
+</body>
+</html>

@@ -378,36 +378,36 @@
         }
 
         async function fetchFileList() {
-            const response = await fetch(SERVER_URL + '/', {
-                method: 'GET',
-                mode: 'cors',
-                cache: 'no-store',
-                headers: { 'Accept': 'text/html' }
-            });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const htmlText = await response.text();
-            return parseDirectoryListing(htmlText);
-        }
+    const API_URL = 'https://api.github.com/repos/yagopc/Games/contents/';
 
-        function parseDirectoryListing(htmlText) {
-            const files = [];
-            const linkRegex = /href="([^"]*\.html?)"/gi;
-            let match;
-
-            while ((match = linkRegex.exec(htmlText)) !== null) {
-                let fileName;
-                try { fileName = decodeURIComponent(match[1]); }
-                catch (e) { fileName = match[1]; }
-                if (fileName &&
-                    fileName !== MENU_FILENAME &&
-                    fileName !== 'index.html' &&
-                    !fileName.startsWith('.') &&
-                    !files.includes(fileName)) {
-                    files.push(fileName);
-                }
-            }
-            return files;
+    const response = await fetch(API_URL, {
+        method: 'GET',
+        cache: 'no-store',
+        headers: {
+            'Accept': 'application/vnd.github+json'
         }
+    });
+
+    if (!response.ok) {
+        throw new Error(`GitHub API: HTTP ${response.status}`);
+    }
+
+    const items = await response.json();
+
+    return items
+        .filter(item =>
+            item.type === 'file' &&
+            /\.html?$/i.test(item.name) &&
+            item.name.toLowerCase() !== MENU_FILENAME.toLowerCase() &&
+            item.name.toLowerCase() !== 'index.html'
+        )
+        .map(item => item.name);
+}
+
+function parseDirectoryListing(htmlText) {
+    // Ya no necesitamos interpretar un listado HTML.
+    return [];
+}
 
         function checkImageExists(url) {
             return new Promise((resolve) => {

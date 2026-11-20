@@ -703,7 +703,7 @@
     var candy = info.candy;
     var img = document.createElement("img");
     $("#gameBoard").append(img);
-    img.src = "mediagames/" + candy.toString() + "-candy.png";
+    img.src = candy.toString() + "-candy.png";
     $(img).data("candy", candy);
     $(img).attr("id", "candy-id-" + candy.id);
     $(img).attr("data-position", candy.col + "-" + candy.row);

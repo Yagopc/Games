@@ -84,7 +84,7 @@
 
         .stats-panel {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             width: 100%;
             background: linear-gradient(180deg, #2b2218, #1c150e);
             padding: 3px 4px;
@@ -283,6 +283,7 @@
         .btn-mark { background: linear-gradient(180deg, #00838f, #004d40); border-color: #4dd0e1; }
         .btn-axe { background: linear-gradient(180deg, #8d6e63, #4e342e); border-color: #bcaaa4; }
         .btn-hammer { background: linear-gradient(180deg, #78909c, #37474f); border-color: #b0bec5; }
+        .btn-shop { background: linear-gradient(180deg, #d32f2f, #8e0000); border-color: #ff8a80; }
         .btn-minimap { background: linear-gradient(180deg, #512da8, #311b92); border-color: #9575cd; }
 
         #message {
@@ -510,6 +511,10 @@
                 <div class="stat-value" id="treasureCount">0/0</div>
             </div>
             <div class="stat-box">
+                <div class="stat-label">Estrellas</div>
+                <div class="stat-value" id="starCount" style="color:#ff6e6e">★ 0</div>
+            </div>
+            <div class="stat-box">
                 <div class="stat-label">Puntos</div>
                 <div class="stat-value" id="scoreCount">0</div>
             </div>
@@ -530,6 +535,7 @@
             <div class="tool-btn" id="tool-floor" onclick="selectTool('F')"><canvas class="tool-icon" id="icon-floor"></canvas>Suelo</div>
             <div class="tool-btn" id="tool-grass" onclick="selectTool('G')"><canvas class="tool-icon" id="icon-grass"></canvas>Hierba</div>
             <div class="tool-btn" id="tool-palm" onclick="selectTool('Q')"><canvas class="tool-icon" id="icon-palm"></canvas>Palmera</div>
+            <div class="tool-btn" id="tool-star" onclick="selectTool('S')"><canvas class="tool-icon" id="icon-star"></canvas>Estrella</div>
             <div class="tool-btn" id="tool-mark" onclick="selectTool('M')"><canvas class="tool-icon" id="icon-mark"></canvas>Marca</div>
             <div class="tool-btn" id="tool-player-extra" onclick="selectTool('P')" title="Mover inicio">🧍</div>
         </div>
@@ -602,6 +608,7 @@
         <div class="action-col-right">
             <button class="btn btn-axe" id="axeBtn" onclick="useAxe()">🪓 Hacha ×3</button>
             <button class="btn btn-hammer" id="hammerBtn" onclick="useHammer()">🔨 Martillo ×2</button>
+            <button class="btn btn-shop" id="shopBtn" onclick="openShop()">⭐ Tienda (0)</button>
         </div>
     </div>
 
@@ -861,6 +868,8 @@
         let axes = DEFAULT_AXES;
         const DEFAULT_HAMMERS = 2;
         let hammers = DEFAULT_HAMMERS;
+        let redStars = 0;          // estrellas rojas recogidas (moneda de la tienda)
+        const MAX_STARS = 5;       // máximo de estrellas verdes en el laberinto
 
         let victoryPhase = 'none';
         let meltProgress = 0;
@@ -1039,7 +1048,43 @@
             texCache.G = grass;
             texCache.Q = palm;
 
+            // Estrella verde flotante (recogible)
+            const star = document.createElement('canvas');
+            star.width = star.height = 96;
+            const stg = star.getContext('2d');
+            const glowG = stg.createRadialGradient(48, 48, 6, 48, 48, 46);
+            glowG.addColorStop(0, 'rgba(120,255,150,0.55)');
+            glowG.addColorStop(1, 'rgba(120,255,150,0)');
+            stg.fillStyle = glowG;
+            stg.fillRect(0, 0, 96, 96);
+            drawStarShape(stg, 48, 50, 34, 14);
+            const sfill = stg.createLinearGradient(0, 16, 0, 84);
+            sfill.addColorStop(0, '#7dff9a');
+            sfill.addColorStop(1, '#16a34a');
+            stg.fillStyle = sfill;
+            stg.fill();
+            stg.lineWidth = 3;
+            stg.lineJoin = 'round';
+            stg.strokeStyle = '#14532d';
+            stg.stroke();
+            drawStarShape(stg, 44, 46, 15, 6);
+            stg.fillStyle = 'rgba(255,255,255,0.35)';
+            stg.fill();
+            textures.S = star;
+            texCache.S = star;
+
             renderToolIcons();
+        }
+
+        function drawStarShape(g, cx, cy, ro, ri) {
+            g.beginPath();
+            for (let i = 0; i < 10; i++) {
+                const a = -Math.PI / 2 + i * Math.PI / 5;
+                const r = (i % 2) ? ri : ro;
+                const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+                if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+            }
+            g.closePath();
         }
 
         function renderToolIcons() {
@@ -1052,7 +1097,8 @@
                 floor: textures.F,
                 grass: textures.G,
                 palm: textures.Q,
-                mark: texCache.M
+                mark: texCache.M,
+                star: textures.S
             };
             Object.keys(mapping).forEach(t => {
                 const c = document.getElementById('icon-' + t);
@@ -1119,6 +1165,8 @@
             score = 0;
             totalTreasures = 0;
             collectedTreasures = 0;
+            redStars = 0;
+            let starsInMap = 0;
             markIndices = norm.markIndices ? JSON.parse(JSON.stringify(norm.markIndices)) : {};
             markCounter = Number(norm.markCounter) || 0;
 
@@ -1145,6 +1193,7 @@
                         player = { x: c + 0.5, y: r + 0.5, dir: 0 };
                     }
                     if (char === 'T') totalTreasures++;
+                    if (char === 'S') { if (starsInMap >= MAX_STARS) map[r][c] = 'F'; else starsInMap++; }
                     if (char === 'M' && !markIndices[`${c},${r}`]) {
                         markCounter++;
                         markIndices[`${c},${r}`] = markCounter;
@@ -1174,7 +1223,7 @@
                 gridSize: GRID_SIZE,
                 player: { x: player.x, y: player.y, dir: player.dir },
                 startPos: { x: startPos.x, y: startPos.y },
-                steps, lives, axes, hammers, score, totalTreasures, collectedTreasures, isGameOver,
+                redStars, steps, lives, axes, hammers, score, totalTreasures, collectedTreasures, isGameOver,
                 markIndices: JSON.parse(JSON.stringify(markIndices)),
                 markCounter
             };
@@ -1196,6 +1245,7 @@
                 collectedTreasures = 0;
                 isGameOver = false;
                 lives = editorLivesWanted;
+                redStars = 0;
                 axes = DEFAULT_AXES;
                 hammers = DEFAULT_HAMMERS;
                 totalTreasures = 0;
@@ -1210,6 +1260,7 @@
 
             player = { x: gameSnapshot.player.x, y: gameSnapshot.player.y, dir: gameSnapshot.player.dir };
             steps = gameSnapshot.steps;
+            redStars = (typeof gameSnapshot.redStars === 'number') ? gameSnapshot.redStars : 0;
             lives = gameSnapshot.lives;
             axes = (typeof gameSnapshot.axes === 'number') ? gameSnapshot.axes : DEFAULT_AXES;
             hammers = (typeof gameSnapshot.hammers === 'number') ? gameSnapshot.hammers : DEFAULT_HAMMERS;
@@ -1610,6 +1661,7 @@
                     else if (tile === 'A') img = textures.A;
                     else if (tile === 'L') img = textures.L;
                     else if (tile === 'T') img = textures.T;
+                    else if (tile === 'S') img = textures.S;
                     else if (tile === 'G') img = textures.G;
                     else if (tile === 'Q') img = textures.Q;
                     else if (texCache[tile]) img = texCache[tile];
@@ -1667,6 +1719,7 @@
             ctx.arc(px, py, tileSize * 0.22, 0, Math.PI * 2);
             ctx.stroke();
             ctx.restore();
+            drawEditorStarInfo();
         }
 
         function render3dRaycaster() {
@@ -1825,6 +1878,7 @@
             renderSprites3D(canvas.width, canvas.height, canvas.height / 2, dirX, dirY, planeX, planeY, zBuffer, width);
 
             if (showMinimapFlag) drawMinimap();
+            drawStarHud();
         }
 
         function getSprites() {
@@ -1833,7 +1887,7 @@
                 for (let r = 0; r < GRID_SIZE; r++) {
                     for (let c = 0; c < GRID_SIZE; c++) {
                         const tile = map[r][c];
-                        if (tile === 'T' || tile === 'M' || tile === 'Q') {
+                        if (tile === 'T' || tile === 'M' || tile === 'Q' || tile === 'S') {
                             spriteCache.push({ x: c + 0.5, y: r + 0.5, distSq: 0, type: tile, cx: c, cy: r });
                         }
                     }
@@ -1916,6 +1970,10 @@
                             runStart = -1;
                         }
                     }
+                } else if (sp.type === 'S') {
+                    const sr = Math.max(8, spriteSize * 0.5);
+                    const floatY = cy - sr * 0.45 + Math.sin(globalTime * 2.4 + sp.x * 1.7 + sp.y) * sr * 0.28;
+                    ctx.drawImage(textures.S, cx - sr, floatY - sr, sr * 2, sr * 2);
                 } else if (sp.type === 'T') {
                     if (textures.T) {
                         ctx.drawImage(textures.T, cx - rad, cy - rad, rad * 2, rad * 2);
@@ -2004,6 +2062,7 @@
                     else if (cell === 'G') color = '#4d9b43';
                     else if (cell === 'Q') color = '#176b32';
                     else if (cell === 'T') color = '#eab308';
+                    else if (cell === 'S') color = '#22c55e';
                     else if (cell === 'M') color = '#a1887f';
                     if (color) {
                         m.fillStyle = color;
@@ -2011,6 +2070,53 @@
                     }
                 }
             }
+        }
+
+        function drawRedStarBadge(x, y, h, alignRight) {
+            const label = '× ' + redStars;
+            ctx.save();
+            ctx.font = `bold ${Math.round(h * 0.62)}px sans-serif`;
+            const tw = ctx.measureText(label).width;
+            const w = h * 1.1 + tw + h * 0.4;
+            const bx = alignRight ? x - w : x;
+            ctx.fillStyle = 'rgba(25,10,10,0.72)';
+            ctx.strokeStyle = '#ef4444';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.roundRect(bx, y, w, h, h * 0.3);
+            ctx.fill();
+            ctx.stroke();
+            drawStarShape(ctx, bx + h * 0.58, y + h * 0.54, h * 0.38, h * 0.16);
+            ctx.fillStyle = '#ef4444';
+            ctx.fill();
+            ctx.strokeStyle = '#7f1d1d';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(label, bx + h * 1.1, y + h * 0.56);
+            ctx.restore();
+        }
+
+        function drawStarHud() {
+            const h = Math.max(22, Math.min(canvas.width, canvas.height) * 0.07);
+            drawRedStarBadge(canvas.width - 8, 8, h, true);
+        }
+
+        function drawEditorStarInfo() {
+            let n = 0;
+            for (let r = 0; r < GRID_SIZE; r++)
+                for (let c = 0; c < GRID_SIZE; c++) if (map[r][c] === 'S') n++;
+            ctx.save();
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+            ctx.fillStyle = 'rgba(0,0,0,0.6)';
+            ctx.fillRect(4, canvas.height - 24, 190, 20);
+            ctx.fillStyle = '#7dff9a';
+            ctx.fillText(`★ Estrellas verdes: ${n}/${MAX_STARS}`, 10, canvas.height - 7);
+            ctx.restore();
         }
 
         function drawMinimap() {
@@ -2024,6 +2130,7 @@
                 minimapKey = key;
             }
             ctx.drawImage(minimapCanvas, 6, 6);
+            drawRedStarBadge(6, 6 + mSize + 4, 20, false);
 
             const px = 6 + player.x * cSize;
             const py = 6 + player.y * cSize;
@@ -2047,6 +2154,10 @@
             document.getElementById('livesCount').innerText = hearts;
             document.getElementById('treasureCount').innerText = `${collectedTreasures}/${totalTreasures}`;
             document.getElementById('scoreCount').innerText = score;
+            const starEl = document.getElementById('starCount');
+            if (starEl) starEl.innerText = '★ ' + redStars;
+            const shopBtn = document.getElementById('shopBtn');
+            if (shopBtn) shopBtn.innerText = `⭐ Tienda (${redStars})`;
             document.getElementById('stepCount').innerText = steps;
             const axeBtn = document.getElementById('axeBtn');
             if (axeBtn) {
@@ -2202,6 +2313,13 @@
                             document.getElementById('message').innerText = '🔄 Has vuelto a la posición inicial.';
                         }
                     }, 2000);
+                } else if (currentTile === 'S') {
+                    map[tileY][tileX] = 'F';
+                    redStars++;
+                    bumpMap();
+                    playSound('treasure');
+                    showCenterNotice(`⭐ ¡Estrella roja! Tienes ${redStars}`, 1500, '#ff8a80');
+                    document.getElementById('message').innerText = `⭐ Estrella recogida. Tienes ${redStars}. Gástalas en la ⭐ Tienda.`;
                 } else if (currentTile === 'T') {
                     map[tileY][tileX] = 'F';
                     collectedTreasures++;
@@ -2233,6 +2351,53 @@
             render();
             needsRender = false;
             updateStats();
+        }
+
+        function openShop() {
+            if (isEditor) return;
+            initAudio();
+            document.getElementById('modalOverlay').classList.add('visible');
+            renderShop();
+        }
+
+        function renderShop(msg, type) {
+            const none = redStars <= 0;
+            const row = (kind, icon, name, have) => `
+                <div class="game-item">
+                    <div>
+                        <div class="game-title">${icon} ${name}</div>
+                        <div class="game-meta">Tienes: ${have} · Coste: 1 ★</div>
+                    </div>
+                    <button class="btn-sm load" ${none ? 'disabled style="opacity:.4"' : ''} onclick="buyItem('${kind}')">Comprar</button>
+                </div>`;
+            const html = `
+                <div style="text-align:center; font-weight:bold; color:#ff8a80; margin-bottom:6px; font-size:0.9rem;">★ Estrellas rojas: ${redStars}</div>
+                <div class="game-list">
+                    ${row('life', '❤️', 'Vida', lives)}
+                    ${row('axe', '🪓', 'Hacha', axes)}
+                    ${row('hammer', '🔨', 'Martillo', hammers)}
+                </div>
+                ${msg ? `<div class="status-msg ${type || 'info'}">${msg}</div>` : ''}
+                <div class="status-msg info">1 estrella = 1 vida, 1 hacha o 1 martillo.</div>`;
+            setModal('⭐ Tienda de Estrellas', html);
+        }
+
+        function buyItem(kind) {
+            if (isEditor) return;
+            if (isGameOver) { playSound('bump'); renderShop('La partida ha terminado.', 'err'); return; }
+            if (redStars <= 0) { playSound('bump'); renderShop('No tienes estrellas rojas.', 'err'); return; }
+            redStars--;
+            let txt = '';
+            if (kind === 'life') { lives++; txt = '❤️ ¡Has comprado una vida!'; }
+            else if (kind === 'axe') { axes++; txt = '🪓 ¡Has comprado un hacha!'; }
+            else if (kind === 'hammer') { hammers++; txt = '🔨 ¡Has comprado un martillo!'; }
+            else { redStars++; return; }
+            playSound('treasure');
+            updateStats();
+            needsRender = true;
+            render();
+            document.getElementById('message').innerText = txt;
+            renderShop(txt, 'ok');
         }
 
         function resetLevel() {
@@ -2336,7 +2501,7 @@
         function selectTool(tool) {
             selectedTool = tool;
             document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-            const toolMap = { W: 'wall', P: 'player', T: 'target', A: 'water', L: 'lava', F: 'floor', G: 'grass', Q: 'palm', M: 'mark' };
+            const toolMap = { W: 'wall', P: 'player', T: 'target', A: 'water', L: 'lava', F: 'floor', G: 'grass', Q: 'palm', M: 'mark', S: 'star' };
             const el = document.getElementById('tool-' + toolMap[tool]);
             if (el) el.classList.add('active');
             if (tool === 'P') {
@@ -2430,6 +2595,16 @@
                 player = { x: cx + 0.5, y: cy + 0.5, dir: 0 };
                 document.getElementById('message').innerText = `🧍 Nuevo inicio en (${cx}, ${cy}). Al volver al 3D empezarás aquí.`;
             } else {
+                if (selectedTool === 'S' && map[cy][cx] !== 'S') {
+                    let nStars = 0;
+                    for (let r = 0; r < GRID_SIZE; r++)
+                        for (let c = 0; c < GRID_SIZE; c++) if (map[r][c] === 'S') nStars++;
+                    if (nStars >= MAX_STARS) {
+                        playSound('bump');
+                        document.getElementById('message').innerText = `⭐ Máximo ${MAX_STARS} estrellas verdes en el laberinto.`;
+                        return;
+                    }
+                }
                 if (selectedTool === 'M' && map[cy][cx] !== 'M') {
                     markCounter++;
                     markIndices[`${cx},${cy}`] = markCounter;
@@ -2573,6 +2748,13 @@
                     grid[cell.r][cell.c] = placed % 2 === 0 ? 'A' : 'L';
                     placed++;
                 }
+            }
+
+            const numStars = Math.min(MAX_STARS, Math.max(1, Math.floor(size / 4)));
+            const availStars = freeCells.filter(c => grid[c.r][c.c] === 'F');
+            for (let i = 0; i < numStars && availStars.length > 0; i++) {
+                const cell = availStars.pop();
+                grid[cell.r][cell.c] = 'S';
             }
 
             return { gridSize: size, map: grid };

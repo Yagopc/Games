@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Abecedario Desordenado (4x3)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        body {
+            background-color: #14100c;
+            background-image:
+                radial-gradient(circle at 50% 30%, #2a2118 0%, #14100c 70%),
+                repeating-linear-gradient(
+                    135deg,
+                    rgba(255,255,255,0.015) 0px,
+                    rgba(255,255,255,0.015) 2px,
+                    transparent 2px,
+                    transparent 6px
+                );
+            color: #fff;
+            font-family: Georgia, 'Times New Roman', serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        h1 {
+            color: #d9b382;
+            text-shadow: 0 2px 0 #000, 0 0 10px rgba(217,179,130,0.3);
+            letter-spacing: 1px;
+        }
+
+        /* Contenedor exterior de madera */
+        .board-frame {
+            background-color: #5a3a1e;
+            background-image:
+                repeating-linear-gradient(90deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 1px, rgba(255,255,255,0.03) 1px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 5px),
+                repeating-linear-gradient(0deg, rgba(0,0,0,0.12) 0px, rgba(0,0,0,0.12) 2px, transparent 2px, transparent 12px),
+                linear-gradient(135deg, #6b4423 0%, #4a2c14 50%, #6b4423 100%);
+            border: 6px solid #2e1a0a;
+            box-shadow: 0 0 0 2px #1a0f05, 0 12px 28px rgba(0,0,0,0.85), inset 0 0 20px rgba(0,0,0,0.6);
+            border-radius: 12px;
+            padding: 8px;
+            position: relative;
+        }
+
+        /* Superficie metálica clara del tablero */
+        .board-playfield {
+            position: relative;
+            background-color: #d0d0d0;
+            background-image:
+                linear-gradient(to right, rgba(60,60,60,0.3) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(60,60,60,0.3) 1px, transparent 1px),
+                repeating-linear-gradient(45deg, rgba(80,80,80,0.05) 0px, rgba(80,80,80,0.05) 3px, transparent 3px, transparent 9px),
+                linear-gradient(160deg, #e0e0e0 0%, #c0c0c0 50%, #a0a0a0 100%);
+            border-radius: 6px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        /* Bloque de madera (Pieza) */
+        .tile {
+            position: absolute;
+            border-radius: 8px;
+            background-color: #d9b485;
+            background-image:
+                repeating-linear-gradient(88deg, rgba(140,90,40,0.18) 0px, rgba(140,90,40,0.18) 1px, rgba(255,255,255,0.06) 1px, rgba(255,255,255,0.06) 2px, transparent 2px, transparent 6px),
+                linear-gradient(135deg, #e6c79a 0%, #c8a06a 50%, #a87c48 100%);
+            border: 2px solid #7a5428;
+            box-shadow: inset 0 2px 0 rgba(255,240,210,0.45), inset 0 -2px 0 rgba(80,50,20,0.4), 0 4px 8px rgba(0,0,0,0.45);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #3b220c;
+            text-shadow: 0 1px 0 rgba(255,240,210,0.6), 0 -1px 0 rgba(0,0,0,0.4);
+            cursor: pointer;
+            transition: left 0.15s cubic-bezier(0.2, 0, 0, 1), top 0.15s cubic-bezier(0.2, 0, 0, 1), transform 0.1s ease, border-color 0.3s ease, background-image 0.3s ease;
+            z-index: 2;
+        }
+
+        .tile:active {
+            transform: scale(0.96);
+        }
+
+        /* Estilo dorado para piezas en su posición correcta */
+        .tile.correct {
+            border-color: #5a7a28;
+            background-image:
+                repeating-linear-gradient(88deg, rgba(140,90,40,0.18) 0px, rgba(140,90,40,0.18) 1px, rgba(255,255,255,0.06) 1px, rgba(255,255,255,0.06) 2px, transparent 2px, transparent 6px),
+                linear-gradient(135deg, #ebd69c 0%, #cca35c 50%, #ad7e39 100%);
+        }
+
+        /* Estilo brillante para cuando todas las piezas están completamente ordenadas */
+        .tile.victory {
+            border-color: #4a9e32;
+            box-shadow: inset 0 2px 0 rgba(255,255,255,0.7), inset 0 -2px 0 rgba(30,80,10,0.4), 0 0 12px rgba(120,220,90,0.6);
+        }
+
+        /* Botones de Madera */
+        .btn-wood {
+            padding: 12px 28px;
+            font-size: 1.15rem;
+            font-weight: bold;
+            font-family: Georgia, serif;
+            color: #f4e3c8;
+            border: 2px solid #2e1a0a;
+            border-radius: 8px;
+            cursor: pointer;
+            text-shadow: 0 1px 2px #000;
+            background-image:
+                repeating-linear-gradient(88deg, rgba(0,0,0,0.15) 0, rgba(0,0,0,0.15) 1px, rgba(255,255,255,0.05) 1px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 5px),
+                linear-gradient(180deg, #2a6a9a, #1a3a5a);
+            box-shadow: 0 4px 0 #1a0f05, 0 6px 12px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,220,170,0.3);
+            transition: transform 0.05s, box-shadow 0.05s;
+        }
+
+        .btn-wood:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #1a0f05, 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .btn-wood-sec {
+            background-image:
+                repeating-linear-gradient(88deg, rgba(0,0,0,0.15) 0, rgba(0,0,0,0.15) 1px, rgba(255,255,255,0.05) 1px, rgba(255,255,255,0.05) 2px, transparent 2px, transparent 5px),
+                linear-gradient(180deg, #7a4a1e, #4a2a10);
+        }
+
+        /* Modal de victoria */
+        .win-banner {
+            background: linear-gradient(180deg, rgba(58,42,26,0.96), rgba(26,16,8,0.96));
+            border: 2px solid #f2c47a;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.85), 0 0 20px rgba(242,196,122,0.4);
+        }
+    </style>
+</head>
+<body class="p-3">
+
+    <!-- Encabezado con contador de pasos -->
+    <header class="flex flex-col items-center justify-center pt-2">
+        <h1 class="text-2xl md:text-3xl font-bold text-center">Abecedario Desordenado</h1>
+        <div class="flex items-center gap-4 mt-2 text-sm md:text-base text-[#e0c19a]">
+            <div class="bg-[#241811] px-4 py-1.5 rounded-full border border-[#5a3a1a] shadow-inner">
+                Movimientos: <span id="moveCount" class="font-bold text-[#f2c47a] text-lg ml-1">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Contenedor principal del Tablero (4x3) -->
+    <main class="flex-1 flex items-center justify-center w-full my-auto">
+        <div class="board-frame" id="boardFrame">
+            <div class="board-playfield" id="playfield"></div>
+        </div>
+    </main>
+
+    <!-- Modal de Victoria (se puede cerrar o iniciar nuevo juego) -->
+    <div id="winModal" class="fixed inset-0 bg-black/75 flex items-center justify-center p-4 z-50 hidden">
+        <div class="win-banner rounded-xl p-6 text-center max-w-xs w-full flex flex-col items-center gap-4">
+            <div class="text-4xl animate-bounce">🏆</div>
+            <h2 class="text-2xl font-bold text-[#f2c47a]">¡Puzzle Resuelto!</h2>
+            <p class="text-[#e0c19a] text-sm">Has ordenado todas las letras de la A a la K.</p>
+            <p class="text-[#d9b382] font-semibold">Pasos totales: <span id="finalMoves" class="text-white font-bold">0</span></p>
+            <div class="flex flex-col gap-2.5 w-full mt-2">
+                <button onclick="initGame()" class="btn-wood w-full">Nuevo Juego</button>
+                <button onclick="hideWinModal()" class="btn-wood btn-wood-sec w-full text-sm py-2.5">Ver Tablero</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pie de página con botón exclusivo para Nuevo Juego -->
+    <footer class="pb-4 w-full flex justify-center">
+        <button id="btnNew" class="btn-wood w-64 max-w-xs text-center" onclick="initGame()">
+            Nuevo Juego
+        </button>
+    </footer>
+
+    <script>
+        /* ============================================================
+         *  SISTEMA AUDIO (Web Audio API)
+         * ============================================================ */
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSlideSound() {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+
+                const bufferSize = audioCtx.sampleRate * 0.05;
+                const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = audioCtx.createBufferSource();
+                noise.buffer = buffer;
+
+                const filter = audioCtx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(450, audioCtx.currentTime);
+                filter.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.05);
+
+                const gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                noise.start();
+            } catch (e) {
+                console.warn('Audio no disponible:', e);
+            }
+        }
+
+        function playWinSound() {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+
+                const notes = [261.63, 329.63, 392.00, 523.25, 659.25, 783.99]; // C4, E4, G4, C5, E5, G5
+                notes.forEach((freq, idx) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.09);
+
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime + idx * 0.09);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.09 + 0.35);
+
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+
+                    osc.start(audioCtx.currentTime + idx * 0.09);
+                    osc.stop(audioCtx.currentTime + idx * 0.09 + 0.35);
+                });
+            } catch (e) {
+                console.warn('Audio no disponible:', e);
+            }
+        }
+
+        /* ============================================================
+         *  CONFIGURACIÓN DEL PUZZLE (4 filas x 3 columnas = 12 celdas)
+         * ============================================================ */
+        const ROWS = 4;
+        const COLS = 3;
+        const TOTAL_CELLS = ROWS * COLS; // 12
+        const LETTERS = ['A','B','C','D','E','F','G','H','I','J','K']; // 11 letras
+
+        let boardState = [];
+        let emptyPos = 11; // Posición vacía inicial abajo a la derecha
+        let moveCount = 0;
+        let isGameWon = false;
+
+        let cellSize = 70;
+        const GAP = 5;
+
+        const playfieldEl = document.getElementById('playfield');
+        const moveCountEl = document.getElementById('moveCount');
+        const winModalEl = document.getElementById('winModal');
+        const finalMovesEl = document.getElementById('finalMoves');
+
+        /* ============================================================
+         *  CÁLCULO RESPONSIVE
+         * ============================================================ */
+        function calculateLayout() {
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            const maxW = Math.min(viewportWidth - 32, 400);
+            const maxH = viewportHeight - 160;
+
+            const sizeByWidth = Math.floor((maxW - (COLS + 1) * GAP) / COLS);
+            const sizeByHeight = Math.floor((maxH - (ROWS + 1) * GAP) / ROWS);
+
+            cellSize = Math.max(50, Math.min(sizeByWidth, sizeByHeight, 95));
+
+            const totalW = COLS * cellSize + (COLS + 1) * GAP;
+            const totalH = ROWS * cellSize + (ROWS + 1) * GAP;
+
+            playfieldEl.style.width = totalW + 'px';
+            playfieldEl.style.height = totalH + 'px';
+
+            renderBoardPositions();
+        }
+
+        /* ============================================================
+         *  VERIFICACIÓN DE SOLUBILIDAD (3 columnas: Impar)
+         *  Con número de columnas impar, el puzzle tiene solución si y solo si
+         *  el número total de inversiones entre fichas es PAR.
+         * ============================================================ */
+        function isSolvable(arr) {
+            let inversions = 0;
+            const tilesOnly = arr.filter(x => x !== null);
+
+            for (let i = 0; i < tilesOnly.length - 1; i++) {
+                for (let j = i + 1; j < tilesOnly.length; j++) {
+                    if (tilesOnly[i] > tilesOnly[j]) {
+                        inversions++;
+                    }
+                }
+            }
+
+            return inversions % 2 === 0;
+        }
+
+        /* ============================================================
+         *  INICIALIZACIÓN Y MEZCLA
+         * ============================================================ */
+        function initGame() {
+            initAudio();
+            isGameWon = false;
+            moveCount = 0;
+            moveCountEl.innerText = '0';
+            hideWinModal();
+
+            let newBoard = [...LETTERS, null];
+
+            // Mezclar aleatoriamente hasta que sea resoluble y no esté resuelto ya
+            do {
+                for (let i = newBoard.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [newBoard[i], newBoard[j]] = [newBoard[j], newBoard[i]];
+                }
+            } while (!isSolvable(newBoard) || isAlreadySolved(newBoard));
+
+            boardState = newBoard;
+            emptyPos = boardState.indexOf(null);
+
+            buildBoardDOM();
+        }
+
+        function isAlreadySolved(arr) {
+            for (let i = 0; i < LETTERS.length; i++) {
+                if (arr[i] !== LETTERS[i]) return false;
+            }
+            return arr[11] === null;
+        }
+
+        /* ============================================================
+         *  CONSTRUCCIÓN Y RENDERIZADO DEL DOM
+         * ============================================================ */
+        function buildBoardDOM() {
+            playfieldEl.innerHTML = '';
+
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                const char = boardState[i];
+                if (char === null) continue;
+
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.id = 'tile-' + char;
+                tile.innerText = char;
+
+                attachTileEvents(tile, char);
+                playfieldEl.appendChild(tile);
+            }
+
+            renderBoardPositions();
+        }
+
+        function renderBoardPositions() {
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                const char = boardState[i];
+                if (char === null) continue;
+
+                const tile = document.getElementById('tile-' + char);
+                if (!tile) continue;
+
+                const row = Math.floor(i / COLS);
+                const col = i % COLS;
+
+                const left = GAP + col * (cellSize + GAP);
+                const top = GAP + row * (cellSize + GAP);
+
+                tile.style.width = cellSize + 'px';
+                tile.style.height = cellSize + 'px';
+                tile.style.left = left + 'px';
+                tile.style.top = top + 'px';
+                tile.style.fontSize = Math.floor(cellSize * 0.52) + 'px';
+
+                // Aplicar estilos según el estado de la pieza
+                tile.classList.remove('victory');
+
+                if (isGameWon) {
+                    tile.classList.add('correct', 'victory');
+                } else if (LETTERS[i] === char) {
+                    tile.classList.add('correct');
+                } else {
+                    tile.classList.remove('correct');
+                }
+            }
+        }
+
+        /* ============================================================
+         *  LÓGICA DE MOVIMIENTO (SWIPE & CLICK)
+         * ============================================================ */
+        function attachTileEvents(tile, char) {
+            let touchStartX = 0;
+            let touchStartY = 0;
+
+            tile.addEventListener('click', (e) => {
+                e.preventDefault();
+                attemptMove(char);
+            });
+
+            tile.addEventListener('touchstart', (e) => {
+                initAudio();
+                const t = e.touches[0];
+                touchStartX = t.clientX;
+                touchStartY = t.clientY;
+            }, { passive: true });
+
+            tile.addEventListener('touchend', (e) => {
+                const t = e.changedTouches[0];
+                const dx = t.clientX - touchStartX;
+                const dy = t.clientY - touchStartY;
+                const minSwipe = 20;
+
+                if (Math.abs(dx) > minSwipe || Math.abs(dy) > minSwipe) {
+                    const charPos = boardState.indexOf(char);
+                    const emptyRow = Math.floor(emptyPos / COLS);
+                    const emptyCol = emptyPos % COLS;
+                    const charRow = Math.floor(charPos / COLS);
+                    const charCol = charPos % COLS;
+
+                    if (Math.abs(dx) > Math.abs(dy)) {
+                        if (dx > 0 && emptyRow === charRow && emptyCol === charCol + 1) attemptMove(char);
+                        else if (dx < 0 && emptyRow === charRow && emptyCol === charCol - 1) attemptMove(char);
+                    } else {
+                        if (dy > 0 && emptyCol === charCol && emptyRow === charRow + 1) attemptMove(char);
+                        else if (dy < 0 && emptyCol === charCol && emptyRow === charRow - 1) attemptMove(char);
+                    }
+                }
+            }, { passive: true });
+        }
+
+        function attemptMove(char) {
+            if (isGameWon) return; // Bloquear movimientos al ganar hasta pulsar "Nuevo Juego"
+
+            const charPos = boardState.indexOf(char);
+            if (charPos === -1) return;
+
+            const charRow = Math.floor(charPos / COLS);
+            const charCol = charPos % COLS;
+            const emptyRow = Math.floor(emptyPos / COLS);
+            const emptyCol = emptyPos % COLS;
+
+            const isAdjacent = (Math.abs(charRow - emptyRow) + Math.abs(charCol - emptyCol)) === 1;
+
+            if (isAdjacent) {
+                boardState[emptyPos] = char;
+                boardState[charPos] = null;
+                emptyPos = charPos;
+
+                moveCount++;
+                moveCountEl.innerText = moveCount;
+
+                playSlideSound();
+                renderBoardPositions();
+
+                checkWinCondition();
+            }
+        }
+
+        /* ============================================================
+         *  VERIFICACIÓN DE VICTORIA
+         * ============================================================ */
+        function checkWinCondition() {
+            for (let i = 0; i < LETTERS.length; i++) {
+                if (boardState[i] !== LETTERS[i]) {
+                    return;
+                }
+            }
+
+            // El puzzle se ha completado
+            isGameWon = true;
+            renderBoardPositions(); // Refrescar para marcar el estilo de victoria en las fichas
+            playWinSound();
+
+            setTimeout(() => {
+                showWinModal();
+            }, 300);
+        }
+
+        function showWinModal() {
+            finalMovesEl.innerText = moveCount;
+            winModalEl.classList.remove('hidden');
+        }
+
+        function hideWinModal() {
+            winModalEl.classList.add('hidden');
+        }
+
+        /* ============================================================
+         *  EVENTOS GLOBALES Y ARRANQUE
+         * ============================================================ */
+        window.addEventListener('resize', calculateLayout);
+        window.addEventListener('orientationchange', () => setTimeout(calculateLayout, 150));
+
+        window.onload = function() {
+            calculateLayout();
+            initGame();
+        };
+    </script>
+</body>
+</html>

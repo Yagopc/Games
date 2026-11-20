@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#000000">
+    <title>Night Driver 1976</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+            touch-action: none;
+            overscroll-behavior: none;
+        }
+        body {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #game-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+        }
+
+        canvas {
+            background: #000;
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+
+        #gas-container {
+            width: 100%;
+            height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            padding: 10px 20px;
+        }
+
+        #btn-gas {
+            width: 100%;
+            max-width: 420px;
+            height: 62px;
+            background: #900000;
+            border: 3px solid #ff4444;
+            border-radius: 12px;
+            color: #ffffff;
+            font-family: "Courier New", monospace;
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none;
+            transition: background 0.08s, border-color 0.08s;
+        }
+
+        #btn-gas.active {
+            background: #ff2222;
+            border-color: #ffffff;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <canvas id="canvas"></canvas>
+    </div>
+
+    <div id="gas-container">
+        <div id="btn-gas">GAS</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const btnGas = document.getElementById('btn-gas');
+
+        // ============================================================
+        //  RESOLUCIÓN RETRO
+        // ============================================================
+        const WIDTH = 320;
+        const HEIGHT = 400;
+        canvas.width = WIDTH;
+        canvas.height = HEIGHT;
+
+        // ============================================================
+        //  ESTADO DE LA CARRETERA
+        // ============================================================
+        let speedActual = 0;
+        const SPEED_MAX = 6;
+        const ACCEL = 0.08;
+        const DECEL = 0.04;
+
+        let trackPosition = 0;
+        let curve = 0;
+        let targetCurve = 0;
+        let curveTimer = 0;
+
+        // ---- Fase para animar la mediana amarilla ----
+        let medianPhase = 0;
+
+        const ROAD_WIDTH_MULT = 1.10;
+
+        const numPylons = 10;
+        let pylons = [];
+
+        function initTrack() {
+            pylons = [];
+            for (let i = 0; i < numPylons; i++) {
+                pylons.push({ z: i * (100 / numPylons) });
+            }
+        }
+
+        // ============================================================
+        //  VEHÍCULO
+        // ============================================================
+        let carRoadOffset = 0;
+
+        const CAR_SCALE_X = 0.48 * 1.10 * 1.05;
+        const CAR_SCALE_Y = 0.48 * 1.10;
+        const CAR_DRAW_WIDTH = 280 * CAR_SCALE_X;
+        const CAR_HALF_WIDTH = CAR_DRAW_WIDTH / 2;
+
+        const COLLISION_MARGIN = 1;
+        const CAR_MAX_FUERA = 40;
+
+        const CAR_Y_RATIO = 0.12;
+
+        // Drag táctil (multi-touch)
+        let dragging = false;
+        let dragOffsetX = 0;
+        let dragTouchId = null;
+
+        // Cooldown del pitido
+        let beepCooldown = 0;
+
+        // Estado del botón GAS
+        let gasPressed = false;
+
+        // Web Audio
+        let audioCtx = null;
+        function reproducirPitido() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'square';
+            osc.frequency.value = 880;
+            gain.gain.value = 0.08;
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.08);
+        }
+
+        // ============================================================
+        //  UPDATE
+        // ============================================================
+        function update() {
+            if (gasPressed) {
+                speedActual = Math.min(SPEED_MAX, speedActual + ACCEL);
+            } else {
+                speedActual = Math.max(0, speedActual - DECEL);
+            }
+
+            if (speedActual > 0.01) {
+                curveTimer--;
+                if (curveTimer <= 0) {
+                    curveTimer = Math.floor(Math.random() * 80) + 40;
+                    targetCurve = (Math.random() - 0.5) * 6.5;
+                }
+                curve += (targetCurve - curve) * 0.03 * (speedActual / SPEED_MAX);
+            }
+
+            trackPosition += speedActual;
+
+            // ---- Fase de la mediana: ahora va de ARRIBA hacia ABAJO ----
+            medianPhase -= speedActual * 0.008;
+            medianPhase = ((medianPhase % 1) + 1) % 1;
+
+            for (let i = 0; i < numPylons; i++) {
+                pylons[i].z -= speedActual * 0.3;
+                if (pylons[i].z <= 0) {
+                    pylons[i].z += 100;
+                }
+            }
+
+            if (beepCooldown > 0) beepCooldown--;
+        }
+
+        // ============================================================
+        //  GEOMETRÍA
+        // ============================================================
+        function geometriaCarreteraEnY(y) {
+            const horizonY = HEIGHT * 0.3;
+            let p = 0;
+            if (y > horizonY) {
+                p = Math.sqrt((y - horizonY) / (HEIGHT - horizonY));
+            }
+            p = Math.max(0, Math.min(1, p));
+
+            const roadWidth = (20 + p * p * 240) * ROAD_WIDTH_MULT;
+            const xOffset = curve * (1 - p) * 180;
+            const centerX = WIDTH / 2 + xOffset;
+            const leftX = centerX - roadWidth / 2;
+            const rightX = centerX + roadWidth / 2;
+
+            return { p, roadWidth, centerX, leftX, rightX };
+        }
+
+        // ============================================================
+        //  DRAW
+        // ============================================================
+        function draw() {
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+            const horizonY = HEIGHT * 0.3;
+
+            // ---- MEDIANA AMARILLA (solo visual) ----
+            drawMedian(horizonY);
+
+            // ---- POSTES ----
+            const sortedPylons = [...pylons].sort((a, b) => b.z - a.z);
+            sortedPylons.forEach(pylon => {
+                const pz = pylon.z / 100;
+                const perspective = 1 - pz;
+                const y = horizonY + (perspective * perspective) * (HEIGHT - horizonY);
+                const roadWidth = (20 + perspective * perspective * 240) * ROAD_WIDTH_MULT;
+                const xOffset = curve * (1 - perspective) * 180;
+                const centerX = WIDTH / 2 + xOffset;
+                const leftX = centerX - roadWidth / 2;
+                const rightX = centerX + roadWidth / 2;
+                const pylonSize = 1 + perspective * 6;
+
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(leftX - pylonSize / 2, y, pylonSize, pylonSize * 1.5);
+                ctx.fillRect(rightX - pylonSize / 2, y, pylonSize, pylonSize * 1.5);
+            });
+
+            // ---- VEHÍCULO ----
+            const alturaVisible = HEIGHT - horizonY;
+            const carY = HEIGHT - alturaVisible * CAR_Y_RATIO;
+
+            const geo = geometriaCarreteraEnY(carY);
+            const roadCenter = geo.centerX;
+            const centerX = roadCenter + carRoadOffset;
+
+            const carLeft = centerX - CAR_HALF_WIDTH;
+            const carRight = centerX + CAR_HALF_WIDTH;
+            const roadLeft = geo.leftX;
+            const roadRight = geo.rightX;
+
+            const tocaIzq = carLeft <= roadLeft + COLLISION_MARGIN;
+            const tocaDer = carRight >= roadRight - COLLISION_MARGIN;
+
+            if ((tocaIzq || tocaDer) && beepCooldown <= 0) {
+                reproducirPitido();
+                beepCooldown = 20;
+
+                if (tocaIzq) {
+                    carRoadOffset = (roadLeft + COLLISION_MARGIN) - roadCenter + CAR_HALF_WIDTH;
+                } else {
+                    carRoadOffset = (roadRight - COLLISION_MARGIN) - roadCenter - CAR_HALF_WIDTH;
+                }
+            }
+
+            const limiteIzq = roadLeft - CAR_MAX_FUERA;
+            const limiteDer = roadRight + CAR_MAX_FUERA;
+            const carXAbs = roadCenter + carRoadOffset;
+            if (carXAbs < limiteIzq) carRoadOffset = limiteIzq - roadCenter;
+            if (carXAbs > limiteDer) carRoadOffset = limiteDer - roadCenter;
+
+            dibujarCoche(roadCenter + carRoadOffset, carY);
+        }
+
+        // ============================================================
+        //  DIBUJAR MEDIANA AMARILLA DISCONTINUA
+        // ============================================================
+        function drawMedian(horizonY) {
+            const dashCount = 6;
+            const phase = medianPhase;
+
+            ctx.lineCap = 'round';
+
+            for (let i = 0; i < dashCount; i++) {
+                let zStart = (i / dashCount + phase / dashCount) % 1;
+                let zEnd = zStart + 0.05;
+
+                if (zEnd > 1) continue;
+
+                const p0 = 1 - zStart;
+                const p1 = 1 - zEnd;
+
+                const y0 = horizonY + p0 * p0 * (HEIGHT - horizonY);
+                const y1 = horizonY + p1 * p1 * (HEIGHT - horizonY);
+
+                const xOffset0 = curve * (1 - p0) * 180;
+                const xOffset1 = curve * (1 - p1) * 180;
+                const centerX0 = WIDTH / 2 + xOffset0;
+                const centerX1 = WIDTH / 2 + xOffset1;
+
+                ctx.lineWidth = 1 + p0 * 2.5;
+                ctx.strokeStyle = '#FFCC00';
+
+                ctx.beginPath();
+                ctx.moveTo(centerX0, y0);
+                ctx.lineTo(centerX1, y1);
+                ctx.stroke();
+            }
+
+            ctx.lineCap = 'butt';
+        }
+
+        // ============================================================
+        //  DIBUJAR EL COCHE
+        // ============================================================
+        function dibujarCoche(cx, cy) {
+            ctx.save();
+            ctx.translate(cx, cy);
+
+            ctx.strokeStyle = "#FFF";
+            ctx.fillStyle = "#000";
+            ctx.lineWidth = 2.5;
+
+            ctx.scale(CAR_SCALE_X, CAR_SCALE_Y);
+
+            ctx.beginPath();
+            ctx.moveTo(-140, 0);
+            ctx.lineTo(-110, -45);
+            ctx.lineTo(-70, -55);
+            ctx.lineTo(-55, -85);
+            ctx.lineTo(-35, -95);
+            ctx.lineTo(35, -95);
+            ctx.lineTo(55, -85);
+            ctx.lineTo(70, -55);
+            ctx.lineTo(110, -45);
+            ctx.lineTo(140, 0);
+            ctx.closePath();
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(-50, -80);
+            ctx.lineTo(50, -80);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(0, -80);
+            ctx.lineTo(0, -20);
+            ctx.stroke();
+
+            ctx.fillStyle = "#FFF";
+            ctx.fillRect(-90, -20, 18, 10);
+            ctx.fillRect(72, -20, 18, 10);
+
+            ctx.fillStyle = "#000";
+            ctx.strokeRect(-100, -15, 200, 15);
+
+            ctx.beginPath();
+            ctx.moveTo(-110, -50);
+            ctx.lineTo(-125, -55);
+            ctx.moveTo(110, -50);
+            ctx.lineTo(125, -55);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // ============================================================
+        //  CONTROL DEL BOTÓN GAS
+        // ============================================================
+        function gasPress(e) {
+            if (e) e.preventDefault();
+            gasPressed = true;
+            btnGas.classList.add('active');
+        }
+
+        function gasRelease(e) {
+            if (e) e.preventDefault();
+            gasPressed = false;
+            btnGas.classList.remove('active');
+        }
+
+        btnGas.addEventListener('touchstart', gasPress, { passive: false });
+        btnGas.addEventListener('touchend', gasRelease, { passive: false });
+        btnGas.addEventListener('touchcancel', gasRelease, { passive: false });
+        btnGas.addEventListener('mousedown', gasPress);
+        btnGas.addEventListener('mouseup', gasRelease);
+        btnGas.addEventListener('mouseleave', gasRelease);
+
+        // ============================================================
+        //  EVENTOS TÁCTILES DEL CANVAS (multi-touch)
+        // ============================================================
+        function toCanvasX(clientX) {
+            const rect = canvas.getBoundingClientRect();
+            return (clientX - rect.left) * (WIDTH / rect.width);
+        }
+
+        function getCarScreenCenter() {
+            const horizonY = HEIGHT * 0.3;
+            const alturaVisible = HEIGHT - horizonY;
+            const carY = HEIGHT - alturaVisible * CAR_Y_RATIO;
+            const geo = geometriaCarreteraEnY(carY);
+            return geo.centerX + carRoadOffset;
+        }
+
+        function moverCocheA(x) {
+            const horizonY = HEIGHT * 0.3;
+            const alturaVisible = HEIGHT - horizonY;
+            const carY = HEIGHT - alturaVisible * CAR_Y_RATIO;
+            const geo = geometriaCarreteraEnY(carY);
+            carRoadOffset = (x + dragOffsetX) - geo.centerX;
+        }
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (dragTouchId !== null) break;
+                const t = e.changedTouches[i];
+                dragTouchId = t.identifier;
+                dragging = true;
+                const x = toCanvasX(t.clientX);
+                dragOffsetX = getCarScreenCenter() - x;
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (!dragging || dragTouchId === null) return;
+
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                if (t.identifier === dragTouchId) {
+                    const x = toCanvasX(t.clientX);
+                    moverCocheA(x);
+                    break;
+                }
+            }
+        }, { passive: false });
+
+        function finTouch(e) {
+            if (dragTouchId === null) return;
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === dragTouchId) {
+                    dragging = false;
+                    dragTouchId = null;
+                    break;
+                }
+            }
+        }
+
+        canvas.addEventListener('touchend', finTouch, { passive: false });
+        canvas.addEventListener('touchcancel', finTouch, { passive: false });
+
+        // ---- Ratón ----
+        canvas.addEventListener('mousedown', (e) => {
+            dragging = true;
+            const x = toCanvasX(e.clientX);
+            dragOffsetX = getCarScreenCenter() - x;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!dragging) return;
+            const x = toCanvasX(e.clientX);
+            moverCocheA(x);
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            dragging = false;
+        });
+
+        // ============================================================
+        //  LOOP
+        // ============================================================
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        initTrack();
+        loop();
+    </script>
+</body>
+</html>

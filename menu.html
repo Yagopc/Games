@@ -2,116 +2,94 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Explorador de Archivos HTML - Localhost:8000</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- ============================================================ -->
+    <!--  CONFIGURACIÓN: cambia SOLO estas dos líneas                  -->
+    <!-- ============================================================ -->
+    <script>
+        window.FOLDER_NAME = 'games';                      // nombre de la carpeta
+        window.SERVER_HOST = 'http://127.0.0.1:8000';      // host del servidor
+    </script>
+    <!-- ============================================================ -->
+
+    <script>
+        (function () {
+            const base = `${window.SERVER_HOST}/${window.FOLDER_NAME}`;
+            const name = window.FOLDER_NAME;
+
+            const addLink = (rel, href) => {
+                const l = document.createElement('link');
+                l.rel = rel;
+                l.href = href;
+                document.head.appendChild(l);
+            };
+            addLink('icon',            `${base}/${name}.png`);
+            addLink('apple-touch-icon',`${base}/${name}.png`);
+
+            const pretty = name.charAt(0).toUpperCase() + name.slice(1);
+            document.title = pretty;
+            document.addEventListener('DOMContentLoaded', () => {
+                const h1 = document.querySelector('.header h1');
+                if (h1) h1.textContent = pretty;
+            });
+        })();
+    </script>
+
+    <!-- Configuración para Web App (PWA) ligera -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <title>Menú</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 40px 20px;
+            padding: 10px;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 100%;
             margin: 0 auto;
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             overflow: hidden;
-            animation: fadeIn 0.5s ease-in;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
+            padding: 15px;
             text-align: center;
         }
 
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
+        .header h1 { font-size: 1.4em; }
 
         .server-info {
             background: #f8f9fa;
-            padding: 15px 30px;
+            padding: 10px 15px;
             border-bottom: 1px solid #e0e0e0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
+            font-size: 0.85em;
         }
 
-        .server-url {
-            font-family: 'Courier New', monospace;
-            font-size: 1.1em;
-            color: #667eea;
-            font-weight: bold;
-        }
-
-        .status {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: #4caf50;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
-            }
-        }
-
-        .status-text {
-            font-size: 0.9em;
-            color: #666;
-        }
-
-        .content {
-            padding: 30px;
-        }
+        .status-text { color: #666; }
+        .content { padding: 10px; }
 
         .loading {
             text-align: center;
-            padding: 60px;
+            padding: 40px;
             color: #666;
         }
 
@@ -119,10 +97,10 @@
             border: 3px solid #f3f3f3;
             border-top: 3px solid #667eea;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 30px;
+            height: 30px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
+            margin: 0 auto 15px;
         }
 
         @keyframes spin {
@@ -133,460 +111,393 @@
         .error-message {
             background: #fee;
             color: #c33;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px 0;
-            border-left: 4px solid #c33;
-        }
-
-        .success-message {
-            background: #e8f5e9;
-            color: #2e7d32;
-            padding: 10px;
+            padding: 15px;
             border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
+            font-size: 0.9em;
         }
 
-        .files-grid {
+        .games-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 100%;
         }
 
-        .file-button {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 15px 20px;
-            border-radius: 10px;
-            font-size: 1em;
+        .game-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-align: left;
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 12px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+            transition: transform 0.1s ease;
         }
 
-        .file-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        .game-card:active {
+            transform: scale(0.95);
+            background: #e2e8f0;
         }
 
-        .file-button:active {
-            transform: translateY(0);
+        .game-cover-wrapper {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            background: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
         }
 
-        .file-icon {
-            font-size: 1.5em;
+        .game-cover-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
-        .file-name {
-            flex: 1;
-            font-weight: 500;
-            word-break: break-all;
+        .default-icon-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 4px;
+            background: linear-gradient(135deg, #e0e7ff 0%, #f3e8ff 100%);
+            color: #333;
         }
 
-        .file-count {
-            background: rgba(255,255,255,0.2);
-            padding: 5px 10px;
-            border-radius: 20px;
-            font-size: 0.85em;
-        }
+        .default-icon { font-size: 1.8em; }
 
-        .no-files {
+        .game-info {
+            width: 100%;
+            padding: 6px 4px;
+            background: #ffffff;
+            border-top: 1px solid #edf2f7;
             text-align: center;
-            padding: 60px;
-            color: #999;
-            font-size: 1.1em;
+        }
+
+        .game-filename-text {
+            font-weight: 600;
+            font-size: 0.7em;
+            color: #2d3748;
+            word-break: break-all;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
         }
 
         .refresh-btn {
             background: #667eea;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 0.9em;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            font-size: 0.85em;
         }
 
-        .refresh-btn:hover {
-            background: #5a67d8;
-            transform: scale(1.05);
+        .game-card.missing {
+            border-color: #c33;
+            opacity: 0.45;
         }
+
+        .banner {
+            position: fixed;
+            left: 10px;
+            right: 10px;
+            bottom: 16px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            color: white;
+            font-size: 0.9em;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+            z-index: 1000;
+            display: none;
+        }
+        .banner.show { display: block; }
+        .banner.ok { background: #2f855a; }
+        .banner.error { background: #c53030; }
 
         footer {
             background: #f8f9fa;
-            padding: 20px;
+            padding: 10px;
             text-align: center;
             color: #666;
-            font-size: 0.85em;
+            font-size: 0.75em;
             border-top: 1px solid #e0e0e0;
-        }
-
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8em;
-            }
-            
-            .files-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .server-info {
-                flex-direction: column;
-                align-items: flex-start;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📁 Explorador de Archivos HTML</h1>
-            <p>Selecciona un archivo para visualizarlo en el navegador</p>
+            <h1>Menú</h1>
         </div>
-        
+
         <div class="server-info">
-            <div class="server-url">
-                🌐 Servidor: https://yagopc.github.io/frogger-game/
-            </div>
-            <div class="status">
-                <div class="status-indicator"></div>
-                <span class="status-text">Conectando al servidor...</span>
-            </div>
-            <button class="refresh-btn" onclick="loadFiles()">
-                🔄 Actualizar lista
+            <span class="status-text">Cargando...</span>
+            <button class="refresh-btn" onclick="loadFiles(true)">
+                🔄 Actualizar
             </button>
         </div>
-        
+
         <div class="content" id="content">
             <div class="loading">
                 <div class="spinner"></div>
-                <p>Cargando archivos HTML...</p>
-                <p style="font-size: 0.9em; margin-top: 10px;">Asegúrate de que el servidor esté ejecutándose en http://localhost:8000</p>
+                <p>Cargando games...</p>
             </div>
         </div>
-        
-        <footer>
-            💡 Tip: Para iniciar el servidor, ejecuta: <strong>python -m http.server 8000</strong> o <strong>npx http-server -p 8000</strong> en la carpeta con tus archivos HTML
-        </footer>
+
+        <footer id="footer"></footer>
     </div>
 
+    <div id="banner" class="banner"></div>
+
     <script>
-        const SERVER_URL = 'https://yagopc.github.io/frogger-game/';
-        
-        async function loadFiles() {
+        // Derivadas de la configuración superior (no tocar)
+        const FOLDER_NAME   = window.FOLDER_NAME;
+        const SERVER_HOST   = window.SERVER_HOST;
+        const SERVER_URL    = `${SERVER_HOST}/${FOLDER_NAME}`;
+        const MENU_FILENAME = `${FOLDER_NAME}.html`;
+
+        document.getElementById('footer').textContent = `Servidor: ${SERVER_URL}`;
+
+        // ---------------- Memoria residente (localStorage) ----------------
+        // La lista de programas (y sus portadas) se guarda la primera vez y se reutiliza
+        // en cada apertura. Solo se vuelve a leer el directorio al pulsar "Actualizar".
+        const CACHE_KEY = `menu_cache::${SERVER_URL}`;
+
+        function readCache() {
+            try {
+                const c = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+                if (c && Array.isArray(c.files) && c.files.length > 0) return c;
+            } catch (e) { /* sin memoria disponible */ }
+            return null;
+        }
+
+        function writeCache(files) {
+            try {
+                localStorage.setItem(CACHE_KEY, JSON.stringify({ files, date: Date.now() }));
+            } catch (e) { console.warn('No se pudo guardar en memoria', e); }
+        }
+
+        function clearCache() {
+            try { localStorage.removeItem(CACHE_KEY); } catch (e) { /* nada */ }
+        }
+
+        function fmtDate(ts) {
+            try {
+                return new Date(ts).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' });
+            } catch (e) { return new Date(ts).toLocaleString(); }
+        }
+
+        // ---------------- Aviso flotante ----------------
+        let bannerTimer = null;
+        function showBanner(msg, kind, ms) {
+            const b = document.getElementById('banner');
+            b.textContent = msg;
+            b.className = 'banner show ' + (kind || 'ok');
+            clearTimeout(bannerTimer);
+            bannerTimer = setTimeout(() => { b.className = 'banner'; }, ms || 4000);
+        }
+
+        // ---------------- Carga de la lista ----------------
+        // force = false: si hay lista en memoria se usa tal cual, sin tocar el servidor.
+        // force = true : (botón Actualizar) vuelve a leer el directorio y sustituye la memoria.
+        async function loadFiles(force = false) {
             const contentDiv = document.getElementById('content');
             const statusText = document.querySelector('.status-text');
-            
-            // Mostrar loading
+
+            if (!force) {
+                const cache = readCache();
+                if (cache) {
+                    renderGrid(cache.files);
+                    statusText.textContent =
+                        `${cache.files.length} programa(s) · guardado ${fmtDate(cache.date)}`;
+                    return;
+                }
+            }
+
             contentDiv.innerHTML = `
                 <div class="loading">
                     <div class="spinner"></div>
-                    <p>Buscando archivos HTML...</p>
-                    <p style="font-size: 0.9em; margin-top: 10px;">Escaneando https://yagopc.github.io/frogger-game/</p>
+                    <p>Buscando games...</p>
                 </div>
             `;
-            
-            statusText.textContent = 'Conectando al servidor...';
-            
+            statusText.textContent = 'Conectando...';
+
             try {
-                // Intentar obtener el listado de archivos del servidor
-                const files = await fetchFileList();
-                
-                if (files.length === 0) {
+                const names = await fetchFileList();
+
+                if (names.length === 0) {
+                    clearCache();
                     contentDiv.innerHTML = `
-                        <div class="no-files">
-                            📭 No se encontraron archivos HTML en el servidor
+                        <div class="loading">
+                            📭 No se encontraron games(.html)
                             <br><br>
-                            <small>Asegúrate de tener archivos .html en la carpeta del servidor</small>
-                            <br><br>
-                            <button class="refresh-btn" onclick="loadFiles()" style="margin-top: 20px;">
-                                🔄 Reintentar
-                            </button>
+                            <button class="refresh-btn" onclick="loadFiles(true)">Reintentar</button>
                         </div>
                     `;
-                    statusText.textContent = 'No se encontraron archivos HTML';
-                } else {
-                    displayFiles(files);
-                    statusText.textContent = `✅ ${files.length} archivo(s) HTML encontrado(s)`;
+                    statusText.textContent = 'Sin games';
+                    return;
                 }
-                
+
+                const files = await resolveCovers(names);
+                writeCache(files);
+                renderGrid(files);
+                statusText.textContent =
+                    `${files.length} programa(s) · actualizado ${fmtDate(Date.now())}`;
+                if (force) showBanner('✅ Directorio actualizado', 'ok');
+
             } catch (error) {
-                console.error('Error al cargar archivos:', error);
-                
-                let errorMessage = '';
-                if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-                    errorMessage = `
-                        <div class="error-message">
-                            <strong>❌ Error de conexión:</strong><br>
-                            No se pudo conectar al servidor en ${SERVER_URL}<br><br>
-                            <strong>Posibles soluciones:</strong><br>
-                            • Verifica que el servidor esté ejecutándose correctamente<br>
-                            • Ejecuta en la terminal: <strong>python -m http.server 8000</strong><br>
-                            • Asegúrate de estar en el puerto 8000<br>
-                            • Revisa que no haya un firewall bloqueando la conexión<br><br>
-                            <button class="refresh-btn" onclick="loadFiles()">🔄 Reintentar</button>
-                        </div>
-                    `;
+                console.error('Error:', error);
+                const cache = readCache();
+                if (cache) {
+                    // Falló la lectura: se conserva lo que ya había en memoria.
+                    renderGrid(cache.files);
+                    statusText.textContent = 'Sin conexión · lista guardada';
+                    showBanner('❌ No se pudo conectar con el servidor. Se mantiene la lista guardada.',
+                        'error', 6000);
                 } else {
-                    errorMessage = `
+                    contentDiv.innerHTML = `
                         <div class="error-message">
-                            <strong>⚠️ Error:</strong> ${error.message}<br><br>
-                            <button class="refresh-btn" onclick="loadFiles()">🔄 Reintentar</button>
+                            <strong>❌ Error de conexión</strong><br>
+                            No se pudo conectar con el servidor.
+                            <br><br>
+                            <button class="refresh-btn" onclick="loadFiles(true)">Reintentar</button>
                         </div>
                     `;
+                    statusText.textContent = 'Error';
                 }
-                
-                contentDiv.innerHTML = errorMessage;
-                statusText.textContent = 'Error de conexión';
             }
         }
-        
+
         async function fetchFileList() {
-            // Método 1: Intentar obtener el listado a través de un endpoint específico
-            // Nota: Esto asume que el servidor permite listar directorios
-            
-            try {
-                // Intentar obtener el listado de archivos desde el servidor
-                // Usamos un fetch a la raíz del servidor para obtener el listado
-                const response = await fetch(SERVER_URL + '/', {
-                    method: 'GET',
-                    mode: 'cors',
-                    headers: {
-                        'Accept': 'text/html'
-                    }
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                }
-                
-                const htmlText = await response.text();
-                
-                // Analizar el HTML del listado de directorios
-                const files = parseDirectoryListing(htmlText);
-                
-                if (files.length > 0) {
-                    return files;
-                }
-                
-                // Si no se encontraron archivos por el método estándar, probar con archivos predefinidos
-                return await tryAlternativeMethod();
-                
-            } catch (error) {
-                console.log('Método estándar falló, intentando método alternativo:', error);
-                return await tryAlternativeMethod();
-            }
+            const response = await fetch(SERVER_URL + '/', {
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-store',
+                headers: { 'Accept': 'text/html' }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const htmlText = await response.text();
+            return parseDirectoryListing(htmlText);
         }
-        
+
         function parseDirectoryListing(htmlText) {
             const files = [];
-            
-            // Patrones comunes para detectar archivos en el listado de directorios
-            // Python HTTP server, Node http-server, etc.
             const linkRegex = /href="([^"]*\.html?)"/gi;
             let match;
-            
+
             while ((match = linkRegex.exec(htmlText)) !== null) {
-                let fileName = match[1];
-                // Decodificar caracteres especiales en la URL
-                fileName = decodeURIComponent(fileName);
-                
-                // Evitar duplicados y archivos de navegación
-                if (fileName && 
-                    fileName !== '../' && 
-                    fileName !== './' &&
-                    fileName !== '..' &&
-                    !files.includes(fileName) &&
-                    (fileName.endsWith('.html') || fileName.endsWith('.htm'))) {
+                let fileName;
+                try { fileName = decodeURIComponent(match[1]); }
+                catch (e) { fileName = match[1]; }
+                if (fileName &&
+                    fileName !== MENU_FILENAME &&
+                    fileName !== 'index.html' &&
+                    !fileName.startsWith('.') &&
+                    !files.includes(fileName)) {
                     files.push(fileName);
                 }
             }
-            
             return files;
         }
-        
-        async function tryAlternativeMethod() {
-            // Método alternativo: Intentar acceder a archivos comunes
-            const commonFiles = [
-                'index.html', 'home.html', 'main.html', 'inicio.html',
-                'about.html', 'contacto.html', 'servicios.html', 'productos.html'
-            ];
-            
-            const existingFiles = [];
-            
-            for (const fileName of commonFiles) {
-                try {
-                    const response = await fetch(`${SERVER_URL}/${fileName}`, {
-                        method: 'HEAD',
-                        mode: 'no-cors'
-                    });
-                    // Si no hay error, asumimos que el archivo existe
-                    existingFiles.push(fileName);
-                } catch (error) {
-                    // El archivo no existe o no se puede acceder
-                    console.log(`${fileName} no encontrado`);
-                }
-            }
-            
-            // Si aún no encontramos archivos, permitir que el usuario especifique manualmente
-            if (existingFiles.length === 0) {
-                // Ofrecer opción de agregar archivos manualmente
-                showManualInput();
-            }
-            
-            return existingFiles;
+
+        function checkImageExists(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = url;
+            });
         }
-        
-        function showManualInput() {
+
+        // Busca la portada (.jpg o .png) de cada programa; se guarda en memoria con la lista.
+        async function resolveCovers(names) {
+            return Promise.all(names.map(async (name) => {
+                const baseName = name.substring(0, name.lastIndexOf('.'));
+                let img = null;
+                for (const ext of ['jpg', 'png']) {
+                    const u = `${SERVER_URL}/${encodeURIComponent(baseName)}.${ext}`;
+                    if (await checkImageExists(u)) { img = u; break; }
+                }
+                return { name, img };
+            }));
+        }
+
+        // ---------------- Pintar la cuadrícula ----------------
+        function renderGrid(files) {
             const contentDiv = document.getElementById('content');
-            const manualInputHTML = `
-                <div style="background: #f0f0f0; padding: 20px; border-radius: 10px; margin: 20px 0;">
-                    <h3>📝 No se pudo detectar automáticamente los archivos</h3>
-                    <p>Puedes ingresar manualmente los nombres de los archivos HTML que deseas abrir:</p>
-                    <div id="manualFiles">
-                        <input type="text" id="fileNameInput" placeholder="nombre-del-archivo.html" style="padding: 10px; width: 70%; margin-right: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                        <button onclick="addManualFile()" style="padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 5px; cursor: pointer;">➕ Agregar</button>
-                    </div>
-                    <div id="manualFileList" style="margin-top: 20px;"></div>
-                    <button onclick="loadManualFiles()" style="margin-top: 15px; padding: 10px 20px; background: #4caf50; color: white; border: none; border-radius: 5px; cursor: pointer;">📂 Cargar archivos manuales</button>
-                </div>
-            `;
-            contentDiv.innerHTML = manualInputHTML + contentDiv.innerHTML;
-            
-            // Inicializar lista de archivos manuales
-            if (!window.manualFilesArray) {
-                window.manualFilesArray = [];
-            }
-            updateManualFileList();
-        }
-        
-        function addManualFile() {
-            const input = document.getElementById('fileNameInput');
-            const fileName = input.value.trim();
-            
-            if (fileName && (fileName.endsWith('.html') || fileName.endsWith('.htm'))) {
-                if (!window.manualFilesArray.includes(fileName)) {
-                    window.manualFilesArray.push(fileName);
-                    updateManualFileList();
-                    input.value = '';
+            const gridContainer = document.createElement('div');
+            gridContainer.className = 'games-grid';
+
+            for (const file of files) {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.onclick = () => openProgram(file.name, card);
+
+                const coverWrapper = document.createElement('div');
+                coverWrapper.className = 'game-cover-wrapper';
+
+                if (file.img) {
+                    coverWrapper.innerHTML = `<img src="${file.img}" alt="${escapeHtml(file.name)}">`;
                 } else {
-                    alert('Este archivo ya ha sido agregado');
-                }
-            } else {
-                alert('Por favor, ingresa un nombre de archivo válido con extensión .html o .htm');
-            }
-        }
-        
-        function updateManualFileList() {
-            const listDiv = document.getElementById('manualFileList');
-            if (listDiv) {
-                if (window.manualFilesArray.length === 0) {
-                    listDiv.innerHTML = '<p style="color: #999;">No hay archivos agregados aún</p>';
-                } else {
-                    listDiv.innerHTML = `
-                        <strong>Archivos agregados:</strong>
-                        <ul style="margin-top: 10px;">
-                            ${window.manualFilesArray.map(f => `<li>${f} <button onclick="removeManualFile('${f}')" style="margin-left: 10px; background: #f44336; color: white; border: none; border-radius: 3px; padding: 2px 8px; cursor: pointer;">Eliminar</button></li>`).join('')}
-                        </ul>
+                    coverWrapper.innerHTML = `
+                        <div class="default-icon-container">
+                            <span class="default-icon">🎮</span>
+                        </div>
                     `;
                 }
+
+                const infoBox = document.createElement('div');
+                infoBox.className = 'game-info';
+                infoBox.innerHTML = `<span class="game-filename-text">${escapeHtml(file.name)}</span>`;
+
+                card.appendChild(coverWrapper);
+                card.appendChild(infoBox);
+                gridContainer.appendChild(card);
             }
+
+            contentDiv.innerHTML = '';
+            contentDiv.appendChild(gridContainer);
         }
-        
-        function removeManualFile(fileName) {
-            const index = window.manualFilesArray.indexOf(fileName);
-            if (index > -1) {
-                window.manualFilesArray.splice(index, 1);
-                updateManualFileList();
+
+        // ---------------- Abrir un programa ----------------
+        // Antes de abrirlo comprueba que el archivo sigue existiendo en el servidor.
+        async function openProgram(name, card) {
+            const url = `${SERVER_URL}/${encodeURIComponent(name)}`;
+
+            try {
+                const r = await fetch(url, { method: 'HEAD', cache: 'no-store' });
+                if (r.status === 404 || r.status === 410) {
+                    card.classList.add('missing');
+                    showBanner(`❌ «${name}» ya no existe en el directorio. ` +
+                        `Pulsa 🔄 Actualizar para refrescar la lista.`, 'error', 8000);
+                    return;
+                }
+            } catch (e) {
+                // No se pudo comprobar (servidor caído o sin CORS): se intenta abrir igualmente.
             }
+
+            const w = window.open(url, '_blank');
+            if (!w) location.href = url;   // ventana emergente bloqueada
         }
-        
-        function loadManualFiles() {
-            if (window.manualFilesArray && window.manualFilesArray.length > 0) {
-                displayFiles(window.manualFilesArray);
-                document.querySelector('.status-text').textContent = `📁 ${window.manualFilesArray.length} archivo(s) cargado(s) manualmente`;
-            } else {
-                alert('No hay archivos manuales para cargar');
-            }
-        }
-        
-        function displayFiles(files) {
-            const contentDiv = document.getElementById('content');
-            
-            const filesHTML = `
-                <div class="success-message">
-                    ✅ Se encontraron ${files.length} archivo(s) HTML
-                </div>
-                <div class="files-grid">
-                    ${files.map(file => `
-                        <button class="file-button" onclick="openFile('${escapeHtml(file)}')">
-                            <span class="file-icon">📄</span>
-                            <span class="file-name">${escapeHtml(file)}</span>
-                            <span class="file-count">HTML</span>
-                        </button>
-                    `).join('')}
-                </div>
-            `;
-            
-            contentDiv.innerHTML = filesHTML;
-        }
-        
-        function openFile(fileName) {
-            const fileUrl = `${SERVER_URL}/${encodeURIComponent(fileName)}`;
-            console.log(`Abriendo archivo: ${fileUrl}`);
-            
-            // Abrir en una nueva pestaña
-            window.open(fileUrl, '_blank');
-        }
-        
+
         function escapeHtml(text) {
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         }
-        
-        // Función para verificar si el servidor está accesible
-        async function checkServerStatus() {
-            try {
-                const response = await fetch(SERVER_URL + '/', {
-                    method: 'HEAD',
-                    mode: 'no-cors'
-                });
-                return true;
-            } catch (error) {
-                return false;
-            }
-        }
-        
-        // Inicializar al cargar la página
+
         window.addEventListener('DOMContentLoaded', () => {
-            loadFiles();
-            
-            // Actualizar automáticamente cada 30 segundos
-            setInterval(() => {
-                if (document.hasFocus()) {
-                    loadFiles();
-                }
-            }, 30000);
+            loadFiles(false);
         });
-        
-        // Exponer funciones globalmente
-        window.loadFiles = loadFiles;
-        window.openFile = openFile;
-        window.addManualFile = addManualFile;
-        window.removeManualFile = removeManualFile;
-        window.loadManualFiles = loadManualFiles;
     </script>
 </body>
 </html>

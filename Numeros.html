@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Desafío Numérico - Agilidad 1 - 20</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .grid-container {
+            width: 100%;
+            max-width: 450px;
+            aspect-ratio: 1 / 1;
+        }
+
+        .free-container {
+            width: 100%;
+            max-width: 450px;
+            height: 52vh;
+            max-height: 480px;
+            min-height: 360px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .floating-btn {
+            position: absolute;
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 900;
+            background-color: #334155;
+            color: #f8fafc;
+            border: 2px solid #475569;
+            box-shadow: 0 6px 12px -2px rgba(0, 0, 0, 0.4);
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s ease, left 0.2s ease-out, top 0.2s ease-out;
+        }
+
+        .floating-btn:active {
+            transform: scale(0.90);
+        }
+
+        .cell-btn {
+            transition: transform 0.1s ease;
+            user-select: none;
+        }
+
+        .cell-btn:active {
+            transform: scale(0.93);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        .shake-err {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            opacity: 0.8;
+            border-radius: 2px;
+            pointer-events: none;
+            animation: fall 3s linear forwards;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between items-center p-2.5 overflow-x-hidden">
+
+    <header class="w-full max-w-md text-center pt-1 pb-1 flex flex-col items-center gap-1.5">
+        <div class="flex items-center justify-between w-full px-1">
+            <h1 class="text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-indigo-500 uppercase flex items-center gap-1.5">
+                <i class="fa-solid fa-bolt text-yellow-400"></i> Agilidad
+            </h1>
+
+            <div class="flex bg-slate-800 p-1 rounded-xl border border-slate-700">
+                <button id="tab-lvl1" onclick="switchLevel(1)" class="px-2.5 py-1 text-[11px] font-black rounded-lg transition-all bg-indigo-600 text-white shadow">Nivel 1</button>
+                <button id="tab-lvl2" onclick="switchLevel(2)" class="px-2.5 py-1 text-[11px] font-black rounded-lg transition-all text-slate-400 hover:text-white">Nivel 2</button>
+                <button id="tab-lvl3" onclick="switchLevel(3)" class="px-2.5 py-1 text-[11px] font-black rounded-lg transition-all text-slate-400 hover:text-white">Nivel 3</button>
+            </div>
+        </div>
+
+        <div class="w-full bg-slate-800/90 border border-amber-500/30 rounded-xl px-3.5 py-1.5 flex items-center justify-between shadow-md">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-trophy text-amber-400 text-base"></i>
+                <div class="text-left">
+                    <div id="record-title-label" class="text-[9px] uppercase font-bold tracking-wider text-slate-400">Récord Nivel 1 (1-16)</div>
+                    <div id="best-time-display" class="text-base font-black text-amber-400 font-mono">--.-- s</div>
+                </div>
+            </div>
+            <button onclick="clearRecord()" title="Borrar Récord" class="text-slate-500 hover:text-rose-400 active:scale-95 transition-all p-1 rounded-lg hover:bg-slate-700/50">
+                <i class="fa-solid fa-trash-can text-xs"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="w-full max-w-md flex-1 flex flex-col justify-center items-center gap-2.5 my-auto">
+
+        <div id="lvl1-container" class="grid-container bg-slate-800/80 p-2.5 rounded-2xl border border-slate-700/60 shadow-2xl backdrop-blur">
+            <div id="grid" class="grid grid-cols-4 grid-rows-4 gap-2 h-full w-full"></div>
+        </div>
+
+        <div id="lvl23-container" class="free-container bg-slate-800/80 p-2 rounded-2xl border border-slate-700/60 shadow-2xl backdrop-blur hidden">
+            <div id="free-board" class="relative w-full h-full"></div>
+        </div>
+
+        <div class="w-full grid grid-cols-2 gap-2.5">
+            <button id="start-btn" onclick="startGame()" class="w-full py-2.5 px-4 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 font-black text-base rounded-xl shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all">
+                <i class="fa-solid fa-play"></i> INICIAR
+            </button>
+            <button id="new-btn" onclick="resetBoard()" class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-base rounded-xl shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all">
+                <i class="fa-solid fa-rotate-right"></i> NUEVO
+            </button>
+        </div>
+
+        <div class="w-full bg-slate-800/90 border border-slate-700/80 rounded-2xl p-2 text-center shadow-inner flex flex-col items-center justify-center">
+            <div class="text-[10px] uppercase tracking-widest text-slate-400 font-semibold mb-0.5 flex items-center gap-1.5">
+                <i class="fa-regular fa-clock text-cyan-400"></i> Tiempo Transcurrido
+            </div>
+            <div id="timer" class="text-3xl font-black font-mono text-cyan-400 tracking-tight">
+                00:00.<span class="text-xl">00</span>
+            </div>
+
+            <div class="w-full mt-1 pt-1 border-t border-slate-700/50 flex flex-col gap-1">
+                <div class="flex justify-between items-center text-xs font-bold px-1">
+                    <span class="text-slate-400">Aciertos:</span>
+                    <span id="hits-count" class="text-emerald-400 text-base font-mono">0 / 16</span>
+                </div>
+                <div class="w-full bg-slate-700/60 h-2 rounded-full overflow-hidden">
+                    <div id="progress-bar" class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full w-0 transition-all duration-200"></div>
+                </div>
+                <div id="next-target-hint" class="text-[11px] text-slate-400 mt-0.5 font-medium">
+                    Pulsa <span class="text-amber-400 font-bold">'INICIAR'</span> o <span class="text-indigo-400 font-bold">'NUEVO'</span> para jugar
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="w-full max-w-md text-center py-0.5">
+        <p class="text-[10px] text-slate-500">Optimizado para pantalla vertical táctil Android</p>
+    </footer>
+
+    <div id="win-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
+        <div class="bg-slate-800 border border-emerald-500/40 rounded-3xl p-6 text-center max-w-xs w-full shadow-2xl relative overflow-hidden transform transition-all">
+            <div id="modal-icon-bg" class="w-16 h-16 bg-emerald-500/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto mb-3 text-3xl">
+                <i id="modal-icon" class="fa-solid fa-trophy"></i>
+            </div>
+            <h2 id="modal-title" class="text-2xl font-black text-white mb-1">¡Completado!</h2>
+            <p id="modal-subtitle" class="text-slate-300 text-xs mb-3">Has completado todos los números en orden correctamente.</p>
+
+            <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-700 mb-3">
+                <div class="text-xs text-slate-400 uppercase tracking-wider mb-1">Tu Tiempo Total</div>
+                <div id="final-time" class="text-3xl font-black text-cyan-400 font-mono">00:00.00</div>
+            </div>
+
+            <div id="new-record-badge" class="hidden mb-3 p-2 bg-amber-500/20 border border-amber-500/50 rounded-xl text-amber-400 text-xs font-bold flex items-center justify-center gap-2 animate-bounce">
+                <i class="fa-solid fa-crown"></i> ¡NUEVO RÉCORD PERSONAL!
+            </div>
+
+            <div class="flex flex-col gap-2">
+                <button onclick="closeModalAndReset()" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 font-black rounded-xl shadow-lg transition-all text-sm">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> JUGAR DE NUEVO
+                </button>
+                <button onclick="backToHome()" class="w-full py-2.5 bg-slate-700 hover:bg-slate-600 active:bg-slate-500 text-white font-bold rounded-xl shadow-lg transition-all text-sm">
+                    <i class="fa-solid fa-house mr-1"></i> PANTALLA DE INICIO
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentLevel = 1;
+        let maxNumbers = 16;
+        let numbers = [];
+        let freePositions = [];
+        let nextExpected = 1;
+        let timerInterval = null;
+        let startTime = 0;
+        let elapsedTime = 0;
+        let isGameRunning = false;
+        let isGameFinished = false;
+        let isBoardRevealed = false;
+        
+        let bestTimes = { 1: null, 2: null, 3: null };
+
+        const gridEl = document.getElementById('grid');
+        const freeBoardEl = document.getElementById('free-board');
+        const lvl1Container = document.getElementById('lvl1-container');
+        const lvl23Container = document.getElementById('lvl23-container');
+        const tabLvl1 = document.getElementById('tab-lvl1');
+        const tabLvl2 = document.getElementById('tab-lvl2');
+        const tabLvl3 = document.getElementById('tab-lvl3');
+        const recordTitleLabel = document.getElementById('record-title-label');
+
+        const timerEl = document.getElementById('timer');
+        const hitsCountEl = document.getElementById('hits-count');
+        const progressBarEl = document.getElementById('progress-bar');
+        const nextTargetHintEl = document.getElementById('next-target-hint');
+        const startBtn = document.getElementById('start-btn');
+        const winModal = document.getElementById('win-modal');
+        const finalTimeEl = document.getElementById('final-time');
+        const bestTimeDisplayEl = document.getElementById('best-time-display');
+        const newRecordBadge = document.getElementById('new-record-badge');
+        const modalTitle = document.getElementById('modal-title');
+
+        window.onload = function() {
+            loadRecords();
+            renderInitialState();
+        };
+
+        function switchLevel(lvl) {
+            if (isGameRunning) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                isGameRunning = false;
+            }
+
+            currentLevel = lvl;
+            maxNumbers = (lvl === 1) ? 16 : 20;
+
+            [tabLvl1, tabLvl2, tabLvl3].forEach((tab, index) => {
+                if (index + 1 === lvl) {
+                    tab.className = "px-2.5 py-1 text-[11px] font-black rounded-lg transition-all bg-indigo-600 text-white shadow";
+                } else {
+                    tab.className = "px-2.5 py-1 text-[11px] font-black rounded-lg transition-all text-slate-400 hover:text-white";
+                }
+            });
+
+            if (lvl === 1) {
+                lvl1Container.classList.remove('hidden');
+                lvl23Container.classList.add('hidden');
+                recordTitleLabel.innerText = "Récord Nivel 1 (1-16)";
+            } else if (lvl === 2) {
+                lvl23Container.classList.remove('hidden');
+                lvl1Container.classList.add('hidden');
+                recordTitleLabel.innerText = "Récord Nivel 2 (1-20)";
+            } else {
+                lvl23Container.classList.remove('hidden');
+                lvl1Container.classList.add('hidden');
+                recordTitleLabel.innerText = "Récord Nivel 3 (Dinámico)";
+            }
+
+            updateBestTimeDisplay();
+            backToHome();
+        }
+
+        function loadRecords() {
+            try {
+                const rec1 = localStorage.getItem('speedGrid_bestTime_lvl1');
+                const rec2 = localStorage.getItem('speedGrid_bestTime_lvl2');
+                const rec3 = localStorage.getItem('speedGrid_bestTime_lvl3');
+                bestTimes[1] = rec1 !== null ? parseInt(rec1, 10) : null;
+                bestTimes[2] = rec2 !== null ? parseInt(rec2, 10) : null;
+                bestTimes[3] = rec3 !== null ? parseInt(rec3, 10) : null;
+            } catch (e) {
+                console.warn('LocalStorage unavailable:', e);
+            }
+            updateBestTimeDisplay();
+        }
+
+        function updateBestTimeDisplay() {
+            const bt = bestTimes[currentLevel];
+            if (bt !== null) {
+                bestTimeDisplayEl.innerText = formatTimeMs(bt);
+            } else {
+                bestTimeDisplayEl.innerText = '--.-- s';
+            }
+        }
+
+        function formatTimeMs(ms) {
+            const seconds = (ms / 1000).toFixed(2);
+            return `${seconds} s`;
+        }
+
+        function clearRecord() {
+            if (bestTimes[currentLevel] === null) return;
+            try {
+                localStorage.removeItem(`speedGrid_bestTime_lvl${currentLevel}`);
+            } catch (e) {
+                console.warn(e);
+            }
+            bestTimes[currentLevel] = null;
+            updateBestTimeDisplay();
+        }
+
+        function renderInitialState() {
+            if (currentLevel === 1) {
+                gridEl.innerHTML = '';
+                for (let i = 0; i < 16; i++) {
+                    const card = document.createElement('div');
+                    card.className = `flex items-center justify-center rounded-xl bg-slate-700/40 border-2 border-slate-700/60 text-slate-600 font-bold text-2xl cursor-not-allowed`;
+                    card.innerHTML = `<i class="fa-solid fa-lock text-slate-600/50 text-xl"></i>`;
+                    gridEl.appendChild(card);
+                }
+            } else {
+                freeBoardEl.innerHTML = '';
+                const rows = 5, cols = 4;
+                for (let i = 0; i < 20; i++) {
+                    const placeholder = document.createElement('div');
+                    placeholder.className = `absolute w-12 h-12 rounded-xl bg-slate-700/20 border-2 border-dashed border-slate-700/40 flex items-center justify-center text-slate-600 text-xs`;
+                    placeholder.innerHTML = `<i class="fa-solid fa-lock text-slate-700"></i>`;
+                    
+                    const r = Math.floor(i / cols);
+                    const c = i % cols;
+                    placeholder.style.left = `${c * 23 + 4}%`;
+                    placeholder.style.top = `${r * 18 + 4}%`;
+                    freeBoardEl.appendChild(placeholder);
+                }
+            }
+            hitsCountEl.innerText = `0 / ${maxNumbers}`;
+            isBoardRevealed = false;
+        }
+
+        function generateShuffledNumbers(count) {
+            const arr = Array.from({ length: count }, (_, i) => i + 1);
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function generateGridJitterPositions(count) {
+            const nums = generateShuffledNumbers(count);
+            const gridCells = [];
+            const rows = 5, cols = 4;
+
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    gridCells.push({ r, c });
+                }
+            }
+
+            for (let i = gridCells.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [gridCells[i], gridCells[j]] = [gridCells[j], gridCells[i]];
+            }
+
+            const cellWidthPct = 100 / cols;
+            const cellHeightPct = 100 / rows;
+            const buttonMarginPct = 2;
+
+            const positions = [];
+
+            nums.forEach((num, index) => {
+                const cell = gridCells[index];
+                const minX = cell.c * cellWidthPct + buttonMarginPct;
+                const maxX = (cell.c + 1) * cellWidthPct - cellWidthPct * 0.45;
+                const minY = cell.r * cellHeightPct + buttonMarginPct;
+                const maxY = (cell.r + 1) * cellHeightPct - cellHeightPct * 0.45;
+
+                const posX = minX + Math.random() * Math.max(1, (maxX - minX));
+                const posY = minY + Math.random() * Math.max(1, (maxY - minY));
+
+                positions.push({ num, x: posX, y: posY });
+            });
+
+            return positions;
+        }
+
+        function renderBoard() {
+            if (currentLevel === 1) {
+                gridEl.innerHTML = '';
+                numbers.forEach((num) => {
+                    const button = document.createElement('button');
+                    button.dataset.number = num;
+                    button.className = `cell-btn flex items-center justify-center text-2xl sm:text-3xl font-black rounded-xl bg-slate-700 text-slate-100 border-2 border-slate-600 shadow-md active:bg-slate-600`;
+                    button.innerText = num;
+
+                    button.addEventListener('click', () => handleCellClick(num, button));
+                    gridEl.appendChild(button);
+                });
+            } else {
+                freeBoardEl.innerHTML = '';
+                freePositions.forEach((pos) => {
+                    const button = document.createElement('button');
+                    button.dataset.number = pos.num;
+                    button.className = `floating-btn`;
+                    button.style.left = `${pos.x}%`;
+                    button.style.top = `${pos.y}%`;
+                    button.innerText = pos.num;
+
+                    button.addEventListener('click', () => handleCellClick(pos.num, button));
+                    freeBoardEl.appendChild(button);
+                });
+            }
+            isBoardRevealed = true;
+        }
+
+        function relocateFloatingButtons() {
+            const newPositions = generateGridJitterPositions(20);
+            newPositions.forEach((pos) => {
+                const btn = freeBoardEl.querySelector(`[data-number='${pos.num}']`);
+                if (btn) {
+                    btn.style.left = `${pos.x}%`;
+                    btn.style.top = `${pos.y}%`;
+                }
+            });
+            freePositions = newPositions;
+        }
+
+        function startGame() {
+            if (!isBoardRevealed) {
+                if (currentLevel === 1) {
+                    numbers = generateShuffledNumbers(16);
+                } else {
+                    freePositions = generateGridJitterPositions(20);
+                }
+                renderBoard();
+            }
+
+            if (isGameFinished) {
+                resetBoard();
+                return;
+            }
+
+            if (!isGameRunning) {
+                isGameRunning = true;
+                startTime = Date.now() - elapsedTime;
+                timerInterval = setInterval(updateTimerDisplay, 10);
+
+                startBtn.classList.remove('bg-emerald-500', 'hover:bg-emerald-600', 'shadow-emerald-500/20');
+                startBtn.classList.add('bg-amber-500', 'hover:bg-amber-600', 'shadow-amber-500/20');
+                startBtn.innerHTML = `<i class="fa-solid fa-pause"></i> PAUSAR`;
+
+                updateHintText();
+            } else {
+                clearInterval(timerInterval);
+                timerInterval = null;
+                isGameRunning = false;
+                startBtn.classList.remove('bg-amber-500', 'hover:bg-amber-600', 'shadow-amber-500/20');
+                startBtn.classList.add('bg-emerald-500', 'hover:bg-emerald-600', 'shadow-emerald-500/20');
+                startBtn.innerHTML = `<i class="fa-solid fa-play"></i> CONTINUAR`;
+                nextTargetHintEl.innerHTML = `<span class="text-amber-400 font-bold">Juego en pausa</span>`;
+            }
+        }
+
+        function resetBoard() {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            isGameRunning = false;
+            isGameFinished = false;
+            elapsedTime = 0;
+            nextExpected = 1;
+
+            if (currentLevel === 1) {
+                numbers = generateShuffledNumbers(16);
+            } else {
+                freePositions = generateGridJitterPositions(20);
+            }
+            renderBoard();
+
+            isGameRunning = true;
+            startTime = Date.now();
+            timerInterval = setInterval(updateTimerDisplay, 10);
+
+            timerEl.innerHTML = `00:00.<span class="text-xl">00</span>`;
+            hitsCountEl.innerText = `0 / ${maxNumbers}`;
+            progressBarEl.style.width = `0%`;
+            updateHintText();
+
+            startBtn.classList.remove('bg-emerald-500', 'hover:bg-emerald-600', 'shadow-emerald-500/20');
+            startBtn.classList.add('bg-amber-500', 'hover:bg-amber-600', 'shadow-amber-500/20');
+            startBtn.innerHTML = `<i class="fa-solid fa-pause"></i> PAUSAR`;
+        }
+
+        function handleCellClick(number, element) {
+            if (!isGameRunning || isGameFinished) return;
+
+            if (number === nextExpected) {
+                if (navigator.vibrate) {
+                    navigator.vibrate(25);
+                }
+
+                nextExpected++;
+                const hits = nextExpected - 1;
+
+                hitsCountEl.innerText = `${hits} / ${maxNumbers}`;
+                progressBarEl.style.width = `${(hits / maxNumbers) * 100}%`;
+
+                if (currentLevel === 3 && hits < maxNumbers) {
+                    relocateFloatingButtons();
+                }
+
+                if (hits === maxNumbers) {
+                    handleGameWin();
+                } else {
+                    updateHintText();
+                }
+            } else {
+                triggerErrorFeedback(element);
+            }
+        }
+
+        function triggerErrorFeedback(element) {
+            if (navigator.vibrate) {
+                navigator.vibrate([40, 30, 40]);
+            }
+            element.classList.add('shake-err');
+            setTimeout(() => element.classList.remove('shake-err'), 300);
+        }
+
+        function updateHintText() {
+            if (nextExpected <= maxNumbers) {
+                nextTargetHintEl.innerHTML = `Siguiente número a pulsar: <span class="text-cyan-400 font-bold text-sm">${nextExpected}</span>`;
+            }
+        }
+
+        function updateTimerDisplay() {
+            elapsedTime = Date.now() - startTime;
+
+            const minutes = Math.floor(elapsedTime / 60000);
+            const seconds = Math.floor((elapsedTime % 60000) / 1000);
+            const milliseconds = Math.floor((elapsedTime % 1000) / 10);
+
+            const pad = (n) => n.toString().padStart(2, '0');
+
+            timerEl.innerHTML = `${pad(minutes)}:${pad(seconds)}.<span class="text-xl">${pad(milliseconds)}</span>`;
+        }
+
+        function handleGameWin() {
+            clearInterval(timerInterval);
+            isGameRunning = false;
+            isGameFinished = true;
+
+            const finalMs = elapsedTime;
+            const formattedTime = timerEl.innerText;
+            finalTimeEl.innerText = formattedTime;
+
+            let isNewRecord = false;
+            const bt = bestTimes[currentLevel];
+
+            if (bt === null || finalMs < bt) {
+                bestTimes[currentLevel] = finalMs;
+                isNewRecord = true;
+
+                try {
+                    localStorage.setItem(`speedGrid_bestTime_lvl${currentLevel}`, finalMs.toString());
+                } catch (e) {
+                    console.warn('LocalStorage error:', e);
+                }
+
+                updateBestTimeDisplay();
+            }
+
+            if (isNewRecord) {
+                newRecordBadge.classList.remove('hidden');
+                modalTitle.innerText = "¡NUEVO RÉCORD!";
+                nextTargetHintEl.innerHTML = `<span class="text-amber-400 font-bold">¡Nuevo récord Nivel ${currentLevel}: ${formatTimeMs(bestTimes[currentLevel])}!</span>`;
+            } else {
+                newRecordBadge.classList.add('hidden');
+                modalTitle.innerText = "¡Completado!";
+                nextTargetHintEl.innerHTML = `<span class="text-emerald-400 font-bold">${maxNumbers}/${maxNumbers} aciertos en ${formattedTime}</span>`;
+            }
+
+            setTimeout(() => {
+                winModal.classList.remove('hidden');
+                triggerConfetti();
+            }, 300);
+        }
+
+        function closeModalAndReset() {
+            winModal.classList.add('hidden');
+            resetBoard();
+        }
+
+        function backToHome() {
+            winModal.classList.add('hidden');
+            clearInterval(timerInterval);
+            timerInterval = null;
+
+            isGameRunning = false;
+            isGameFinished = false;
+            elapsedTime = 0;
+            nextExpected = 1;
+            numbers = [];
+            freePositions = [];
+
+            renderInitialState();
+
+            timerEl.innerHTML = `00:00.<span class="text-xl">00</span>`;
+            hitsCountEl.innerText = `0 / ${maxNumbers}`;
+            progressBarEl.style.width = `0%`;
+            nextTargetHintEl.innerHTML = `Pulsa <span class="text-amber-400 font-bold">'INICIAR'</span> o <span class="text-indigo-400 font-bold">'NUEVO'</span> para jugar`;
+
+            startBtn.classList.remove('bg-amber-500', 'hover:bg-amber-600', 'shadow-amber-500/20');
+            startBtn.classList.add('bg-emerald-500', 'hover:bg-emerald-600', 'shadow-emerald-500/20');
+            startBtn.innerHTML = `<i class="fa-solid fa-play"></i> INICIAR`;
+        }
+
+        function triggerConfetti() {
+            const colors = ['#34d399', '#38bdf8', '#facc15', '#f43f5e', '#a855f7'];
+            for (let i = 0; i < 40; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.top = '-10px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                document.body.appendChild(confetti);
+
+                setTimeout(() => confetti.remove(), 3500);
+            }
+        }
+    </script>
+</body>
+</html>

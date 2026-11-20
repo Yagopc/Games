@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Rescue Heroes Arcade</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * {
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #020617;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        /* Contenedor adaptativo 9:16 sin deformación */
+        #game-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 56.25vh; /* Aspect ratio 9:16 */
+            max-height: 177.78vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 40px rgba(0,0,0,0.9);
+            background: #020617;
+            overflow: hidden;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .btn-arcade {
+            background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%);
+            border: 2px solid #38bdf8;
+            box-shadow: 0 4px 0 #0369a1, 0 6px 12px rgba(0,0,0,0.5);
+            transition: transform 0.08s, box-shadow 0.08s;
+        }
+        .btn-arcade:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #0369a1, 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .btn-secondary {
+            background: linear-gradient(180deg, #475569 0%, #1e293b 100%);
+            border: 2px solid #64748b;
+            box-shadow: 0 4px 0 #0f172a, 0 6px 12px rgba(0,0,0,0.5);
+        }
+        .btn-secondary:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #0f172a, 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .glass-overlay {
+            background: rgba(15, 23, 42, 0.92);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-wrapper">
+    <!-- Canvas de resolución fija interna 450x800 -->
+    <canvas id="gameCanvas" width="450" height="800"></canvas>
+
+    <!-- HUD superior dentro del juego -->
+    <div id="hud" class="absolute top-0 left-0 right-0 p-3 flex justify-between items-center pointer-events-none hidden z-10">
+        <div class="flex gap-2">
+            <div class="bg-slate-900/80 border border-slate-700/80 px-3 py-1.5 rounded-2xl text-emerald-400 font-extrabold text-sm flex items-center gap-1 shadow-md">
+                💚 <span id="hud-saved">0</span>
+            </div>
+            <div class="bg-slate-900/80 border border-slate-700/80 px-3 py-1.5 rounded-2xl text-rose-400 font-extrabold text-sm flex items-center gap-1 shadow-md">
+                💥 <span id="hud-lost">0</span>
+            </div>
+        </div>
+        <div class="bg-slate-900/80 border border-slate-700/80 px-3 py-1.5 rounded-2xl text-amber-300 font-extrabold text-xs shadow-md">
+            🏃 RESTANTES: <span id="hud-remaining" class="text-sm">60</span>
+        </div>
+        <button id="btn-pause" class="pointer-events-auto bg-slate-800 border border-slate-600 text-white p-2 rounded-2xl text-base active:scale-90 transition">
+            ⚙️
+        </button>
+    </div>
+
+    <!-- Menú Principal -->
+    <div id="menu-main" class="absolute inset-0 flex flex-col justify-between p-6 glass-overlay z-20">
+        <div class="text-center mt-6">
+            <h1 class="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-blue-500 uppercase tracking-wide drop-shadow-lg">
+                Rescue Heroes
+            </h1>
+            <p class="text-slate-400 text-xs font-semibold tracking-widest mt-1 uppercase">Arcade Táctil Vertical</p>
+        </div>
+
+        <div class="space-y-4 my-auto w-full max-w-xs mx-auto">
+            <button id="btn-start" class="btn-arcade w-full py-4 rounded-2xl text-white font-black text-xl tracking-wider uppercase">
+                ¡JUGAR!
+            </button>
+            <button id="btn-settings" class="btn-secondary w-full py-3.5 rounded-2xl text-white font-bold text-base tracking-wider uppercase flex items-center justify-center gap-2">
+                ⚙️ Configuración
+            </button>
+        </div>
+
+        <div class="text-center text-slate-400 text-xs space-y-1 pb-2">
+            <p><span class="text-emerald-400 font-bold">🟩 Verde:</span> +20% Colchón | <span class="text-amber-400 font-bold">🟨 Amarillo:</span> -20% Colchón</p>
+            <p class="text-slate-500">Arrastra horizontalmente con el dedo para salvarlos</p>
+        </div>
+    </div>
+
+    <!-- Modal Configuración -->
+    <div id="modal-settings" class="absolute inset-0 flex items-center justify-center p-5 glass-overlay z-30 hidden">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-xs rounded-3xl p-5 shadow-2xl flex flex-col gap-4">
+            <h2 class="text-xl font-black text-white text-center uppercase tracking-wide">Configuración</h2>
+
+            <div>
+                <label class="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">Nivel de Dificultad</label>
+                <div class="space-y-2">
+                    <button class="diff-btn w-full p-2.5 rounded-xl border-2 border-emerald-500/60 bg-emerald-950/40 text-emerald-300 font-bold text-left flex justify-between items-center" data-diff="easy">
+                        <div>
+                            <div class="text-sm">Fácil</div>
+                            <div class="text-[10px] text-emerald-400/80 font-normal">4 Rampas • 60 Personajes</div>
+                        </div>
+                        <span class="diff-check text-lg">✓</span>
+                    </button>
+                    <button class="diff-btn w-full p-2.5 rounded-xl border-2 border-slate-700 bg-slate-800/40 text-slate-300 font-bold text-left flex justify-between items-center" data-diff="normal">
+                        <div>
+                            <div class="text-sm">Normal</div>
+                            <div class="text-[10px] text-slate-400 font-normal">6 Rampas • 80 Personajes</div>
+                        </div>
+                        <span class="diff-check text-lg hidden">✓</span>
+                    </button>
+                    <button class="diff-btn w-full p-2.5 rounded-xl border-2 border-slate-700 bg-slate-800/40 text-slate-300 font-bold text-left flex justify-between items-center" data-diff="hard">
+                        <div>
+                            <div class="text-sm">Difícil</div>
+                            <div class="text-[10px] text-slate-400 font-normal">6 Rampas • 80 Personajes (+20% Vel)</div>
+                        </div>
+                        <span class="diff-check text-lg hidden">✓</span>
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-slate-400 text-xs font-bold uppercase tracking-wider block mb-2">Sonido</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="btn-toggle-sfx" class="p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold text-xs">
+                        🔊 EFECTOS: ON
+                    </button>
+                    <button id="btn-toggle-music" class="p-2.5 rounded-xl bg-slate-800 border border-slate-700 text-white font-bold text-xs">
+                        🎵 MÚSICA: ON
+                    </button>
+                </div>
+            </div>
+
+            <button id="btn-close-settings" class="btn-arcade w-full py-3 rounded-xl text-white font-bold text-sm mt-1 uppercase">
+                GUARDAR Y VOLVER
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal Fin de Juego -->
+    <div id="modal-gameover" class="absolute inset-0 flex items-center justify-center p-5 glass-overlay z-40 hidden">
+        <div class="bg-slate-900 border border-slate-700 w-full max-w-xs rounded-3xl p-6 shadow-2xl text-center flex flex-col gap-3">
+            <div id="go-icon" class="text-5xl">🏆</div>
+            <h2 id="go-title" class="text-2xl font-black text-white uppercase">¡NIVEL COMPLETADO!</h2>
+            
+            <div class="bg-slate-800/80 rounded-2xl p-3 my-1 border border-slate-700/60 text-xs space-y-2">
+                <div class="flex justify-between text-slate-300">
+                    <span>Vidas Salvadas:</span>
+                    <span id="go-saved" class="font-bold text-emerald-400 text-sm">0</span>
+                </div>
+                <div class="flex justify-between text-slate-300">
+                    <span>Muñecos Perdidos:</span>
+                    <span id="go-lost" class="font-bold text-rose-400 text-sm">0</span>
+                </div>
+                <div class="h-px bg-slate-700"></div>
+                <div class="flex justify-between text-white font-bold text-sm">
+                    <span>Efectividad:</span>
+                    <span id="go-rate" class="text-sky-400">0%</span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2 mt-1">
+                <button id="btn-restart" class="btn-arcade w-full py-3 rounded-xl text-white font-bold text-sm uppercase">
+                    REINTENTAR
+                </button>
+                <button id="btn-main-menu" class="btn-secondary w-full py-2.5 rounded-xl text-white font-semibold text-xs uppercase">
+                    MENÚ PRINCIPAL
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+/**
+ * AUDIO MANAGER (Web Audio API)
+ */
+class AudioEngine {
+    constructor() {
+        this.ctx = null;
+        this.sfxOn = true;
+        this.musicOn = true;
+        this.musicTimer = null;
+    }
+
+    init() {
+        if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            this.ctx = new AudioCtx();
+        }
+        if (this.ctx.state === 'suspended') {
+            this.ctx.resume();
+        }
+    }
+
+    playJump() {
+        if (!this.sfxOn) return;
+        this.init();
+
+        // Tono de despegue
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(400, this.ctx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.08);
+
+        // Grito cómico muy corto
+        this.playShortScream();
+    }
+
+    playShortScream() {
+        if (!this.sfxOn) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        
+        const dur = 0.12 + Math.random() * 0.04; // Cortísimo
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(650 + Math.random() * 150, now);
+        osc.frequency.exponentialRampToValueAtTime(250 + Math.random() * 50, now + dur);
+
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(0.08, now + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + dur);
+    }
+
+    playBounce() {
+        if (!this.sfxOn) return;
+        this.init();
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(600, this.ctx.currentTime + 0.07);
+        osc.frequency.exponentialRampToValueAtTime(250, this.ctx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.15);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        osc.stop(this.ctx.currentTime + 0.15);
+    }
+
+    playBuff() {
+        if (!this.sfxOn) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(350, now);
+        osc.frequency.exponentialRampToValueAtTime(850, now + 0.18);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.18);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+    }
+
+    playDebuff() {
+        if (!this.sfxOn) return;
+        this.init();
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(550, now);
+        osc.frequency.exponentialRampToValueAtTime(180, now + 0.18);
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.linearRampToValueAtTime(0.01, now + 0.18);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.18);
+    }
+
+    playSplat() {
+        if (!this.sfxOn) return;
+        this.init();
+        const bufLen = this.ctx.sampleRate * 0.12;
+        const buf = this.ctx.createBuffer(1, bufLen, this.ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buf;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(600, this.ctx.currentTime);
+        filter.frequency.linearRampToValueAtTime(100, this.ctx.currentTime + 0.12);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start();
+    }
+
+    startMusic() {
+        if (!this.musicOn || this.musicTimer) return;
+        this.init();
+        let idx = 0;
+        const notes = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63, 293.66, 349.23];
+        this.musicTimer = setInterval(() => {
+            if (!this.musicOn) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(notes[idx], this.ctx.currentTime);
+            gain.gain.setValueAtTime(0.025, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.16);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.16);
+            idx = (idx + 1) % notes.length;
+        }, 220);
+    }
+
+    stopMusic() {
+        if (this.musicTimer) {
+            clearInterval(this.musicTimer);
+            this.musicTimer = null;
+        }
+    }
+}
+
+const audio = new AudioEngine();
+
+// --- CONFIGURACIÓN DE NIVELES ---
+const LEVELS = {
+    easy: {
+        ramps: [
+            { side: 'left', yRatio: 0.15 }, { side: 'left', yRatio: 0.28 },
+            { side: 'right', yRatio: 0.15 }, { side: 'right', yRatio: 0.28 }
+        ],
+        total: 60,
+        interval: 1.1,
+        speedMult: 1.0
+    },
+    normal: {
+        ramps: [
+            { side: 'left', yRatio: 0.13 }, { side: 'left', yRatio: 0.23 }, { side: 'left', yRatio: 0.33 },
+            { side: 'right', yRatio: 0.13 }, { side: 'right', yRatio: 0.23 }, { side: 'right', yRatio: 0.33 }
+        ],
+        total: 80,
+        interval: 0.9,
+        speedMult: 1.0
+    },
+    hard: {
+        ramps: [
+            { side: 'left', yRatio: 0.13 }, { side: 'left', yRatio: 0.23 }, { side: 'left', yRatio: 0.33 },
+            { side: 'right', yRatio: 0.13 }, { side: 'right', yRatio: 0.23 }, { side: 'right', yRatio: 0.33 }
+        ],
+        total: 80,
+        interval: 0.6,
+        speedMult: 1.2
+    }
+};
+
+// --- MOTOR DEL JUEGO ---
+class RescueGame {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+
+        // Dimensiones virtuales nativas fijas
+        this.V_WIDTH = 450;
+        this.V_HEIGHT = 800;
+
+        this.diffKey = 'easy';
+        this.state = 'MENU';
+
+        // Ancho base del colchón (20% más corto por defecto => ~16.5% del ancho de pantalla: 75px)
+        this.basePaddleWidth = 35;
+        this.paddleScale = 1.0;
+        this.paddle = {
+            x: this.V_WIDTH / 2 - 37.5,
+            y: this.V_HEIGHT * 0.85, // 85% de la altura (elevado)
+            width: 75,
+            height: 20,
+            targetX: this.V_WIDTH / 2 - 37.5
+        };
+        this.paddleResetTimer = null;
+
+        this.characters = [];
+        this.particles = [];
+
+        this.saved = 0;
+        this.lost = 0;
+        this.spawned = 0;
+
+        this.spawnTimer = 0;
+        this.baseGravity = 0.38;
+
+        this.lastSpecialTime = 0;
+        this.specialCooldown = 30; // Mínimo 30 segundos entre especiales
+
+        this.setupControls();
+        this.setupUI();
+
+        this.lastTimestamp = performance.now();
+        requestAnimationFrame((t) => this.loop(t));
+    }
+
+    updatePaddleSize() {
+        this.paddle.width = this.basePaddleWidth * this.paddleScale;
+    }
+
+    setupControls() {
+        const handlePointer = (e) => {
+            if (this.state !== 'PLAYING') return;
+            const rect = this.canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            // Mapear coordenada táctil al canvas virtual de 450px
+            const scaleX = this.V_WIDTH / rect.width;
+            const canvasX = (clientX - rect.left) * scaleX;
+            this.paddle.targetX = canvasX - this.paddle.width / 2;
+        };
+
+        window.addEventListener('mousemove', handlePointer);
+        window.addEventListener('touchmove', handlePointer, { passive: true });
+        window.addEventListener('touchstart', handlePointer, { passive: true });
+    }
+
+    setupUI() {
+        document.getElementById('btn-start').onclick = () => this.startGame();
+        document.getElementById('btn-settings').onclick = () => this.toggleModal('modal-settings', true);
+        document.getElementById('btn-close-settings').onclick = () => this.toggleModal('modal-settings', false);
+        document.getElementById('btn-pause').onclick = () => this.toggleModal('modal-settings', true);
+        document.getElementById('btn-restart').onclick = () => {
+            this.toggleModal('modal-gameover', false);
+            this.startGame();
+        };
+        document.getElementById('btn-main-menu').onclick = () => {
+            this.toggleModal('modal-gameover', false);
+            this.showMenu();
+        };
+
+        const diffBtns = document.querySelectorAll('.diff-btn');
+        diffBtns.forEach(btn => {
+            btn.onclick = () => {
+                this.diffKey = btn.dataset.diff;
+                diffBtns.forEach(b => {
+                    b.classList.remove('border-emerald-500/60', 'bg-emerald-950/40', 'text-emerald-300');
+                    b.classList.add('border-slate-700', 'bg-slate-800/40', 'text-slate-300');
+                    b.querySelector('.diff-check').classList.add('hidden');
+                });
+                btn.classList.remove('border-slate-700', 'bg-slate-800/40', 'text-slate-300');
+                btn.classList.add('border-emerald-500/60', 'bg-emerald-950/40', 'text-emerald-300');
+                btn.querySelector('.diff-check').classList.remove('hidden');
+            };
+        });
+
+        const sfxBtn = document.getElementById('btn-toggle-sfx');
+        const musicBtn = document.getElementById('btn-toggle-music');
+
+        sfxBtn.onclick = () => {
+            audio.sfxOn = !audio.sfxOn;
+            sfxBtn.innerText = `🔊 EFECTOS: ${audio.sfxOn ? 'ON' : 'OFF'}`;
+            sfxBtn.classList.toggle('opacity-50', !audio.sfxOn);
+        };
+
+        musicBtn.onclick = () => {
+            audio.musicOn = !audio.musicOn;
+            musicBtn.innerText = `🎵 MÚSICA: ${audio.musicOn ? 'ON' : 'OFF'}`;
+            musicBtn.classList.toggle('opacity-50', !audio.musicOn);
+            if (audio.musicOn && this.state === 'PLAYING') audio.startMusic();
+            else audio.stopMusic();
+        };
+    }
+
+    toggleModal(id, show) {
+        document.getElementById(id).classList.toggle('hidden', !show);
+    }
+
+    showMenu() {
+        this.state = 'MENU';
+        audio.stopMusic();
+        if (this.paddleResetTimer) clearTimeout(this.paddleResetTimer);
+        document.getElementById('hud').classList.add('hidden');
+        document.getElementById('menu-main').classList.remove('hidden');
+    }
+
+    startGame() {
+        audio.init();
+        audio.startMusic();
+        this.state = 'PLAYING';
+        this.saved = 0;
+        this.lost = 0;
+        this.spawned = 0;
+        this.characters = [];
+        this.particles = [];
+        this.spawnTimer = 0;
+        this.paddleScale = 1.0;
+        this.updatePaddleSize();
+        if (this.paddleResetTimer) clearTimeout(this.paddleResetTimer);
+        this.lastSpecialTime = performance.now() / 1000;
+
+        document.getElementById('menu-main').classList.add('hidden');
+        document.getElementById('hud').classList.remove('hidden');
+        this.updateHUD();
+    }
+
+    updateHUD() {
+        const lvl = LEVELS[this.diffKey];
+        document.getElementById('hud-saved').innerText = this.saved;
+        document.getElementById('hud-lost').innerText = this.lost;
+        document.getElementById('hud-remaining').innerText = lvl.total - this.spawned;
+    }
+
+    modifyPaddleSize(factor) {
+        this.paddleScale = Math.max(0.6, Math.min(2.6, this.paddleScale * factor));
+        this.updatePaddleSize();
+
+        // 30 segundos de duración para restablecer
+        if (this.paddleResetTimer) clearTimeout(this.paddleResetTimer);
+        this.paddleResetTimer = setTimeout(() => {
+            if (this.state === 'PLAYING') {
+                this.paddleScale = 1.0;
+                this.updatePaddleSize();
+            }
+        }, 30000);
+    }
+
+    spawnCharacter() {
+        const lvl = LEVELS[this.diffKey];
+        if (this.spawned >= lvl.total) return;
+
+        const ramp = lvl.ramps[Math.floor(Math.random() * lvl.ramps.length)];
+        const rampY = this.V_HEIGHT * ramp.yRatio;
+        const rampW = 80;
+
+        const speedMult = lvl.speedMult;
+        const currentGravity = this.baseGravity * speedMult;
+
+        const deltaY = this.paddle.y - rampY;
+        const vy = -(5.5 + Math.random() * 2.5) * speedMult;
+
+        // Ecuación cuadrática para tiempo de vuelo exacto
+        const a = 0.5 * currentGravity;
+        const b = vy;
+        const c = -deltaY;
+        const flightTime = (-b + Math.sqrt(b * b - 4 * a * c)) / (2 * a);
+
+        // NUNCA sobrepasa el 45% del ancho de la pantalla (450 * 0.45 = 202.5px)
+        const minDistance = this.V_WIDTH * 0.12;
+        const maxDistance = this.V_WIDTH * 0.44; // < 45%
+        const targetDistance = minDistance + Math.random() * (maxDistance - minDistance);
+
+        let startX, vx;
+        if (ramp.side === 'left') {
+            startX = rampW - 10;
+            vx = targetDistance / flightTime;
+        } else {
+            startX = this.V_WIDTH - rampW + 10;
+            vx = -(targetDistance / flightTime);
+        }
+
+        // Lógica de Aparición de Personajes Especiales
+        const nowSec = performance.now() / 1000;
+        let charType = 'normal';
+
+        if (nowSec - this.lastSpecialTime >= this.specialCooldown) {
+            if (Math.random() < 0.35) {
+                charType = Math.random() < 0.5 ? 'green' : 'yellow';
+                this.lastSpecialTime = nowSec;
+            }
+        }
+
+        this.characters.push(new Jumper(startX, rampY, vx, vy, ramp.side, charType, speedMult));
+        this.spawned++;
+        audio.playJump();
+        this.updateHUD();
+    }
+
+    createParticles(x, y, color, count = 14) {
+        for (let i = 0; i < count; i++) {
+            this.particles.push(new Particle(x, y, color));
+        }
+    }
+
+    loop(timestamp) {
+        const dt = Math.min(0.05, (timestamp - this.lastTimestamp) / 1000);
+        this.lastTimestamp = timestamp;
+
+        this.update(dt);
+        this.render();
+
+        requestAnimationFrame((t) => this.loop(t));
+    }
+
+    update(dt) {
+        if (this.state !== 'PLAYING') return;
+
+        const lvl = LEVELS[this.diffKey];
+
+        // Suavizado del movimiento del colchón
+        this.paddle.x += (this.paddle.targetX - this.paddle.x) * 0.35;
+        this.paddle.x = Math.max(0, Math.min(this.V_WIDTH - this.paddle.width, this.paddle.x));
+
+        // Spawn de personajes
+        this.spawnTimer += dt;
+        if (this.spawnTimer >= lvl.interval) {
+            this.spawnTimer = 0;
+            this.spawnCharacter();
+        }
+
+        const currentGravity = this.baseGravity * lvl.speedMult;
+
+        // Actualizar Personajes
+        for (let i = this.characters.length - 1; i >= 0; i--) {
+            const c = this.characters[i];
+            c.update(currentGravity);
+
+            // Detección de Colisión con el Colchón
+            if (c.y + c.radius >= this.paddle.y &&
+                c.y - c.radius <= this.paddle.y + this.paddle.height &&
+                c.x >= this.paddle.x - 10 &&
+                c.x <= this.paddle.x + this.paddle.width + 10 &&
+                c.vy > 0) {
+
+                this.saved++;
+
+                if (c.type === 'green') {
+                    this.modifyPaddleSize(15.20); // +20%
+                    audio.playBuff();
+                    this.createParticles(c.x, this.paddle.y, '#22c55e', 20);
+                } else if (c.type === 'yellow') {
+                    this.modifyPaddleSize(9.80); // -20%
+                    audio.playDebuff();
+                    this.createParticles(c.x, this.paddle.y, '#eab308', 20);
+                } else {
+                    audio.playBounce();
+                    this.createParticles(c.x, this.paddle.y, '#38bdf8', 14);
+                }
+
+                this.characters.splice(i, 1);
+                this.updateHUD();
+                this.checkGameOver();
+                continue;
+            }
+
+            // Detección de Caída al Suelo
+            if (c.y > this.V_HEIGHT - 12) {
+                this.lost++;
+                audio.playSplat();
+                this.createParticles(c.x, this.V_HEIGHT - 15, '#f43f5e', 18);
+                this.characters.splice(i, 1);
+                this.updateHUD();
+                this.checkGameOver();
+            }
+        }
+
+        // Partículas
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.update();
+            if (p.alpha <= 0) this.particles.splice(i, 1);
+        }
+    }
+
+    checkGameOver() {
+        const lvl = LEVELS[this.diffKey];
+        if (this.saved + this.lost >= lvl.total) {
+            this.state = 'GAMEOVER';
+            audio.stopMusic();
+
+            const rate = Math.round((this.saved / lvl.total) * 100);
+            document.getElementById('go-saved').innerText = this.saved;
+            document.getElementById('go-lost').innerText = this.lost;
+            document.getElementById('go-rate').innerText = `${rate}%`;
+
+            const title = document.getElementById('go-title');
+            const icon = document.getElementById('go-icon');
+            if (rate >= 70) {
+                title.innerText = '¡NIVEL COMPLETADO!';
+                icon.innerText = '🏆';
+            } else {
+                title.innerText = '¡MISIÓN FALLIDA!';
+                icon.innerText = '💔';
+            }
+
+            setTimeout(() => this.toggleModal('modal-gameover', true), 400);
+        }
+    }
+
+    render() {
+        // Limpiar Canvas
+        this.ctx.clearRect(0, 0, this.V_WIDTH, this.V_HEIGHT);
+
+        // Fondo y Decoración
+        this.renderBackground();
+
+        // Renderizar Rampas
+        const lvl = LEVELS[this.diffKey];
+        lvl.ramps.forEach(r => this.renderRamp(r.side, this.V_HEIGHT * r.yRatio));
+
+        // Renderizar Colchón y Porteadores Fijos
+        this.renderPaddleAndHolders();
+
+        // Renderizar Personajes en Aire
+        this.characters.forEach(c => c.draw(this.ctx));
+
+        // Renderizar Partículas
+        this.particles.forEach(p => p.draw(this.ctx));
+    }
+
+    renderBackground() {
+        const grad = this.ctx.createLinearGradient(0, 0, 0, this.V_HEIGHT);
+        grad.addColorStop(0, '#020617');
+        grad.addColorStop(1, '#0f172a');
+        this.ctx.fillStyle = grad;
+        this.ctx.fillRect(0, 0, this.V_WIDTH, this.V_HEIGHT);
+
+        // Línea divisoria central sutil
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+        this.ctx.setLineDash([6, 6]);
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.V_WIDTH / 2, 0);
+        this.ctx.lineTo(this.V_WIDTH / 2, this.V_HEIGHT);
+        this.ctx.stroke();
+        this.ctx.setLineDash([]);
+    }
+
+    renderRamp(side, y) {
+        const rampW = 80;
+        const rampH = 12;
+
+        this.ctx.save();
+        this.ctx.fillStyle = '#334155';
+        this.ctx.strokeStyle = '#0ea5e9';
+        this.ctx.lineWidth = 2;
+
+        if (side === 'left') {
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, y - 16);
+            this.ctx.lineTo(rampW, y);
+            this.ctx.lineTo(rampW, y + rampH);
+            this.ctx.lineTo(0, y + rampH);
+            this.ctx.closePath();
+            this.ctx.fill();
+            this.ctx.stroke();
+        } else {
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.V_WIDTH, y - 16);
+            this.ctx.lineTo(this.V_WIDTH - rampW, y);
+            this.ctx.lineTo(this.V_WIDTH - rampW, y + rampH);
+            this.ctx.lineTo(this.V_WIDTH, y + rampH);
+            this.ctx.closePath();
+            this.ctx.fill();
+            this.ctx.stroke();
+        }
+        this.ctx.restore();
+    }
+
+    renderPaddleAndHolders() {
+        const x = this.paddle.x;
+        const y = this.paddle.y;
+        const w = this.paddle.width;
+        const h = this.paddle.height;
+
+        this.ctx.save();
+
+        // Resplandor del colchón según el estado de power-up
+        this.ctx.shadowColor = this.paddleScale > 1.0 ? '#22c55e' : (this.paddleScale < 1.0 ? '#eab308' : '#38bdf8');
+        this.ctx.shadowBlur = 12;
+
+        const grad = this.ctx.createLinearGradient(x, y, x, y + h);
+        if (this.paddleScale > 1.0) {
+            grad.addColorStop(0, '#4ade80');
+            grad.addColorStop(1, '#16a34a');
+        } else if (this.paddleScale < 1.0) {
+            grad.addColorStop(0, '#fde047');
+            grad.addColorStop(1, '#ca8a04');
+        } else {
+            grad.addColorStop(0, '#38bdf8');
+            grad.addColorStop(1, '#0284c7');
+        }
+
+        this.ctx.fillStyle = grad;
+        this.ctx.beginPath();
+        this.ctx.roundRect(x, y, w, h, 6);
+        this.ctx.fill();
+
+        // Estructura interna
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(x + 5, y + h / 2);
+        this.ctx.lineTo(x + w - 5, y + h / 2);
+        this.ctx.stroke();
+
+        this.ctx.restore();
+
+        // Personajes porteadores fijos sujetando ambos extremos
+        this.drawHolder(x - 8, y + h / 2, 'left');
+        this.drawHolder(x + w + 8, y + h / 2, 'right');
+    }
+
+    drawHolder(x, y, side) {
+        this.ctx.save();
+        this.ctx.translate(x, y);
+
+        // Cabeza
+        this.ctx.fillStyle = '#fde047';
+        this.ctx.beginPath();
+        this.ctx.arc(0, -11, 5.5, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Cuerpo / Traje
+        this.ctx.fillStyle = '#0284c7';
+        this.ctx.beginPath();
+        this.ctx.arc(0, -2, 6.5, 0, Math.PI * 2);
+        this.ctx.fill();
+
+        // Brazos sujetando el colchón arriba
+        this.ctx.strokeStyle = '#ffffff';
+        this.ctx.lineWidth = 2.2;
+        this.ctx.beginPath();
+        if (side === 'left') {
+            this.ctx.moveTo(0, -4);
+            this.ctx.lineTo(7, -9);
+            this.ctx.moveTo(0, -4);
+            this.ctx.lineTo(-5, 2);
+        } else {
+            this.ctx.moveTo(0, -4);
+            this.ctx.lineTo(-7, -9);
+            this.ctx.moveTo(0, -4);
+            this.ctx.lineTo(5, 2);
+        }
+
+        // Piernas
+        this.ctx.moveTo(-3, 3);
+        this.ctx.lineTo(-5, 10);
+        this.ctx.moveTo(3, 3);
+        this.ctx.lineTo(5, 10);
+        this.ctx.stroke();
+
+        this.ctx.restore();
+    }
+}
+
+// --- PERSONAJE SALTADOR ---
+class Jumper {
+    constructor(x, y, vx, vy, side, type = 'normal', speedMult = 1.0) {
+        this.x = x;
+        this.y = y;
+        this.vx = vx;
+        this.vy = vy;
+        this.radius = 11;
+        this.rotation = 0;
+        this.rotSpeed = (Math.random() - 0.5) * 0.22 * speedMult;
+        this.type = type;
+
+        if (this.type === 'green') {
+            this.color = '#22c55e'; // Verde (+20% Colchón)
+        } else if (this.type === 'yellow') {
+            this.color = '#eab308'; // Amarillo (-20% Colchón)
+        } else {
+            this.color = side === 'left' ? '#f43f5e' : '#a855f7';
+        }
+    }
+
+    update(gravity) {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.vy += gravity;
+        this.rotation += this.rotSpeed;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        if (this.type !== 'normal') {
+            ctx.shadowColor = this.color;
+            ctx.shadowBlur = 8;
+        }
+
+        // Cabeza
+        ctx.fillStyle = this.type === 'normal' ? '#fde047' : '#ffffff';
+        ctx.beginPath();
+        ctx.arc(0, -5, 5.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cuerpo
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(0, 4, 6.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Extremidades
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(-9, -2);
+        ctx.lineTo(9, -2);
+        ctx.moveTo(-3, 7);
+        ctx.lineTo(-6, 13);
+        ctx.moveTo(3, 7);
+        ctx.lineTo(6, 13);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+}
+
+// --- PARTÍCULAS ---
+class Particle {
+    constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.vx = (Math.random() - 0.5) * 5;
+        this.vy = (Math.random() - 0.5) * 5 - 1.5;
+        this.radius = Math.random() * 3.5 + 1.5;
+        this.color = color;
+        this.alpha = 1.0;
+    }
+
+    update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.alpha -= 0.04;
+    }
+
+    draw(ctx) {
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, this.alpha);
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+}
+
+// Iniciar aplicación
+window.onload = () => {
+    new RescueGame();
+};
+</script>
+</body>
+</html>

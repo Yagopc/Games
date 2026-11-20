@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Sudoku Pro Mobile</title>
+  
+  <!-- CDN Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Typography: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* Estilos globales y reseteo táctil */
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+      box-sizing: border-box;
+      touch-action: manipulation;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background-color: #f8fafc; /* Slate 50 - Fondo Blanco Limpio */
+      color: #0f172a; /* Slate 900 - Texto Oscuro */
+      height: 100dvh; /* Dynamic Viewport Height */
+      width: 100vw;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* BORDES PERSONALIZADOS DEL TABLERO SUDOKU 3x3 */
+    .cell-border-right { border-right: 2.5px solid #0f172a; }
+    .cell-border-bottom { border-bottom: 2.5px solid #0f172a; }
+    .cell-border-thin-right { border-right: 1px solid #cbd5e1; }
+    .cell-border-thin-bottom { border-bottom: 1px solid #cbd5e1; }
+
+    /* ESTADOS DE CELDAS Y HIGHLIGHTS (TEMA CLARO SOLICITADO) */
+    .cell {
+      transition: background-color 0.12s ease, color 0.12s ease;
+    }
+    
+    /* CASILLA SELECCIONADA: FONDO AZUL CLARO */
+    .cell-selected {
+      background-color: #93c5fd !important; /* Blue 300 - Azul claro sobresaliente */
+    }
+
+    .cell-highlight-cross {
+      background-color: #f1f5f9; /* Slate 100 */
+    }
+
+    .cell-highlight-match {
+      background-color: #bfdbfe !important; /* Blue 200 */
+    }
+
+    /* NÚMEROS FIJOS (GENERADOS POR EL SUDOKU): NEGRO OSCURO Y GRUESO */
+    .cell-fixed {
+      font-weight: 800;
+      color: #0f172a; /* Slate 900 / Negro */
+    }
+
+    /* NÚMEROS INGRESADOS POR EL USUARIO: TEXTO EN ROJO */
+    .cell-user {
+      font-weight: 700;
+      color: #dc2626 !important; /* Red 600 - Rojo destacado */
+    }
+
+    /* NÚMEROS RESUELTOS AUTOMÁTICAMENTE: VERDE */
+    .cell-solved {
+      font-weight: 700;
+      color: #16a34a !important; /* Green 600 */
+    }
+
+    /* ESTADO DE ERROR (SÓLO SI LA AYUDA DE ERRORES ESTÁ ACTIVA Y ES INCORRECTO) */
+    .cell-error {
+      background-color: #fecaca !important; /* Red 200 */
+    }
+
+    /* LÁPIZ / NOTAS EN SUB-CUADRÍCULA */
+    .pencil-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .pencil-num {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.65rem;
+      font-weight: 600;
+      line-height: 1;
+      color: #64748b; /* Slate 500 */
+    }
+
+    /* ANIMACIÓN DE PARPADEO PARA NÚMEROS FORZADOS */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .cell-forced-blink {
+      animation: blink 1s infinite;
+      color: #2563eb; /* Blue 600 */
+      font-weight: 800;
+      font-size: 1.25rem; /* Equivalente a text-xl */
+    }
+
+    /* BOTONES TÁCTILES */
+    .btn-touch {
+      transition: transform 0.08s ease, background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .btn-touch:active {
+      transform: scale(0.93);
+    }
+
+    .btn-toggle-active {
+      background-color: #0f172a !important; /* Slate 900 */
+      color: #ffffff !important;
+      border-color: #0f172a !important;
+    }
+
+    .modal-backdrop {
+      background-color: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(6px);
+    }
+  </style>
+</head>
+<body class="flex flex-col justify-between items-center max-w-md mx-auto h-full p-2 select-none">
+
+  <!-- ================= HEADER / BARRA SUPERIOR ================= -->
+  <header class="w-full flex justify-between items-center pt-1 px-1 pb-1 shrink-0">
+    <div>
+      <h1 class="text-xl font-black tracking-tight text-slate-900">
+        SUDOKU<span class="text-xs ml-1 px-1.5 py-0.5 rounded bg-slate-900 text-white font-bold">PRO</span>
+      </h1>
+      <div id="difficulty-badge" class="text-xs text-slate-600 font-semibold">Dificultad: <span id="diff-text" class="text-blue-600 capitalize">Fácil</span></div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- Cronómetro -->
+      <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-slate-300 shadow-sm">
+        <i data-lucide="timer" class="w-4 h-4 text-slate-700"></i>
+        <span id="timer-display" class="font-mono font-bold text-sm text-slate-900">00:00</span>
+      </div>
+
+      <!-- Botón Menú / Dificultad -->
+      <button id="btn-open-diff" class="btn-touch p-2 bg-white hover:bg-slate-100 border border-slate-300 shadow-sm rounded-xl text-slate-800">
+        <i data-lucide="sliders-horizontal" class="w-5 h-5"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- ================= BARRA DE AYUDAS / TOGGLES (4 BOTONES) ================= -->
+  <section class="w-full grid grid-cols-4 gap-1 my-1 shrink-0">
+    <button id="toggle-cross" class="btn-touch btn-toggle-active flex items-center justify-center gap-1 py-1.5 px-1 bg-white border border-slate-300 rounded-xl text-[10px] font-bold text-slate-700 shadow-sm">
+      <i data-lucide="crosshair" class="w-3.5 h-3.5"></i>
+      <span>Resalte</span>
+    </button>
+    
+    <button id="toggle-match" class="btn-touch btn-toggle-active flex items-center justify-center gap-1 py-1.5 px-1 bg-white border border-slate-300 rounded-xl text-[10px] font-bold text-slate-700 shadow-sm">
+      <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+      <span>Iguales</span>
+    </button>
+    
+    <button id="toggle-errors" class="btn-touch btn-toggle-active flex items-center justify-center gap-1 py-1.5 px-1 bg-white border border-slate-300 rounded-xl text-[10px] font-bold text-slate-700 shadow-sm">
+      <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+      <span>Errores</span>
+    </button>
+
+    <!-- NUEVO BOTÓN: Mostrar candidatos y números forzados -->
+    <button id="toggle-candidates" class="btn-touch flex items-center justify-center gap-1 py-1.5 px-1 bg-white border border-slate-300 rounded-xl text-[10px] font-bold text-slate-700 shadow-sm">
+      <i data-lucide="list" class="w-3.5 h-3.5"></i>
+      <span>Candidatos</span>
+    </button>
+  </section>
+
+  <!-- ================= TABLERO SUDOKU ================= -->
+  <main class="w-full flex-grow flex items-center justify-center py-1 overflow-hidden">
+    <div class="w-full aspect-square max-h-[calc(100dvh-250px)] max-w-[calc(100dvh-250px)] bg-slate-900 border-2 border-slate-900 rounded-2xl shadow-xl p-0.5 overflow-hidden">
+      <div id="sudoku-grid" class="grid grid-cols-9 grid-rows-9 w-full h-full bg-white rounded-xl overflow-hidden">
+        <!-- Celdas cargadas con JS -->
+      </div>
+    </div>
+  </main>
+
+  <!-- ================= ACCIONES Y TECLADO ================= -->
+  <footer class="w-full flex flex-col gap-2 shrink-0 pb-2">
+    <!-- Botones de Acción (5 botones) -->
+    <div class="grid grid-cols-5 gap-1.5">
+      <button id="btn-undo" class="btn-touch flex flex-col items-center justify-center py-2 bg-white border border-slate-300 shadow-sm rounded-xl text-slate-800">
+        <i data-lucide="undo-2" class="w-5 h-5 mb-0.5"></i>
+        <span class="text-[9px] font-bold">Deshacer</span>
+      </button>
+
+      <button id="btn-erase" class="btn-touch flex flex-col items-center justify-center py-2 bg-white border border-slate-300 shadow-sm rounded-xl text-slate-800">
+        <i data-lucide="erase" class="w-5 h-5 mb-0.5"></i>
+        <span class="text-[9px] font-bold">Borrar</span>
+      </button>
+
+      <button id="btn-notes" class="btn-touch flex flex-col items-center justify-center py-2 bg-white border border-slate-300 shadow-sm rounded-xl text-slate-800 relative">
+        <i data-lucide="pencil" class="w-5 h-5 mb-0.5"></i>
+        <span class="text-[9px] font-bold">Lápiz</span>
+        <span id="notes-badge" class="absolute top-1 right-2 text-[9px] font-extrabold text-blue-600 hidden">ON</span>
+      </button>
+
+      <button id="btn-hint" class="btn-touch flex flex-col items-center justify-center py-2 bg-white border border-slate-300 shadow-sm rounded-xl text-slate-800">
+        <i data-lucide="lightbulb" class="w-5 h-5 mb-0.5 text-amber-500"></i>
+        <span class="text-[9px] font-bold">Pista</span>
+      </button>
+
+      <!-- NUEVO BOTÓN: Resolver Sudoku -->
+      <button id="btn-solve" class="btn-touch flex flex-col items-center justify-center py-2 bg-white border border-slate-300 shadow-sm rounded-xl text-slate-800">
+        <i data-lucide="check-check" class="w-5 h-5 mb-0.5 text-emerald-500"></i>
+        <span class="text-[9px] font-bold">Resolver</span>
+      </button>
+    </div>
+
+    <!-- Teclado Numérico 1 al 9 -->
+    <div id="numpad-container" class="grid grid-cols-9 gap-1.5 mt-0.5">
+      <!-- Generado dinámicamente -->
+    </div>
+  </footer>
+
+  <!-- ================= MODAL SELECCIÓN DIFICULTAD ================= -->
+  <div id="modal-difficulty" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white border border-slate-200 w-full max-w-xs rounded-2xl p-5 shadow-2xl flex flex-col gap-4 text-center">
+      <div class="flex flex-col items-center">
+        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-2">
+          <i data-lucide="gamepad-2" class="w-6 h-6"></i>
+        </div>
+        <h2 class="text-xl font-extrabold text-slate-900">Seleccionar Modo</h2>
+        <p class="text-xs text-slate-500 mt-0.5">Elige el nivel de dificultad</p>
+      </div>
+
+      <div class="flex flex-col gap-2.5">
+        <button data-diff="easy" class="diff-select-btn btn-touch w-full py-3 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 rounded-xl text-emerald-800 font-bold flex items-center justify-between px-4">
+          <span>Fácil</span>
+          <span class="text-xs font-semibold opacity-80">~42 dadas</span>
+        </button>
+        
+        <button data-diff="medium" class="diff-select-btn btn-touch w-full py-3 bg-amber-50 hover:bg-amber-100 border border-amber-300 rounded-xl text-amber-800 font-bold flex items-center justify-between px-4">
+          <span>Medio</span>
+          <span class="text-xs font-semibold opacity-80">~34 dadas</span>
+        </button>
+
+        <button data-diff="hard" class="diff-select-btn btn-touch w-full py-3 bg-rose-50 hover:bg-rose-100 border border-rose-300 rounded-xl text-rose-800 font-bold flex items-center justify-between px-4">
+          <span>Difícil</span>
+          <span class="text-xs font-semibold opacity-80">~26 dadas</span>
+        </button>
+      </div>
+
+      <button id="btn-close-diff-modal" class="btn-touch w-full py-2 bg-slate-100 text-slate-600 rounded-xl text-xs font-bold mt-1">
+        Cancelar
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= MODAL VICTORIA ================= -->
+  <div id="modal-victory" class="fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white border border-slate-200 w-full max-w-xs rounded-2xl p-6 shadow-2xl flex flex-col items-center text-center gap-4">
+      <div class="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center border border-amber-300 animate-bounce">
+        <i data-lucide="trophy" class="w-8 h-8"></i>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-black text-slate-900">¡Completado!</h2>
+        <p class="text-xs text-slate-500 mt-1">Has resuelto el Sudoku correctamente.</p>
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 w-full rounded-xl p-3 flex justify-around text-center">
+        <div>
+          <div class="text-[10px] text-slate-500 uppercase font-bold">Tiempo</div>
+          <div id="final-time" class="font-mono font-extrabold text-lg text-blue-600">00:00</div>
+        </div>
+        <div class="border-r border-slate-200"></div>
+        <div>
+          <div class="text-[10px] text-slate-500 uppercase font-bold">Modo</div>
+          <div id="final-diff" class="font-extrabold text-lg text-slate-900 capitalize">Fácil</div>
+        </div>
+      </div>
+
+      <button id="btn-victory-new-game" class="btn-touch w-full py-3 bg-blue-600 hover:bg-blue-700 rounded-xl text-white font-bold shadow-md shadow-blue-500/20">
+        Nuevo Juego
+      </button>
+    </div>
+  </div>
+
+  <!-- ================= LÓGICA JAVASCRIPT ================= -->
+  <script>
+    /* ESTADO DEL JUEGO */
+    const STATE = {
+      boardSolution: [],
+      boardInitial: [],
+      boardCurrent: [],
+      boardNotes: [],
+      
+      selectedCell: null,
+      isNoteMode: false,
+      difficulty: 'easy',
+      history: [],
+      
+      helps: {
+        crossHighlight: true,
+        matchHighlight: true,
+        realtimeErrors: true,
+        showCandidates: false // NUEVO: mostrar posibilidades reales
+      },
+
+      forcedMoves: {}, // NUEVO: mapa de celdas forzadas (clave "r,c" -> número)
+
+      timerSeconds: 0,
+      timerInterval: null
+    };
+
+    // Cantidad de números dadas según dificultad
+    const GIVEN_NUMBERS = {
+      easy: 42,
+      medium: 34,
+      hard: 26
+    };
+
+    /* ALGORITMO DE GENERACIÓN DE SUDOKU CON VERIFICACIÓN DE SOLUCIÓN ÚNICA */
+    class SudokuGenerator {
+      // Comprueba si un número puede colocarse en (row, col) según las reglas
+      static isValid(board, row, col, num) {
+        for (let i = 0; i < 9; i++) {
+          if (board[row][i] === num && i !== col) return false;
+          if (board[i][col] === num && i !== row) return false;
+        }
+        const boxRow = Math.floor(row / 3) * 3;
+        const boxCol = Math.floor(col / 3) * 3;
+        for (let r = 0; r < 3; r++) {
+          for (let c = 0; c < 3; c++) {
+            const currR = boxRow + r;
+            const currC = boxCol + c;
+            if (board[currR][currC] === num && (currR !== row || currC !== col)) return false;
+          }
+        }
+        return true;
+      }
+
+      // Cuenta soluciones (hasta un límite) para verificar unicidad
+      static countSolutions(board, limit = 2) {
+        // Buscamos la celda vacía con menos candidatos (MRV) para eficiencia
+        let bestRow = -1, bestCol = -1, bestCandidates = null;
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            if (board[r][c] === 0) {
+              const candidates = [];
+              for (let num = 1; num <= 9; num++) {
+                if (this.isValid(board, r, c, num)) candidates.push(num);
+              }
+              if (candidates.length === 0) return 0; // sin solución
+              if (bestCandidates === null || candidates.length < bestCandidates.length) {
+                bestRow = r;
+                bestCol = c;
+                bestCandidates = candidates;
+                if (candidates.length === 1) break; // no puede mejorar
+              }
+            }
+          }
+          if (bestCandidates && bestCandidates.length === 1) break;
+        }
+
+        // Si no hay celdas vacías, hemos encontrado una solución
+        if (bestRow === -1) return 1;
+
+        let count = 0;
+        for (const num of bestCandidates) {
+          board[bestRow][bestCol] = num;
+          count += this.countSolutions(board, limit - count);
+          board[bestRow][bestCol] = 0; // backtrack
+          if (count >= limit) break;
+        }
+        return count;
+      }
+
+      // Genera una solución completa (backtracking con orden aleatorio)
+      static solve(board) {
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) {
+            if (board[r][c] === 0) {
+              const nums = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+              for (const num of nums) {
+                if (this.isValid(board, r, c, num)) {
+                  board[r][c] = num;
+                  if (this.solve(board)) return true;
+                  board[r][c] = 0;
+                }
+              }
+              return false;
+            }
+          }
+        }
+        return true;
+      }
+
+      // Genera un puzzle con solución única (o con solución garantizada como salvaguarda)
+      static generate(difficulty) {
+        const maxAttempts = 20; // límite de reintentos para evitar bucles infinitos
+
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+          // 1. Generar solución completa
+          const solution = Array.from({ length: 9 }, () => Array(9).fill(0));
+          this.solve(solution);
+
+          // 2. Copiar y vaciar celdas según dificultad
+          const puzzle = solution.map(row => [...row]);
+          const countToKeep = GIVEN_NUMBERS[difficulty] || 42;
+          const totalToRemove = 81 - countToKeep;
+
+          const positions = [];
+          for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) positions.push([r, c]);
+          }
+          positions.sort(() => Math.random() - 0.5);
+
+          let removed = 0;
+          for (const [r, c] of positions) {
+            if (removed >= totalToRemove) break;
+            puzzle[r][c] = 0;
+            removed++;
+          }
+
+          // 3. Verificar que el puzzle tiene solución única
+          const testBoard = puzzle.map(row => [...row]);
+          const numSolutions = this.countSolutions(testBoard, 2);
+          if (numSolutions === 1) {
+            // Puzzle válido con solución única
+            return { solution, puzzle };
+          }
+          // Si no es única, reintentamos (nueva solución base y nuevo vaciado)
+        }
+
+        // Salvaguarda: si tras maxAttempts no se consigue, devolvemos el último generado
+        // (garantiza que el juego siempre tenga al menos una solución)
+        console.warn('No se pudo generar un puzzle con solución única; se devuelve uno con solución garantizada.');
+        const solution = Array.from({ length: 9 }, () => Array(9).fill(0));
+        this.solve(solution);
+        const puzzle = solution.map(row => [...row]);
+        const countToKeep = GIVEN_NUMBERS[difficulty] || 42;
+        const totalToRemove = 81 - countToKeep;
+        const positions = [];
+        for (let r = 0; r < 9; r++) {
+          for (let c = 0; c < 9; c++) positions.push([r, c]);
+        }
+        positions.sort(() => Math.random() - 0.5);
+        let removed = 0;
+        for (const [r, c] of positions) {
+          if (removed >= totalToRemove) break;
+          puzzle[r][c] = 0;
+          removed++;
+        }
+        return { solution, puzzle };
+      }
+    }
+
+    /* FUNCIONES AUXILIARES PARA CANDIDATOS Y FORZADOS */
+
+    // Comprueba si un número puede colocarse en una celda vacía,
+    // excluyendo explícitamente la propia celda en las comprobaciones.
+    function isValidPlacement(r, c, num) {
+      // Fila: recorremos todas las columnas excepto la actual
+      for (let i = 0; i < 9; i++) {
+        if (i !== c && STATE.boardCurrent[r][i] === num) return false;
+      }
+      // Columna: recorremos todas las filas excepto la actual
+      for (let i = 0; i < 9; i++) {
+        if (i !== r && STATE.boardCurrent[i][c] === num) return false;
+      }
+      // Caja 3x3: recorremos la caja excluyendo la celda actual
+      const boxRow = Math.floor(r / 3) * 3;
+      const boxCol = Math.floor(c / 3) * 3;
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          const rr = boxRow + i;
+          const cc = boxCol + j;
+          if (rr !== r || cc !== c) {
+            if (STATE.boardCurrent[rr][cc] === num) return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    // Devuelve el conjunto de candidatos para una celda vacía
+    function getCandidates(r, c) {
+      const candidates = new Set();
+      if (STATE.boardCurrent[r][c] !== 0) return candidates;
+      for (let num = 1; num <= 9; num++) {
+        if (isValidPlacement(r, c, num)) {
+          candidates.add(num);
+        }
+      }
+      return candidates;
+    }
+
+    // Calcula todas las celdas forzadas (naked singles + hidden singles)
+    function computeForcedMoves() {
+      const forced = {};
+      if (!STATE.helps.showCandidates) return forced;
+
+      // 1. Naked singles: celdas con un único candidato
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (STATE.boardCurrent[r][c] === 0) {
+            const candidates = getCandidates(r, c);
+            if (candidates.size === 1) {
+              const num = candidates.values().next().value;
+              forced[`${r},${c}`] = num;
+            }
+          }
+        }
+      }
+
+      // 2. Hidden singles: en cada unidad, si un número solo puede ir en una celda
+      // Filas
+      for (let r = 0; r < 9; r++) {
+        for (let num = 1; num <= 9; num++) {
+          let possible = [];
+          for (let c = 0; c < 9; c++) {
+            if (STATE.boardCurrent[r][c] === 0 && isValidPlacement(r, c, num)) {
+              possible.push({ r, c });
+            }
+          }
+          if (possible.length === 1) {
+            const { r: rr, c: cc } = possible[0];
+            const key = `${rr},${cc}`;
+            if (!forced[key]) forced[key] = num;
+          }
+        }
+      }
+      // Columnas
+      for (let c = 0; c < 9; c++) {
+        for (let num = 1; num <= 9; num++) {
+          let possible = [];
+          for (let r = 0; r < 9; r++) {
+            if (STATE.boardCurrent[r][c] === 0 && isValidPlacement(r, c, num)) {
+              possible.push({ r, c });
+            }
+          }
+          if (possible.length === 1) {
+            const { r: rr, c: cc } = possible[0];
+            const key = `${rr},${cc}`;
+            if (!forced[key]) forced[key] = num;
+          }
+        }
+      }
+      // Cajas 3x3
+      for (let boxRow = 0; boxRow < 3; boxRow++) {
+        for (let boxCol = 0; boxCol < 3; boxCol++) {
+          for (let num = 1; num <= 9; num++) {
+            let possible = [];
+            for (let dr = 0; dr < 3; dr++) {
+              for (let dc = 0; dc < 3; dc++) {
+                const r = boxRow * 3 + dr;
+                const c = boxCol * 3 + dc;
+                if (STATE.boardCurrent[r][c] === 0 && isValidPlacement(r, c, num)) {
+                  possible.push({ r, c });
+                }
+              }
+            }
+            if (possible.length === 1) {
+              const { r: rr, c: cc } = possible[0];
+              const key = `${rr},${cc}`;
+              if (!forced[key]) forced[key] = num;
+            }
+          }
+        }
+      }
+
+      return forced;
+    }
+
+    /* INTERFAZ Y RENDER */
+    function initUI() {
+      const gridContainer = document.getElementById('sudoku-grid');
+      gridContainer.innerHTML = '';
+
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell flex items-center justify-center relative cursor-pointer text-xl select-none';
+          cell.dataset.row = r;
+          cell.dataset.col = c;
+
+          if (c === 2 || c === 5) cell.classList.add('cell-border-right');
+          else if (c !== 8) cell.classList.add('cell-border-thin-right');
+
+          if (r === 2 || r === 5) cell.classList.add('cell-border-bottom');
+          else if (r !== 8) cell.classList.add('cell-border-thin-bottom');
+
+          cell.addEventListener('click', () => selectCell(r, c));
+          gridContainer.appendChild(cell);
+        }
+      }
+
+      // Teclado numérico
+      const numpadContainer = document.getElementById('numpad-container');
+      numpadContainer.innerHTML = '';
+      for (let i = 1; i <= 9; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'btn-touch aspect-[4/5] bg-white hover:bg-slate-100 border border-slate-300 rounded-xl flex items-center justify-center text-slate-900 font-extrabold text-xl shadow-sm';
+        btn.textContent = i;
+        btn.addEventListener('click', () => handleNumberInput(i));
+        numpadContainer.appendChild(btn);
+      }
+
+      lucide.createIcons();
+    }
+
+    function startNewGame(difficulty = 'easy') {
+      STATE.difficulty = difficulty;
+      const diffNames = { easy: 'Fácil', medium: 'Medio', hard: 'Difícil' };
+      document.getElementById('diff-text').textContent = diffNames[difficulty];
+
+      const data = SudokuGenerator.generate(difficulty);
+      STATE.boardSolution = data.solution;
+      STATE.boardInitial = data.puzzle;
+      STATE.boardCurrent = data.puzzle.map(row => [...row]);
+      STATE.boardNotes = Array.from({ length: 9 }, () => Array.from({ length: 9 }, () => new Set()));
+      STATE.selectedCell = null;
+      STATE.history = [];
+      STATE.forcedMoves = {}; // reiniciar
+
+      resetTimer();
+      startTimer();
+      renderBoard();
+    }
+
+    function renderBoard() {
+      const cells = document.querySelectorAll('#sudoku-grid .cell');
+
+      // Precalcular celdas forzadas para el estado actual
+      STATE.forcedMoves = computeForcedMoves();
+
+      cells.forEach(cell => {
+        const r = parseInt(cell.dataset.row);
+        const c = parseInt(cell.dataset.col);
+
+        const val = STATE.boardCurrent[r][c];
+        const isInitial = STATE.boardInitial[r][c] !== 0;
+        const notes = STATE.boardNotes[r][c];
+
+        // Reset de clases de fondo conservando bordes
+        cell.className = cell.className
+          .split(' ')
+          .filter(cls => cls.startsWith('cell-border'))
+          .join(' ');
+        cell.classList.add('cell', 'flex', 'items-center', 'justify-center', 'relative', 'cursor-pointer', 'text-xl', 'select-none');
+
+        const isSelected = STATE.selectedCell && STATE.selectedCell.r === r && STATE.selectedCell.c === c;
+        const selectedVal = STATE.selectedCell ? STATE.boardCurrent[STATE.selectedCell.r][STATE.selectedCell.c] : 0;
+
+        let isCrossHighlight = false;
+        let isMatchHighlight = false;
+
+        if (STATE.selectedCell) {
+          const sr = STATE.selectedCell.r;
+          const sc = STATE.selectedCell.c;
+          const sameBox = Math.floor(sr / 3) === Math.floor(r / 3) && Math.floor(sc / 3) === Math.floor(c / 3);
+
+          if (STATE.helps.crossHighlight && (sr === r || sc === c || sameBox)) {
+            isCrossHighlight = true;
+          }
+
+          if (STATE.helps.matchHighlight && selectedVal !== 0 && val === selectedVal) {
+            isMatchHighlight = true;
+          }
+        }
+
+        // Asignación de color de fondo
+        if (isSelected) {
+          cell.classList.add('cell-selected');
+        } else if (isMatchHighlight) {
+          cell.classList.add('cell-highlight-match');
+        } else if (isCrossHighlight) {
+          cell.classList.add('cell-highlight-cross');
+        } else {
+          cell.classList.add('bg-white');
+        }
+
+        // Detección de error opcional
+        let isError = false;
+        if (STATE.helps.realtimeErrors && val !== 0 && !isInitial) {
+          if (val !== STATE.boardSolution[r][c]) {
+            isError = true;
+            cell.classList.add('cell-error');
+          }
+        }
+
+        // ========== CONTENIDO DE LA CELDA ==========
+        cell.innerHTML = '';
+
+        if (val !== 0) {
+          // Celda con número (fijo, del usuario o resuelto)
+          const span = document.createElement('span');
+          span.textContent = val;
+          if (isInitial) {
+            span.className = 'cell-fixed';
+          } else if (val === STATE.boardSolution[r][c]) {
+            // Número correcto introducido por el usuario o resuelto automáticamente
+            span.className = 'cell-solved';
+          } else {
+            span.className = 'cell-user';
+          }
+          cell.appendChild(span);
+        } else if (STATE.helps.showCandidates) {
+          // MODO CANDIDATOS ACTIVADO
+          const forcedNum = STATE.forcedMoves[`${r},${c}`];
+          if (forcedNum) {
+            // Número forzado: mostrar parpadeando
+            const span = document.createElement('span');
+            span.textContent = forcedNum;
+            span.className = 'cell-forced-blink';
+            cell.appendChild(span);
+          } else {
+            // Mostrar rejilla de candidatos calculados
+            const candidates = getCandidates(r, c);
+            if (candidates.size > 0) {
+              const pencilGrid = document.createElement('div');
+              pencilGrid.className = 'pencil-grid';
+              for (let n = 1; n <= 9; n++) {
+                const numDiv = document.createElement('div');
+                numDiv.className = 'pencil-num';
+                numDiv.textContent = candidates.has(n) ? n : '';
+                pencilGrid.appendChild(numDiv);
+              }
+              cell.appendChild(pencilGrid);
+            }
+          }
+        } else if (notes.size > 0) {
+          // Notas manuales (solo cuando el modo candidatos está desactivado)
+          const pencilGrid = document.createElement('div');
+          pencilGrid.className = 'pencil-grid';
+          for (let n = 1; n <= 9; n++) {
+            const numDiv = document.createElement('div');
+            numDiv.className = 'pencil-num';
+            numDiv.textContent = notes.has(n) ? n : '';
+            pencilGrid.appendChild(numDiv);
+          }
+          cell.appendChild(pencilGrid);
+        }
+      });
+    }
+
+    function selectCell(r, c) {
+      // Si el modo candidatos está activo y la celda tiene un número forzado,
+      // al pulsarla se confirma la ayuda y se coloca el número.
+      if (STATE.helps.showCandidates) {
+        const forced = STATE.forcedMoves[`${r},${c}`];
+        if (forced && STATE.boardCurrent[r][c] === 0 && STATE.boardInitial[r][c] === 0) {
+          STATE.selectedCell = { r, c };
+          saveHistory();
+          STATE.boardCurrent[r][c] = forced;
+          STATE.boardNotes[r][c].clear();
+          renderBoard();
+          checkVictory();
+          return;
+        }
+      }
+
+      STATE.selectedCell = { r, c };
+      renderBoard();
+    }
+
+    /* EDICIÓN Y TECLADO NUMÉRICO */
+    function handleNumberInput(num) {
+      if (!STATE.selectedCell) return;
+      const { r, c } = STATE.selectedCell;
+
+      if (STATE.boardInitial[r][c] !== 0) return;
+
+      saveHistory();
+
+      if (STATE.isNoteMode) {
+        STATE.boardCurrent[r][c] = 0;
+        if (STATE.boardNotes[r][c].has(num)) {
+          STATE.boardNotes[r][c].delete(num);
+        } else {
+          STATE.boardNotes[r][c].add(num);
+        }
+      } else {
+        if (STATE.boardCurrent[r][c] === num) {
+          STATE.boardCurrent[r][c] = 0;
+        } else {
+          STATE.boardCurrent[r][c] = num;
+          STATE.boardNotes[r][c].clear();
+        }
+        checkVictory();
+      }
+
+      renderBoard();
+    }
+
+    function eraseCurrentCell() {
+      if (!STATE.selectedCell) return;
+      const { r, c } = STATE.selectedCell;
+
+      if (STATE.boardInitial[r][c] !== 0) return;
+
+      saveHistory();
+      STATE.boardCurrent[r][c] = 0;
+      STATE.boardNotes[r][c].clear();
+      renderBoard();
+    }
+
+    function giveHint() {
+      if (!STATE.selectedCell) return;
+      const { r, c } = STATE.selectedCell;
+
+      if (STATE.boardInitial[r][c] !== 0) return;
+
+      saveHistory();
+      STATE.boardCurrent[r][c] = STATE.boardSolution[r][c];
+      STATE.boardNotes[r][c].clear();
+      renderBoard();
+
+      checkVictory();
+    }
+
+    // NUEVO: Resuelve todo el Sudoku automáticamente
+    function solveSudoku() {
+      // Si ya está resuelto, no hacer nada
+      let alreadySolved = true;
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (STATE.boardCurrent[r][c] !== STATE.boardSolution[r][c]) {
+            alreadySolved = false;
+            break;
+          }
+        }
+        if (!alreadySolved) break;
+      }
+      if (alreadySolved) return;
+
+      saveHistory();
+
+      // Rellenar todas las celdas con la solución
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          STATE.boardCurrent[r][c] = STATE.boardSolution[r][c];
+          STATE.boardNotes[r][c].clear();
+        }
+      }
+
+      STATE.selectedCell = null;
+      renderBoard();
+      checkVictory();
+    }
+
+    function saveHistory() {
+      const currentCopy = STATE.boardCurrent.map(row => [...row]);
+      const notesCopy = STATE.boardNotes.map(row => row.map(set => new Set(set)));
+
+      STATE.history.push({
+        boardCurrent: currentCopy,
+        boardNotes: notesCopy
+      });
+
+      if (STATE.history.length > 30) STATE.history.shift();
+    }
+
+    function undoMove() {
+      if (STATE.history.length === 0) return;
+      const lastState = STATE.history.pop();
+      STATE.boardCurrent = lastState.boardCurrent;
+      STATE.boardNotes = lastState.boardNotes;
+      renderBoard();
+    }
+
+    function checkVictory() {
+      for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+          if (STATE.boardCurrent[r][c] !== STATE.boardSolution[r][c]) {
+            return false;
+          }
+        }
+      }
+
+      stopTimer();
+      document.getElementById('final-time').textContent = formatTime(STATE.timerSeconds);
+      const diffNames = { easy: 'Fácil', medium: 'Medio', hard: 'Difícil' };
+      document.getElementById('final-diff').textContent = diffNames[STATE.difficulty];
+      document.getElementById('modal-victory').classList.remove('hidden');
+      return true;
+    }
+
+    /* CRONÓMETRO */
+    function startTimer() {
+      clearInterval(STATE.timerInterval);
+      STATE.timerInterval = setInterval(() => {
+        STATE.timerSeconds++;
+        document.getElementById('timer-display').textContent = formatTime(STATE.timerSeconds);
+      }, 1000);
+    }
+
+    function stopTimer() {
+      clearInterval(STATE.timerInterval);
+    }
+
+    function resetTimer() {
+      stopTimer();
+      STATE.timerSeconds = 0;
+      document.getElementById('timer-display').textContent = "00:00";
+    }
+
+    function formatTime(seconds) {
+      const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+      const s = (seconds % 60).toString().padStart(2, '0');
+      return `${m}:${s}`;
+    }
+
+    /* EVENT LISTENERS */
+    function setupEventListeners() {
+      const btnNotes = document.getElementById('btn-notes');
+      btnNotes.addEventListener('click', () => {
+        STATE.isNoteMode = !STATE.isNoteMode;
+        const badge = document.getElementById('notes-badge');
+        if (STATE.isNoteMode) {
+          btnNotes.classList.add('btn-toggle-active');
+          badge.classList.remove('hidden');
+        } else {
+          btnNotes.classList.remove('btn-toggle-active');
+          badge.classList.add('hidden');
+        }
+      });
+
+      document.getElementById('btn-erase').addEventListener('click', eraseCurrentCell);
+      document.getElementById('btn-undo').addEventListener('click', undoMove);
+      document.getElementById('btn-hint').addEventListener('click', giveHint);
+      document.getElementById('btn-solve').addEventListener('click', solveSudoku); // NUEVO
+
+      setupToggle('toggle-cross', 'crossHighlight');
+      setupToggle('toggle-match', 'matchHighlight');
+      setupToggle('toggle-errors', 'realtimeErrors');
+      setupToggle('toggle-candidates', 'showCandidates'); // NUEVO TOGGLE
+
+      const modalDiff = document.getElementById('modal-difficulty');
+      document.getElementById('btn-open-diff').addEventListener('click', () => {
+        modalDiff.classList.remove('hidden');
+      });
+
+      document.getElementById('btn-close-diff-modal').addEventListener('click', () => {
+        modalDiff.classList.add('hidden');
+      });
+
+      document.querySelectorAll('.diff-select-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const diff = e.currentTarget.dataset.diff;
+          modalDiff.classList.add('hidden');
+          startNewGame(diff);
+        });
+      });
+
+      document.getElementById('btn-victory-new-game').addEventListener('click', () => {
+        document.getElementById('modal-victory').classList.add('hidden');
+        modalDiff.classList.remove('hidden');
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (e.key >= '1' && e.key <= '9') {
+          handleNumberInput(parseInt(e.key));
+        } else if (e.key === 'Backspace' || e.key === 'Delete') {
+          eraseCurrentCell();
+        } else if (e.key.toLowerCase() === 'n') {
+          btnNotes.click();
+        } else if (e.key.toLowerCase() === 'z' && (e.ctrlKey || e.metaKey)) {
+          undoMove();
+        }
+      });
+    }
+
+    function setupToggle(buttonId, helpKey) {
+      const btn = document.getElementById(buttonId);
+      btn.addEventListener('click', () => {
+        STATE.helps[helpKey] = !STATE.helps[helpKey];
+        if (STATE.helps[helpKey]) {
+          btn.classList.add('btn-toggle-active');
+        } else {
+          btn.classList.remove('btn-toggle-active');
+        }
+        renderBoard();
+      });
+    }
+
+    /* INICIALIZACIÓN */
+    window.onload = function() {
+      initUI();
+      startNewGame('easy');
+      setupEventListeners();
+    };
+  </script>
+</body>
+</html>

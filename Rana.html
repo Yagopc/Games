@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>FROGGER - Edición Profesional</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body {
+            background: #061811;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: manipulation;
+            padding: 10px;
+        }
+        
+        .game-container {
+            background: #092419;
+            padding: 15px;
+            border-radius: 16px;
+            border: 2px solid #2ee88a;
+            box-shadow: 0 0 35px rgba(46, 232, 138, 0.25);
+            max-width: 440px;
+            width: 100%;
+            position: relative;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 5px 12px 5px;
+            color: #d4ffe8;
+            font-size: 15px;
+        }
+        
+        .lives {
+            display: flex;
+            gap: 4px;
+            font-size: 18px;
+        }
+        
+        .score-box {
+            color: #ffd166;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .config-btn {
+            background: #113f2b;
+            border: 1.5px solid #2ee88a;
+            color: #2ee88a;
+            padding: 4px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+        
+        .config-btn:hover {
+            background: #2ee88a;
+            color: #061811;
+        }
+        
+        canvas {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 400/520;
+            background: #02140c;
+            border: 2px solid #1a5c3e;
+            border-radius: 8px;
+            touch-action: none;
+            display: block;
+            image-rendering: pixelated;
+        }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(2, 55px);
+            gap: 8px;
+            margin-top: 12px;
+            max-width: 280px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .controls button {
+            background: #0d3824;
+            border: 2px solid #2ee88a;
+            border-radius: 10px;
+            color: #d4ffe8;
+            font-size: 22px;
+            cursor: pointer;
+            touch-action: manipulation;
+            transition: transform 0.05s, background 0.1s;
+        }
+        
+        .controls button:active {
+            transform: scale(0.93);
+            background: #ffd166;
+            color: #061811;
+        }
+        
+        .btn-up { grid-column: 2; grid-row: 1; }
+        .btn-left { grid-column: 1; grid-row: 2; }
+        .btn-down { grid-column: 2; grid-row: 2; }
+        .btn-right { grid-column: 3; grid-row: 2; }
+        
+        .info {
+            color: #a8dfc2;
+            text-align: center;
+            font-size: 11px;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+
+        /* Modal de Configuración */
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 20, 12, 0.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 16px;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #0d3021;
+            border: 2px solid #2ee88a;
+            padding: 24px;
+            border-radius: 12px;
+            width: 85%;
+            max-width: 340px;
+            color: #d4ffe8;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+
+        .modal-content h2 {
+            text-align: center;
+            margin-bottom: 16px;
+            color: #ffd166;
+            font-size: 20px;
+        }
+
+        .setting-group {
+            margin-bottom: 14px;
+        }
+
+        .setting-group label {
+            display: block;
+            font-size: 13px;
+            margin-bottom: 5px;
+            color: #a8dfc2;
+        }
+
+        .setting-group select, .setting-group input {
+            width: 100%;
+            background: #061811;
+            border: 1.5px solid #2ee88a;
+            color: #d4ffe8;
+            padding: 8px;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .checkbox-label input {
+            width: 18px;
+            height: 18px;
+            accent-color: #2ee88a;
+            cursor: pointer;
+        }
+
+        .modal-close-btn {
+            width: 100%;
+            background: #2ee88a;
+            color: #061811;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+
+        .modal-close-btn:hover {
+            background: #24bd70;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <div class="lives" id="livesDisplay">❤️❤️❤️</div>
+            <div class="score-box">🏆 <span id="scoreDisplay">0</span></div>
+            <button class="config-btn" id="configOpenBtn">⚙️ Config</button>
+        </div>
+        
+        <canvas id="gameCanvas" width="400" height="520"></canvas>
+        
+        <div class="controls">
+            <button class="btn-up" data-dir="up">▲</button>
+            <button class="btn-left" data-dir="left">◀</button>
+            <button class="btn-down" data-dir="down">▼</button>
+            <button class="btn-right" data-dir="right">▶</button>
+        </div>
+        
+        <div class="info">
+            🐸 Usa las flechas o botones · Cruza la autovía · Llega a la meta
+        </div>
+
+        <!-- MODAL DE CONFIGURACIÓN -->
+        <div class="modal-overlay" id="configModal">
+            <div class="modal-content">
+                <h2>Configuración</h2>
+                
+                <div class="setting-group">
+                    <label for="difficultySelect">Nivel de Dificultad:</label>
+                    <select id="difficultySelect">
+                        <option value="easy">Fácil (5 carriles, 1 veh/s)</option>
+                        <option value="medium">Medio (7 carriles, 2 veh/s)</option>
+                        <option value="hard">Difícil (10 carriles, 2 veh/s)</option>
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label for="livesInput">Número de Vidas (3 - 5):</label>
+                    <input type="number" id="livesInput" min="3" max="5" value="3">
+                </div>
+
+                <div class="setting-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="soundToggle" checked> Activar Efectos de Sonido
+                    </label>
+                </div>
+
+                <div class="setting-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="musicToggle"> Activar Música de Fondo
+                    </label>
+                </div>
+
+                <button class="modal-close-btn" id="configSaveBtn">Guardar y Reiniciar</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        // FROGGER - EDICIÓN PROFESIONAL
+        // ============================================
+        
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const W = 400;
+        const H = 520;
+        
+        // ============================================
+        // CONFIGURACIÓN Y ESTADO
+        // ============================================
+        const CONFIG = {
+            difficulty: 'easy', // 'easy', 'medium', 'hard'
+            lives: 3,
+            soundEnabled: true,
+            musicEnabled: false
+        };
+
+        const FROG_SIZE = 22;
+        const START_X = 40;
+        const START_Y = 475;
+        const GOAL_Y = 40;
+        
+        let gameRunning = true;
+        let gameOver = false;
+        let gameWon = false;
+        let frameCount = 0;
+        let lives = CONFIG.lives;
+        let score = 0;
+        let particles = [];
+        let cars = [];
+        
+        // Variables de carretera según dificultad
+        let numCars = 5;
+        let roadStart = 110;
+        let roadEnd = 410;
+        let roadHeight = roadEnd - roadStart;
+        let laneHeight = roadHeight / numCars;
+        
+        const frog = {
+            x: START_X,
+            y: START_Y,
+            size: FROG_SIZE,
+            hopAnim: 0
+        };
+
+        // ============================================
+        // AUDIO Y MÚSICA PROCEDURAL
+        // ============================================
+        const AudioManager = {
+            ctx: null,
+            musicInterval: null,
+            noteIndex: 0,
+            
+            init() {
+                try {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch(e) {
+                    console.log('Audio no disponible');
+                }
+            },
+            
+            playTone(freq, duration, type = 'square', gain = 0.1) {
+                if (!this.ctx || !CONFIG.soundEnabled) return;
+                try {
+                    if (this.ctx.state === 'suspended') this.ctx.resume();
+                    const osc = this.ctx.createOscillator();
+                    const gainNode = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gainNode.gain.setValueAtTime(0, this.ctx.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(gain, this.ctx.currentTime + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gainNode);
+                    gainNode.connect(this.ctx.destination);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e) {}
+            },
+            
+            hop() { this.playTone(550, 0.05, 'square', 0.06); },
+            squish() { this.playTone(130, 0.35, 'sawtooth', 0.15); },
+            win() { 
+                this.playTone(650, 0.08, 'sine', 0.1);
+                setTimeout(() => { if (CONFIG.soundEnabled && this.ctx) this.playTone(850, 0.12, 'sine', 0.1); }, 100);
+                setTimeout(() => { if (CONFIG.soundEnabled && this.ctx) this.playTone(1100, 0.18, 'sine', 0.08); }, 220);
+            },
+            gameOver() {
+                this.playTone(280, 0.4, 'sawtooth', 0.12);
+                setTimeout(() => { if (CONFIG.soundEnabled && this.ctx) this.playTone(180, 0.5, 'sawtooth', 0.1); }, 200);
+            },
+
+            toggleMusic(enable) {
+                if (enable) {
+                    if (!this.musicInterval && this.ctx) {
+                        const melody = [261.63, 329.63, 392.00, 523.25, 392.00, 329.63];
+                        this.musicInterval = setInterval(() => {
+                            if (!CONFIG.musicEnabled) return;
+                            try {
+                                if (this.ctx.state === 'suspended') this.ctx.resume();
+                                const osc = this.ctx.createOscillator();
+                                const gain = this.ctx.createGain();
+                                osc.type = 'triangle';
+                                osc.frequency.setValueAtTime(melody[this.noteIndex], this.ctx.currentTime);
+                                gain.gain.setValueAtTime(0.03, this.ctx.currentTime);
+                                gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.3);
+                                osc.connect(gain);
+                                gain.connect(this.ctx.destination);
+                                osc.start();
+                                osc.stop(this.ctx.currentTime + 0.3);
+                                this.noteIndex = (this.noteIndex + 1) % melody.length;
+                            } catch(e) {}
+                        }, 350);
+                    }
+                } else {
+                    if (this.musicInterval) {
+                        clearInterval(this.musicInterval);
+                        this.musicInterval = null;
+                    }
+                }
+            }
+        };
+
+        // ============================================
+        // GESTIÓN DE CONFIGURACIÓN Y NIVELES
+        // ============================================
+        function applyDifficultySettings() {
+            if (CONFIG.difficulty === 'easy') {
+                numCars = 5;
+                roadStart = 110;
+                roadEnd = 400;
+            } else if (CONFIG.difficulty === 'medium') {
+                numCars = 7; // 5 originales + 2 carriles más
+                roadStart = 90;
+                roadEnd = 430;
+            } else if (CONFIG.difficulty === 'hard') {
+                numCars = 10; // 10 carriles
+                roadStart = 75;
+                roadEnd = 455;
+            }
+            roadHeight = roadEnd - roadStart;
+            laneHeight = roadHeight / numCars;
+        }
+
+        function createCars() {
+            cars.length = 0;
+            applyDifficultySettings();
+            
+            const CAR_COLORS = ['#ff5e7a', '#ff9b3d', '#ffd166', '#ff5cc8', '#2ee88a', '#4da6ff', '#bf75ff', '#ff7043'];
+            
+            for (let i = 0; i < numCars; i++) {
+                const laneY = roadStart + (i * laneHeight) + (laneHeight / 2);
+                const dir = (i % 2 === 0) ? 1 : -1;
+                
+                // Velocidad basada en dificultad
+                let baseSpeed = (CONFIG.difficulty === 'easy') ? (1.2 + Math.random() * 1.2) : (2.0 + Math.random() * 1.8);
+                const speed = dir * baseSpeed;
+                
+                // Generar múltiples vehículos por carril si es necesario
+                let vehiclesPerLane = (CONFIG.difficulty === 'easy') ? 1 : 2;
+                
+                for (let v = 0; v < vehiclesPerLane; v++) {
+                    const spacing = W / vehiclesPerLane;
+                    const x = (v * spacing) + (Math.random() * 80);
+                    
+                    cars.push({
+                        x: x,
+                        y: laneY - 12,
+                        width: 44,
+                        height: 24,
+                        speed: speed,
+                        color: CAR_COLORS[(i + v) % CAR_COLORS.length],
+                        lane: i
+                    });
+                }
+            }
+        }
+
+        function resetGame() {
+            frog.x = START_X;
+            frog.y = START_Y;
+            lives = CONFIG.lives;
+            score = 0;
+            gameOver = false;
+            gameWon = false;
+            particles = [];
+            createCars();
+            updateUI();
+        }
+
+        // ============================================
+        // PARTÍCULAS
+        // ============================================
+        function emitParticles(x, y, color, count = 20) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 3.5 + 0.5;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed - 1.2,
+                    life: 25 + Math.random() * 20,
+                    maxLife: 45,
+                    color: color,
+                    size: 2.5 + Math.random() * 3
+                });
+            }
+        }
+
+        // ============================================
+        // MOVIMIENTO Y LÓGICA
+        // ============================================
+        const MOVE_STEP = 12;
+
+        function moveFrog(direction) {
+            if (gameOver || gameWon) {
+                resetGame();
+                return;
+            }
+            
+            let newX = frog.x;
+            let newY = frog.y;
+            
+            switch(direction) {
+                case 'up': newY = Math.max(0, frog.y - MOVE_STEP); break;
+                case 'down': newY = Math.min(H - FROG_SIZE, frog.y + MOVE_STEP); break;
+                case 'left': newX = Math.max(0, frog.x - MOVE_STEP); break;
+                case 'right': newX = Math.min(W - FROG_SIZE, frog.x + MOVE_STEP); break;
+                default: return;
+            }
+            
+            if (newX === frog.x && newY === frog.y) return;
+            
+            frog.x = newX;
+            frog.y = newY;
+            frog.hopAnim = 8; // fotogramas de animación de salto
+            
+            AudioManager.hop();
+            emitParticles(frog.x + FROG_SIZE/2, frog.y + FROG_SIZE/2, '#2ee88a', 6);
+            
+            checkCollision();
+            checkGoal();
+        }
+
+        function checkCollision() {
+            if (gameOver || gameWon) return;
+            
+            const frogCenterX = frog.x + frog.size / 2;
+            const frogCenterY = frog.y + frog.size / 2;
+            
+            for (let car of cars) {
+                const hitX = frogCenterX >= car.x && frogCenterX <= car.x + car.width;
+                const hitY = frogCenterY >= car.y && frogCenterY <= car.y + car.height;
+                
+                if (hitX && hitY) {
+                    loseLife();
+                    return;
+                }
+            }
+        }
+        
+        function checkGoal() {
+            if (gameOver || gameWon) return;
+            
+            if (frog.y < GOAL_Y) {
+                gameWon = true;
+                score += 150;
+                AudioManager.win();
+                emitParticles(frog.x + FROG_SIZE/2, frog.y + FROG_SIZE/2, '#ffd166', 45);
+                updateUI();
+            }
+        }
+        
+        function loseLife() {
+            lives--;
+            AudioManager.squish();
+            emitParticles(frog.x + FROG_SIZE/2, frog.y + FROG_SIZE/2, '#ff5e7a', 35);
+            
+            if (lives <= 0) {
+                gameOver = true;
+                AudioManager.gameOver();
+            } else {
+                frog.x = START_X;
+                frog.y = START_Y;
+            }
+            updateUI();
+        }
+
+        // ============================================
+        // ACTUALIZACIÓN DE ESTADO
+        // ============================================
+        function update() {
+            if (frog.hopAnim > 0) frog.hopAnim--;
+
+            if (gameOver || gameWon) {
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    const p = particles[i];
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.05;
+                    p.life--;
+                    if (p.life <= 0) particles.splice(i, 1);
+                }
+                return;
+            }
+            
+            frameCount++;
+            
+            for (let car of cars) {
+                car.x += car.speed;
+                if (car.x > W + 30) car.x = -car.width - 30;
+                if (car.x < -car.width - 30) car.x = W + 30;
+            }
+            
+            checkCollision();
+            checkGoal();
+            
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.05;
+                p.life--;
+                if (p.life <= 0) particles.splice(i, 1);
+            }
+        }
+
+        // ============================================
+        // RENDERIZADO GRÁFICO PROFESIONAL
+        // ============================================
+        function draw() {
+            ctx.clearRect(0, 0, W, H);
+            
+            // --- FONDO GENERAL ---
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+            bgGrad.addColorStop(0, '#0d2b1d');
+            bgGrad.addColorStop(0.5, '#061811');
+            bgGrad.addColorStop(1, '#020d08');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, W, H);
+            
+            // --- ZONA DE META ---
+            ctx.fillStyle = '#225e3c';
+            ctx.fillRect(0, 0, W, roadStart);
+            
+            // Detalles de meta / césped superior
+            for (let i = 0; i < 9; i++) {
+                const fx = 25 + i * 45;
+                const fy = 18;
+                ctx.fillStyle = (i % 2 === 0) ? '#ff6b8a' : '#ffd166';
+                ctx.beginPath();
+                ctx.arc(fx, fy, 4.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.fillStyle = 'rgba(255,255,255,0.85)';
+            ctx.font = 'bold 15px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('🏁 ZONA DE META 🏁', W / 2, 20);
+            
+            // --- CARRETERA ---
+            const roadGrad = ctx.createLinearGradient(0, roadStart, 0, roadEnd);
+            roadGrad.addColorStop(0, '#1c1c1c');
+            roadGrad.addColorStop(0.5, '#262626');
+            roadGrad.addColorStop(1, '#1c1c1c');
+            ctx.fillStyle = roadGrad;
+            ctx.fillRect(0, roadStart, W, roadEnd - roadStart);
+            
+            // Líneas de carril discontinuas
+            ctx.strokeStyle = 'rgba(255, 220, 80, 0.4)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([10, 10]);
+            for (let i = 1; i < numCars; i++) {
+                const y = roadStart + (i * laneHeight);
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(W, y);
+                ctx.stroke();
+            }
+            ctx.setLineDash([]);
+            
+            // --- CÉSPED INFERIOR (ZONA DE SALIDA) ---
+            ctx.fillStyle = '#1c5235';
+            ctx.fillRect(0, roadEnd, W, H - roadEnd);
+            
+            // --- VEHÍCULOS / COCHES ---
+            for (let car of cars) {
+                const cx = car.x;
+                const cy = car.y;
+                const cw = car.width;
+                const ch = car.height;
+                
+                ctx.shadowColor = car.color;
+                ctx.shadowBlur = 10;
+                
+                const grad = ctx.createLinearGradient(cx, cy, cx, cy + ch);
+                grad.addColorStop(0, car.color);
+                grad.addColorStop(1, '#111');
+                ctx.fillStyle = grad;
+                
+                // Carrocería con esquinas redondeadas
+                const r = 6;
+                ctx.beginPath();
+                ctx.moveTo(cx + r, cy);
+                ctx.lineTo(cx + cw - r, cy);
+                ctx.quadraticCurveTo(cx + cw, cy, cx + cw, cy + r);
+                ctx.lineTo(cx + cw, cy + ch - r);
+                ctx.quadraticCurveTo(cx + cw, cy + ch, cx + cw - r, cy + ch);
+                ctx.lineTo(cx + r, cy + ch);
+                ctx.quadraticCurveTo(cx, cy + ch, cx, cy + ch - r);
+                ctx.lineTo(cx, cy + r);
+                ctx.quadraticCurveTo(cx, cy, cx + r, cy);
+                ctx.fill();
+                
+                ctx.shadowBlur = 0;
+                
+                // Parabrisas / Ventanas
+                ctx.fillStyle = 'rgba(180, 230, 255, 0.4)';
+                ctx.fillRect(cx + 10, cy + 4, 10, ch - 8);
+                ctx.fillRect(cx + 26, cy + 4, 8, ch - 8);
+                
+                // Luces delanteras / traseras
+                ctx.fillStyle = (car.speed > 0) ? '#ffeb3b' : '#ff5252';
+                if (car.speed > 0) {
+                    ctx.fillRect(cx + cw - 4, cy + 3, 3, 4);
+                    ctx.fillRect(cx + cw - 4, cy + ch - 7, 3, 4);
+                } else {
+                    ctx.fillRect(cx + 1, cy + 3, 3, 4);
+                    ctx.fillRect(cx + 1, cy + ch - 7, 3, 4);
+                }
+            }
+            
+            // ============================================
+            // RANA (GRÁFICO DETALLADO Y ANIMADO)
+            // ============================================
+            const fx = frog.x;
+            const fy = frog.y;
+            const fs = frog.size;
+            const centerX = fx + fs / 2;
+            const centerY = fy + fs / 2;
+            const radius = fs / 2 - (frog.hopAnim > 0 ? 2 : 0);
+            
+            ctx.shadowColor = '#2ee88a';
+            ctx.shadowBlur = 14;
+            
+            // Cuerpo base
+            const frogGrad = ctx.createRadialGradient(
+                centerX - 3, centerY - 3, 2,
+                centerX, centerY, radius
+            );
+            frogGrad.addColorStop(0, '#a3ffcb');
+            frogGrad.addColorStop(0.4, '#2ee88a');
+            frogGrad.addColorStop(0.8, '#1b9c5d');
+            frogGrad.addColorStop(1, '#0e5432');
+            ctx.fillStyle = frogGrad;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.shadowBlur = 0;
+            
+            // Ojos
+            const eyeOffset = radius * 0.35;
+            const eyeRadius = radius * 0.3;
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(centerX - eyeOffset, centerY - eyeOffset - 1, eyeRadius, 0, Math.PI * 2);
+            ctx.arc(centerX + eyeOffset, centerY - eyeOffset - 1, eyeRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Pupilas
+            ctx.fillStyle = '#061811';
+            const pupilRadius = eyeRadius * 0.55;
+            ctx.beginPath();
+            ctx.arc(centerX - eyeOffset + 0.5, centerY - eyeOffset - 1, pupilRadius, 0, Math.PI * 2);
+            ctx.arc(centerX + eyeOffset - 0.5, centerY - eyeOffset - 1, pupilRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Brillo ocular
+            ctx.fillStyle = 'rgba(255,255,255,0.8)';
+            ctx.beginPath();
+            ctx.arc(centerX - eyeOffset + 1.5, centerY - eyeOffset - 2, 1.2, 0, Math.PI * 2);
+            ctx.arc(centerX + eyeOffset + 1.5, centerY - eyeOffset - 2, 1.2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Sonrisa alegre
+            ctx.strokeStyle = '#093620';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY + 2, radius * 0.3, 0.1, Math.PI - 0.1);
+            ctx.stroke();
+            
+            // Patas traceras y delanteras estilizadas
+            ctx.fillStyle = '#1b9c5d';
+            ctx.strokeStyle = '#0e5432';
+            ctx.lineWidth = 2;
+            
+            // Patas izq/der
+            ctx.beginPath();
+            ctx.arc(fx - 2, fy + fs - 2, 4, 0, Math.PI * 2);
+            ctx.arc(fx + fs + 2, fy + fs - 2, 4, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // --- PARTÍCULAS ---
+            for (let p of particles) {
+                const alpha = p.life / p.maxLife;
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = p.color;
+                const s = p.size;
+                ctx.fillRect(p.x - s/2, p.y - s/2, s, s);
+            }
+            ctx.globalAlpha = 1;
+            
+            // --- PANTALLAS DE GAME OVER / VICTORIA ---
+            if (gameOver || gameWon) {
+                ctx.fillStyle = 'rgba(2, 20, 12, 0.82)';
+                ctx.fillRect(0, 0, W, H);
+                
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0,0,0,0.9)';
+                ctx.shadowBlur = 18;
+                
+                if (gameOver) {
+                    ctx.font = 'bold 34px sans-serif';
+                    ctx.fillStyle = '#ff5e7a';
+                    ctx.fillText('💀 GAME OVER', W/2, H/2 - 25);
+                } else {
+                    ctx.font = 'bold 34px sans-serif';
+                    ctx.fillStyle = '#ffd166';
+                    ctx.fillText('🎉 ¡VICTORIA!', W/2, H/2 - 25);
+                }
+                
+                ctx.font = '16px sans-serif';
+                ctx.fillStyle = '#d4ffe8';
+                ctx.fillText(`Puntuación final: ${score}`, W/2, H/2 + 20);
+                
+                ctx.font = '13px sans-serif';
+                ctx.fillStyle = '#2ee88a';
+                ctx.fillText('Pulsa cualquier tecla o botón para reiniciar', W/2, H/2 + 60);
+                ctx.shadowBlur = 0;
+            }
+        }
+        
+        // ============================================
+        // ACTUALIZAR INTERFAZ HTML
+        // ============================================
+        function updateUI() {
+            const livesDisplay = document.getElementById('livesDisplay');
+            livesDisplay.textContent = '❤️'.repeat(lives) + '🖤'.repeat(CONFIG.lives - lives);
+            document.getElementById('scoreDisplay').textContent = score;
+        }
+
+        // ============================================
+        // BUCLE PRINCIPAL
+        // ============================================
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ============================================
+        // CONFIGURACIÓN UI Y EVENTOS
+        // ============================================
+        const configModal = document.getElementById('configModal');
+        document.getElementById('configOpenBtn').addEventListener('click', () => {
+            configModal.classList.add('active');
+        });
+
+        document.getElementById('configSaveBtn').addEventListener('click', () => {
+            CONFIG.difficulty = document.getElementById('difficultySelect').value;
+            
+            let parsedLives = parseInt(document.getElementById('livesInput').value);
+            if (isNaN(parsedLives) || parsedLives < 3) parsedLives = 3;
+            if (parsedLives > 5) parsedLives = 5;
+            CONFIG.lives = parsedLives;
+            
+            CONFIG.soundEnabled = document.getElementById('soundToggle').checked;
+            CONFIG.musicEnabled = document.getElementById('musicToggle').checked;
+            
+            AudioManager.toggleMusic(CONFIG.musicEnabled);
+            
+            configModal.classList.remove('active');
+            resetGame();
+        });
+
+        // Controles de teclado
+        document.addEventListener('keydown', (e) => {
+            if (configModal.classList.contains('active')) return;
+
+            const directionMap = {
+                'ArrowUp': 'up', 'ArrowDown': 'down',
+                'ArrowLeft': 'left', 'ArrowRight': 'right',
+                'w': 'up', 'W': 'up',
+                's': 'down', 'S': 'down',
+                'a': 'left', 'A': 'left',
+                'd': 'right', 'D': 'right'
+            };
+            
+            if (directionMap[e.key]) {
+                e.preventDefault();
+                moveFrog(directionMap[e.key]);
+            }
+        });
+        
+        // Controles táctiles / botones de pantalla
+        document.querySelectorAll('[data-dir]').forEach(btn => {
+            const dir = btn.dataset.dir;
+            const handler = (e) => {
+                e.preventDefault();
+                moveFrog(dir);
+            };
+            btn.addEventListener('pointerdown', handler);
+            btn.addEventListener('touchstart', handler, { passive: false });
+        });
+        
+        // Inicialización del sistema
+        AudioManager.init();
+        createCars();
+        updateUI();
+        gameLoop();
+
+        console.log('🐸 Frogger Profesional inicializado correctamente.');
+    </script>
+</body>
+</html>

@@ -1,0 +1,1681 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#121212">
+    <title>Sokoban Pro - Juego y Editor Táctil</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #101820;
+            background-image: radial-gradient(ellipse at 50% 8%, #263b48 0%, #111b23 48%, #080d12 100%);
+            color: #f0f0f0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100dvh;
+            padding: 4px 8px calc(12px + env(safe-area-inset-bottom, 0px));
+            gap: 3px;
+        }
+
+        header {
+            text-align: center;
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+            gap: 4px;
+        }
+
+        .header-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            gap: 6px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #f5d99b;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .mode-badge {
+            font-size: 0.6rem;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .mode-badge.play { background: linear-gradient(180deg, #2e7d32, #1b5e20); border: 1px solid #4caf50; }
+        .mode-badge.edit { background: linear-gradient(180deg, #d32f2f, #8e0000); border: 1px solid #ef5350; }
+
+        .server-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.65rem;
+            padding: 2px 7px;
+            border-radius: 12px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            font-weight: 600;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .status-dot.online { background: #00e676; box-shadow: 0 0 6px #00e676; }
+        .status-dot.offline { background: #ff5252; box-shadow: 0 0 6px #ff5252; }
+
+        .stats-panel {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            background: linear-gradient(180deg, #2a2a2a, #1a1a1a);
+            padding: 3px 8px;
+            border-radius: 8px;
+            border: 1px solid #444;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+        }
+
+        .stat-box { text-align: center; }
+        .stat-label { font-size: 0.58rem; color: #aaa; text-transform: uppercase; }
+        .stat-value { font-size: 0.85rem; font-weight: bold; color: #f2c47a; }
+
+        .game-viewport {
+            position: relative;
+            flex: 1 1 auto;
+            min-height: 160px;
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse at center, #263844, #101820 76%);
+            border-radius: 14px;
+            border: 2px solid #526775;
+            box-shadow: 0 9px 24px rgba(0,0,0,0.65), inset 0 0 24px rgba(0,0,0,0.5), 0 0 0 1px rgba(150,205,220,.12);
+            overflow: hidden;
+        }
+
+        canvas#gameCanvas {
+            display: block;
+            touch-action: none;
+            border-radius: 4px;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .editor-panel {
+            display: none;
+            width: 100%;
+            max-width: 420px;
+            background: #1e1e1e;
+            padding: 5px;
+            border-radius: 8px;
+            border: 1px solid #ff9800;
+            flex-direction: column;
+            gap: 5px;
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.2);
+            flex-shrink: 0;
+        }
+        .editor-panel.active { display: flex; }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 3px;
+        }
+
+        .tool-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3px 1px;
+            background: #2a2a2a;
+            border: 2px solid #444;
+            border-radius: 6px;
+            color: #ddd;
+            font-size: 0.58rem;
+            cursor: pointer;
+            font-weight: bold;
+            line-height: 1.1;
+        }
+        .tool-btn.active {
+            border-color: #ff9800;
+            background: #3e2723;
+            color: #fff;
+            box-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
+        }
+        .tool-icon {
+            width: 18px;
+            height: 18px;
+            margin-bottom: 1px;
+        }
+
+        .editor-controls-row {
+            display: flex;
+            gap: 3px;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .grid-size-selector {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.68rem;
+            color: #ffb74d;
+            font-weight: bold;
+        }
+        .grid-size-selector select {
+            background: #2a2a2a;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 2px 3px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        .controls-wrapper {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+            margin-top: auto;
+        }
+
+        .dpad-container {
+            display: grid;
+            grid-template-columns: repeat(3, 52px);
+            grid-template-rows: repeat(2, 42px);
+            gap: 4px;
+            justify-content: center;
+        }
+
+        .dbtn {
+            background: linear-gradient(180deg, #49616e, #263943);
+            border: 1px solid #7893a0;
+            border-radius: 10px;
+            color: #f0f0f0;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 0 #111, 0 4px 6px rgba(0,0,0,0.5);
+            cursor: pointer;
+            padding: 0;
+        }
+        .dbtn:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #111;
+            background: #555;
+        }
+        .dbtn-up    { grid-column: 2; grid-row: 1; }
+        .dbtn-left  { grid-column: 1; grid-row: 2; }
+        .dbtn-down  { grid-column: 2; grid-row: 2; }
+        .dbtn-right { grid-column: 3; grid-row: 2; }
+
+        .toggle-editor-btn {
+            width: 100%;
+            padding: 7px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            color: #fff;
+            text-transform: uppercase;
+            border-radius: 8px;
+            border: 2px solid #ffb74d;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: linear-gradient(180deg, #f57c00, #e65100);
+        }
+
+        .unified-action-bar {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 2px;
+            width: 100%;
+        }
+
+        .btn {
+            padding: 6px 1px;
+            font-size: 0.58rem;
+            font-weight: bold;
+            color: #f4e3c8;
+            border: 1px solid #222;
+            border-radius: 6px;
+            cursor: pointer;
+            text-shadow: 0 1px 2px #000;
+            box-shadow: 0 2px 0 #000;
+            background: linear-gradient(180deg, #444, #222);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1px;
+            white-space: nowrap;
+            min-height: 34px;
+        }
+        .btn:active:not(:disabled) { transform: translateY(2px); box-shadow: none; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+
+        .btn-undo { background: linear-gradient(180deg, #b8860b, #785807); border-color: #ffd54f; }
+        .btn-redo { background: linear-gradient(180deg, #5d4037, #3e2723); border-color: #d7ccc8; }
+        .btn-reset { background: linear-gradient(180deg, #c62828, #8e0000); border-color: #ef5350; }
+        .btn-load-main { background: linear-gradient(180deg, #2e7d32, #1b5e20); border-color: #81c784; }
+        .btn-menu { background: linear-gradient(180deg, #1565c0, #0d47a1); border-color: #64b5f6; }
+        .btn-save-edit { background: linear-gradient(180deg, #2e7d32, #1b5e20); border-color: #81c784; }
+        .btn-clear { background: linear-gradient(180deg, #d32f2f, #7b1fa2); border-color: #ce93d8; }
+        .btn-random { background: linear-gradient(180deg, #7b1fa2, #4a148c); border-color: #ce93d8; }
+
+        #message {
+            min-height: 16px;
+            font-size: 0.72rem;
+            font-weight: bold;
+            color: #f2c47a;
+            text-align: center;
+            text-shadow: 0 1px 2px #000;
+            flex-shrink: 0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 12px;
+        }
+        .modal-overlay.visible { display: flex; }
+
+        .modal {
+            background: linear-gradient(180deg, #2c2c2c, #1a1a1a);
+            border: 2px solid #666;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.9);
+            max-width: 420px;
+            width: 100%;
+            max-height: 85dvh;
+            display: flex;
+            flex-direction: column;
+            color: #eee;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 8px 12px;
+            background: #222;
+            border-bottom: 1px solid #444;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: #f2c47a;
+            font-size: 0.9rem;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: #aaa;
+            font-size: 1.4rem;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+        .modal-body {
+            padding: 10px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        .modal-footer {
+            padding: 8px 12px;
+            background: #222;
+            border-top: 1px solid #444;
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        .menu-card {
+            background: #222;
+            border: 2px solid #444;
+            border-radius: 8px;
+            padding: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .menu-card:active { border-color: #f2c47a; background: #333; }
+        .menu-card .icon { font-size: 1.2rem; }
+        .menu-card .title { font-weight: bold; font-size: 0.72rem; color: #fff; }
+
+        .game-list { display: flex; flex-direction: column; gap: 6px; }
+        .game-item {
+            background: #252525;
+            border: 1px solid #444;
+            border-radius: 6px;
+            padding: 7px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 6px;
+        }
+        .game-title { font-weight: bold; color: #f2c47a; font-size: 0.75rem; }
+        .game-meta { font-size: 0.65rem; color: #aaa; }
+
+        .btn-sm {
+            padding: 4px 7px;
+            font-size: 0.68rem;
+            border-radius: 4px;
+            border: 1px solid #555;
+            cursor: pointer;
+            background: #333;
+            color: #fff;
+            font-weight: bold;
+        }
+        .btn-sm.load { background: #2e7d32; border-color: #4caf50; }
+        .btn-sm.del { background: #c62828; border-color: #ef5350; }
+
+        .status-msg {
+            padding: 6px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            text-align: center;
+            margin-top: 8px;
+            line-height: 1.3;
+        }
+        .status-msg.ok { background: rgba(46,125,50,0.3); color: #81c784; border: 1px solid #2e7d32; }
+        .status-msg.err { background: rgba(198,40,40,0.3); color: #e57373; border: 1px solid #c62828; }
+        .status-msg.info { background: rgba(25,118,210,0.3); color: #64b5f6; border: 1px solid #1976d2; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-top">
+            <h1>Sokoban <span class="mode-badge play" id="modeBadge">Juego</span></h1>
+            <div class="server-status-pill" id="serverPill" onclick="checkServerHealth()">
+                <span class="status-dot offline" id="serverDot"></span>
+                <span id="serverText">Servidor...</span>
+            </div>
+        </div>
+
+        <div class="stats-panel">
+            <div class="stat-box">
+                <div class="stat-label">Pasos</div>
+                <div class="stat-value" id="stepCount">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Empujes</div>
+                <div class="stat-value" id="pushCount">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Metas</div>
+                <div class="stat-value" id="boxProgress">0/0</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="editor-panel" id="editorPanel">
+        <div class="tool-grid">
+            <div class="tool-btn active" id="tool-wall" onclick="selectTool('W')"><canvas class="tool-icon" id="icon-wall"></canvas>Pared</div>
+            <div class="tool-btn" id="tool-box" onclick="selectTool('B')"><canvas class="tool-icon" id="icon-box"></canvas>Caja</div>
+            <div class="tool-btn" id="tool-target" onclick="selectTool('T')"><canvas class="tool-icon" id="icon-target"></canvas>Destino</div>
+            <div class="tool-btn" id="tool-player" onclick="selectTool('P')"><canvas class="tool-icon" id="icon-player"></canvas>Jugador</div>
+            <div class="tool-btn" id="tool-floor" onclick="selectTool('F')"><canvas class="tool-icon" id="icon-floor"></canvas>Suelo</div>
+        </div>
+
+        <div class="editor-controls-row">
+            <div class="grid-size-selector">
+                <label for="gridSizeSelect">Tamaño:</label>
+                <select id="gridSizeSelect" onchange="changeGridSize(this.value)">
+                    <option value="6">6x6</option>
+                    <option value="8" selected>8x8</option>
+                    <option value="10">10x10</option>
+                    <option value="12">12x12</option>
+                </select>
+            </div>
+
+            <div style="display:flex; gap:3px; flex-wrap:wrap;">
+                <button class="btn btn-clear" onclick="clearEditorGrid()">🧹 Limpiar</button>
+                <button class="btn btn-undo" onclick="verifyCustomLevel()">🧩 Comprobar</button>
+                <button class="btn btn-random" onclick="generateRandomLevel()">🎲 Aleatorio</button>
+                <button class="btn btn-save-edit" onclick="saveEditorLevel()">💾 Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-viewport" id="viewport">
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div id="message"></div>
+
+    <div class="controls-wrapper">
+        <div class="dpad-container" id="dpad">
+            <button class="dbtn dbtn-up" onclick="handleInput(0, -1)">▲</button>
+            <button class="dbtn dbtn-left" onclick="handleInput(-1, 0)">◄</button>
+            <button class="dbtn dbtn-down" onclick="handleInput(0, 1)">▼</button>
+            <button class="dbtn dbtn-right" onclick="handleInput(1, 0)">►</button>
+        </div>
+
+        
+
+        <div class="unified-action-bar">
+            <button class="btn btn-undo" id="btnUndo" onclick="undoMove()">↩️ Atrás</button>
+            <button class="btn btn-redo" id="btnRedo" onclick="redoMove()">↪️ Adelante</button>
+            <button class="btn btn-random" onclick="playRandomLevel()">🎲 Azar</button>
+            <button class="btn btn-load-main" onclick="openMenuAndListServer()">📂 Serv</button>
+            <button class="btn btn-reset" onclick="resetLevel()">🔄 Rein</button>
+            <button class="btn btn-menu" onclick="openMenu()">📋 Menú</button>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importJSON(this.files[0])">
+
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <span id="modalTitle">Opciones & Archivos</span>
+                <button class="modal-close" onclick="closeMenu()">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeMenu()">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx = null;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            try {
+                initAudio();
+                if (!audioCtx) return;
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'step') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(120, now);
+                    osc.frequency.exponentialRampToValueAtTime(40, now + 0.05);
+                    gain.gain.setValueAtTime(0.42, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now); osc.stop(now + 0.05);
+                } else if (type === 'push') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(90, now);
+                    osc.frequency.linearRampToValueAtTime(50, now + 0.1);
+                    gain.gain.setValueAtTime(1.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now); osc.stop(now + 0.1);
+                } else if (type === 'target') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.setValueAtTime(880, now + 0.08);
+                    gain.gain.setValueAtTime(1.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.18);
+                    osc.start(now); osc.stop(now + 0.18);
+                } else if (type === 'paint') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.linearRampToValueAtTime(600, now + 0.04);
+                    gain.gain.setValueAtTime(0.8, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.04);
+                    osc.start(now); osc.stop(now + 0.04);
+                } else if (type === 'win') {
+                    [523.25, 659.25, 783.99, 1046.50].forEach((freq, idx) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.type = 'triangle';
+                        o.frequency.setValueAtTime(freq, now + idx * 0.09);
+                        g.gain.setValueAtTime(0.2, now + idx * 0.09);
+                        g.gain.linearRampToValueAtTime(0.01, now + idx * 0.09 + 0.22);
+                        o.connect(g); g.connect(audioCtx.destination);
+                        o.start(now + idx * 0.09); o.stop(now + idx * 0.09 + 0.22);
+                    });
+                }
+            } catch(e) {}
+        }
+
+        const SERVER_URL = 'http://localhost:8004';
+        const SERVER_LIST_ENDPOINT = '/sokoban/list';
+        const SERVER_LOAD_ENDPOINT = '/sokoban/load';
+        const SERVER_SAVE_ENDPOINT = '/sokoban/save';
+        const SERVER_DEL_ENDPOINT  = '/sokoban/delete';
+        const LOCAL_STORAGE_KEY = 'sokoban_saved_games_v3';
+
+        let isServerOnline = false;
+        let GRID_SIZE = 12
+        let tt=GRID_SIZE;
+        let map = [];
+        let player = { x: 1, y: 1, dir: 'down', isPushing: false };
+        let boxes = [];
+
+        let gameLevel = null;
+        let editorLevel = null;
+
+        let history = [];
+        let redoStack = [];
+        let steps = 0;
+        let pushes = 0;
+        let isGameWon = false;
+        let isSolving = false;
+        let solveTimer = null;
+
+        let isEditor = false;
+        let selectedTool = 'W';
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let tileSize = 40;
+
+        const DEFAULT_LEVEL = {
+            gridSize: tt,
+            map: [
+                ['W','W','W','W','W','W','W','W','W','W','W'],
+                ['W','F','F','F','W','F','F','W','W','W','W','W'],
+                ['W','F','T','B','F','B','F','W','W','W','W','W'],
+                ['W','W','W','F','W','T','F','W','W','W','W','W'],
+                ['W','T','W','F','W','F','F','W','W','W','W','W'],
+                ['W','F','W','F','W','B','F','W','W','W','W','W'],
+                ['W','B','P','F','F','T','F','W','W','W','W','W'],
+                ['W','F','F','W','W','W','W','W','W','W','W','W'],
+                ['W','W','W','W','W','W','W','W','W','W','W','W'],
+                ['W','W','W','W','W','W','W','W','W','W','W','W']
+
+            ]
+        };
+
+        const texCache = {};
+
+        function createTextures() {
+            const size = 96;
+            // Suelo: losas de piedra cálida con bordes biselados y textura sutil.
+            const floorCanvas = document.createElement('canvas');
+            floorCanvas.width = floorCanvas.height = size;
+            const f = floorCanvas.getContext('2d');
+            let g = f.createLinearGradient(0, 0, size, size);
+            g.addColorStop(0, '#e7dfd0'); g.addColorStop(0.55, '#c9bda9'); g.addColorStop(1, '#a99b87');
+            f.fillStyle = g; f.fillRect(0, 0, size, size);
+            f.fillStyle = 'rgba(255,255,255,.28)'; f.fillRect(3, 3, size-6, 4); f.fillRect(3, 3, 4, size-6);
+            f.fillStyle = 'rgba(54,43,34,.20)'; f.fillRect(3, size-7, size-6, 4); f.fillRect(size-7, 3, 4, size-6);
+            f.strokeStyle = 'rgba(94,77,58,.22)'; f.lineWidth = 1.5; f.strokeRect(7,7,size-14,size-14);
+            // pequeñas variaciones decorativas, sin ruido excesivo
+            f.fillStyle = 'rgba(255,255,255,.16)'; f.beginPath(); f.arc(24,27,2,0,Math.PI*2); f.arc(71,65,1.5,0,Math.PI*2); f.fill();
+            texCache.F = floorCanvas;
+
+            // Paredes: bloques de piedra oscura con volumen y juntas profundas.
+            const wallCanvas = document.createElement('canvas'); wallCanvas.width = wallCanvas.height = size;
+            const w = wallCanvas.getContext('2d');
+            let wg = w.createLinearGradient(0,0,size,size); wg.addColorStop(0,'#52616a'); wg.addColorStop(.48,'#34434d'); wg.addColorStop(1,'#202d36');
+            w.fillStyle = wg; w.fillRect(0,0,size,size);
+            w.strokeStyle = '#17232b'; w.lineWidth = 5;
+            w.beginPath(); w.moveTo(0,32); w.lineTo(size,32); w.moveTo(0,65); w.lineTo(size,65); w.moveTo(48,0); w.lineTo(48,32); w.moveTo(24,32); w.lineTo(24,65); w.moveTo(69,65); w.lineTo(69,size); w.stroke();
+            w.strokeStyle = 'rgba(196,220,229,.30)'; w.lineWidth = 2;
+            w.beginPath(); w.moveTo(3,4); w.lineTo(45,4); w.moveTo(3,4); w.lineTo(3,28); w.moveTo(51,36); w.lineTo(92,36); w.moveTo(27,36); w.lineTo(27,61); w.moveTo(4,69); w.lineTo(65,69); w.stroke();
+            w.fillStyle = 'rgba(9,18,24,.22)'; w.fillRect(0,29,size,5); w.fillRect(0,62,size,5);
+            texCache.W = wallCanvas;
+
+            // Destino: sello luminoso incrustado en la losa.
+            const targetCanvas = document.createElement('canvas'); targetCanvas.width = targetCanvas.height = size;
+            const t = targetCanvas.getContext('2d'); t.drawImage(floorCanvas,0,0);
+            t.save(); t.shadowColor = '#23e6b0'; t.shadowBlur = 13;
+            const rg=t.createRadialGradient(48,48,5,48,48,31); rg.addColorStop(0,'#e4fff7'); rg.addColorStop(.35,'#3ce7b2'); rg.addColorStop(1,'#087d70');
+            t.fillStyle=rg; t.beginPath(); t.arc(48,48,25,0,Math.PI*2); t.fill(); t.restore();
+            t.strokeStyle='#e0fff6'; t.lineWidth=3; t.beginPath(); t.arc(48,48,17,0,Math.PI*2); t.stroke();
+            t.strokeStyle='rgba(255,255,255,.7)'; t.lineWidth=2; t.beginPath(); t.moveTo(48,29); t.lineTo(48,67); t.moveTo(29,48); t.lineTo(67,48); t.stroke();
+            texCache.T=targetCanvas;
+            renderToolIcons();
+        }
+
+        function renderToolIcons() {
+            ['wall', 'box', 'target', 'player', 'floor'].forEach(t => {
+                const c = document.getElementById('icon-' + t);
+                if (!c) return;
+                c.width = c.height = 20;
+                const cx = c.getContext('2d');
+                if (t === 'wall') cx.drawImage(texCache.W, 0, 0, 20, 20);
+                if (t === 'floor') cx.drawImage(texCache.F, 0, 0, 20, 20);
+                if (t === 'target') cx.drawImage(texCache.T, 0, 0, 20, 20);
+                if (t === 'box') { cx.drawImage(texCache.F, 0, 0, 20, 20); drawBox(cx, 0, 0, 20, false); }
+                if (t === 'player') { cx.drawImage(texCache.F, 0, 0, 20, 20); drawPlayer(cx, 0, 0, 20, 'down', false); }
+            });
+        }
+
+        function drawBox(c, x, y, size, onTarget) {
+            c.save(); c.translate(x,y);
+            const p=size*.105, s=size-2*p, r=Math.max(2,size*.09);
+            c.shadowColor='rgba(0,0,0,.48)'; c.shadowBlur=size*.12; c.shadowOffsetY=size*.07;
+            let grad=c.createLinearGradient(p,p,p+s,p+s);
+            if(onTarget){grad.addColorStop(0,'#52f0bd');grad.addColorStop(.5,'#13a77e');grad.addColorStop(1,'#087052');}
+            else {grad.addColorStop(0,'#e9b875');grad.addColorStop(.45,'#b97838');grad.addColorStop(1,'#70401f');}
+            c.fillStyle=grad; c.beginPath(); c.roundRect(p,p,s,s,r); c.fill(); c.shadowColor='transparent';
+            c.lineWidth=Math.max(1,size*.045); c.strokeStyle=onTarget?'#b8ffe7':'#583017'; c.stroke();
+            // Refuerzos de madera metálicos en las esquinas
+            c.strokeStyle=onTarget?'rgba(225,255,246,.75)':'rgba(255,220,164,.82)'; c.lineWidth=Math.max(1,size*.035);
+            c.beginPath(); c.moveTo(p+size*.08,p+size*.08); c.lineTo(p+s-size*.08,p+s-size*.08); c.moveTo(p+s-size*.08,p+size*.08); c.lineTo(p+size*.08,p+s-size*.08); c.stroke();
+            c.fillStyle=onTarget?'#eafff8':'#f6d7a2';
+            [[p+size*.13,p+size*.13],[p+s-size*.13,p+size*.13],[p+size*.13,p+s-size*.13],[p+s-size*.13,p+s-size*.13]].forEach(q=>{c.beginPath();c.arc(q[0],q[1],Math.max(.8,size*.025),0,Math.PI*2);c.fill();});
+            if(onTarget){c.strokeStyle='rgba(255,255,255,.8)';c.lineWidth=Math.max(1,size*.035);c.beginPath();c.arc(size/2,size/2,size*.13,0,Math.PI*2);c.stroke();}
+            c.restore();
+        }
+
+        function drawPlayer(c, x, y, size, dir, isPushing) {
+            c.save();
+            c.translate(x, y);
+            const cx = size * .5;
+            const forward = dir || 'down';
+            const side = forward === 'left' || forward === 'right';
+            const back = forward === 'up';
+
+            // Sombra y botas: el personaje siempre permanece de pie.
+            c.fillStyle = 'rgba(12,20,26,.34)';
+            c.beginPath(); c.ellipse(cx, size*.86, size*.27, size*.075, 0, 0, Math.PI*2); c.fill();
+
+            // Las piernas se separan ligeramente para dar una silueta de caminante.
+            c.fillStyle = '#26313b';
+            c.beginPath();
+            c.roundRect(cx-size*.17, size*.66, size*.13, size*.17, size*.045);
+            c.roundRect(cx+size*.035, size*.66, size*.13, size*.17, size*.045);
+            c.fill();
+            c.fillStyle = '#171f28';
+            c.beginPath();
+            c.ellipse(cx-size*.105, size*.81, size*.12, size*.055, -.12, 0, Math.PI*2);
+            c.ellipse(cx+size*.105, size*.81, size*.12, size*.055, .12, 0, Math.PI*2);
+            c.fill();
+
+            // Chaqueta y mochila: espalda visible al avanzar hacia arriba.
+            const body = c.createLinearGradient(cx-size*.23, 0, cx+size*.23, 0);
+            body.addColorStop(0, '#07516d'); body.addColorStop(.48, '#27b9d0'); body.addColorStop(1, '#06445f');
+            c.fillStyle = body;
+            c.beginPath();
+            c.moveTo(cx-size*.21,size*.43);
+            c.quadraticCurveTo(cx,size*.38,cx+size*.21,size*.43);
+            c.lineTo(cx+size*.24,size*.69);
+            c.quadraticCurveTo(cx,size*.75,cx-size*.24,size*.69);
+            c.closePath(); c.fill();
+            c.strokeStyle='rgba(220,252,255,.62)'; c.lineWidth=Math.max(.7,size*.018);
+            c.beginPath(); c.moveTo(cx,size*.46); c.lineTo(cx,size*.68); c.stroke();
+            if (back) {
+                c.fillStyle='#805332'; c.beginPath();
+                c.roundRect(cx-size*.13,size*.48,size*.26,size*.19,size*.035); c.fill();
+                c.strokeStyle='#c18a55'; c.lineWidth=Math.max(.7,size*.018); c.stroke();
+            }
+
+            // Brazos. Al empujar, las manos se proyectan hacia la caja en la dirección correcta.
+            c.lineCap='round'; c.lineJoin='round';
+            c.strokeStyle='#e8ad83'; c.lineWidth=size*.085;
+            c.beginPath();
+            if (isPushing && forward === 'up') {
+                c.moveTo(cx-size*.16,size*.49); c.lineTo(cx-size*.12,size*.31);
+                c.moveTo(cx+size*.16,size*.49); c.lineTo(cx+size*.12,size*.31);
+            } else if (isPushing && forward === 'down') {
+                c.moveTo(cx-size*.16,size*.49); c.lineTo(cx-size*.12,size*.70);
+                c.moveTo(cx+size*.16,size*.49); c.lineTo(cx+size*.12,size*.70);
+            } else if (isPushing && forward === 'left') {
+                c.moveTo(cx-size*.17,size*.49); c.lineTo(size*.17,size*.51);
+                c.moveTo(cx+size*.17,size*.51); c.lineTo(cx-size*.01,size*.60);
+            } else if (isPushing && forward === 'right') {
+                c.moveTo(cx+size*.17,size*.49); c.lineTo(size*.83,size*.51);
+                c.moveTo(cx-size*.17,size*.51); c.lineTo(cx+size*.01,size*.60);
+            } else {
+                c.moveTo(cx-size*.18,size*.49); c.lineTo(cx-size*.25,size*.63);
+                c.moveTo(cx+size*.18,size*.49); c.lineTo(cx+size*.25,size*.63);
+            }
+            c.stroke();
+
+            // Cabeza: frente hacia abajo, nuca hacia arriba y perfil al moverse lateralmente.
+            const headY=size*.32, headX=side ? cx+(forward==='right'?size*.025:-size*.025) : cx;
+            c.fillStyle='#f0bd91';
+            c.beginPath(); c.ellipse(headX,headY,size*.19,size*.205,0,0,Math.PI*2); c.fill();
+
+            const hair=c.createLinearGradient(0,size*.10,0,size*.36);
+            hair.addColorStop(0,'#5b3a2b'); hair.addColorStop(1,'#241c20');
+            c.fillStyle=hair;
+            c.beginPath();
+            if (back) {
+                c.ellipse(cx,size*.285,size*.205,size*.215,0,Math.PI,Math.PI*2);
+                c.lineTo(cx+size*.18,size*.36); c.quadraticCurveTo(cx,size*.40,cx-size*.18,size*.36); c.closePath();
+            } else if (side) {
+                const sign=forward==='right'?1:-1;
+                c.moveTo(cx-size*.19,size*.32);
+                c.quadraticCurveTo(cx-size*.24,size*.10,cx+sign*size*.03,size*.105);
+                c.quadraticCurveTo(cx+sign*size*.23,size*.12,cx+sign*size*.18,size*.30);
+                c.lineTo(cx+sign*size*.09,size*.24); c.lineTo(cx-size*.03,size*.29); c.closePath();
+            } else {
+                c.moveTo(cx-size*.20,size*.32);
+                c.quadraticCurveTo(cx-size*.25,size*.09,cx-size*.02,size*.105);
+                c.quadraticCurveTo(cx+size*.22,size*.08,cx+size*.20,size*.31);
+                c.lineTo(cx+size*.09,size*.23); c.lineTo(cx-size*.02,size*.20);
+                c.lineTo(cx-size*.11,size*.26); c.closePath();
+            }
+            c.fill();
+
+            if (!back) {
+                c.fillStyle='#fff';
+                if (side) {
+                    const sign=forward==='right'?1:-1, ex=cx+sign*size*.105;
+                    c.beginPath(); c.ellipse(ex,size*.325,size*.035,size*.052,0,0,Math.PI*2); c.fill();
+                    c.fillStyle='#25313a'; c.beginPath(); c.arc(ex+sign*size*.012,size*.33,size*.022,0,Math.PI*2); c.fill();
+                    // Nariz que apunta hacia la marcha.
+                    c.fillStyle='#e4a17d'; c.beginPath();
+                    c.moveTo(cx+sign*size*.16,size*.345); c.lineTo(cx+sign*size*.22,size*.37); c.lineTo(cx+sign*size*.15,size*.38); c.fill();
+                } else {
+                    c.beginPath();
+                    c.ellipse(cx-size*.07,size*.325,size*.032,size*.045,0,0,Math.PI*2);
+                    c.ellipse(cx+size*.07,size*.325,size*.032,size*.045,0,0,Math.PI*2); c.fill();
+                    c.fillStyle='#25313a';
+                    const py=forward==='up'?-size*.008:size*.012;
+                    c.beginPath(); c.arc(cx-size*.07,size*.33+py,size*.018,0,Math.PI*2);
+                    c.arc(cx+size*.07,size*.33+py,size*.018,0,Math.PI*2); c.fill();
+                    c.strokeStyle='#9d554b'; c.lineWidth=Math.max(.7,size*.014);
+                    c.beginPath(); c.arc(cx,size*.365,size*.04,.2,Math.PI-.2); c.stroke();
+                }
+            }
+
+            // Pañuelo visible desde delante; por detrás se ve el nudo.
+            c.fillStyle='#f6c65b'; c.beginPath();
+            if (back) {
+                c.moveTo(cx-size*.07,size*.43); c.lineTo(cx+size*.07,size*.43);
+                c.lineTo(cx+size*.11,size*.49); c.lineTo(cx,size*.47); c.lineTo(cx-size*.11,size*.49);
+            } else {
+                c.moveTo(cx-size*.09,size*.43); c.lineTo(cx+size*.09,size*.43); c.lineTo(cx,size*.52);
+            }
+            c.closePath(); c.fill();
+            c.restore();
+        }
+
+        async function checkServerHealth() {
+            const dot = document.getElementById('serverDot');
+            const txt = document.getElementById('serverText');
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 1800);
+                const res = await fetch(`${SERVER_URL}${SERVER_LIST_ENDPOINT}`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (!res.ok) throw new Error('Offline');
+                isServerOnline = true;
+                dot.className = 'status-dot online';
+                txt.innerText = 'Servidor OK';
+            } catch(e) {
+                isServerOnline = false;
+                dot.className = 'status-dot offline';
+                txt.innerText = 'Modo Local';
+            }
+        }
+
+        function extractGamesFromServerData(data) {
+            if (!data) return [];
+            if (Array.isArray(data)) return data;
+            if (Array.isArray(data.games)) return data.games;
+            if (Array.isArray(data.levels)) return data.levels;
+            if (Array.isArray(data.niveles)) return data.niveles;
+            if (data.map && Array.isArray(data.map)) {
+                return [{ id: data.id || 'sokoban_0', title: data.title || data.name || 'Nivel sokoban.json', level: data }];
+            }
+            return [];
+        }
+
+        function normalizeLevel(levelData) {
+            if (!levelData) return null;
+            if (Array.isArray(levelData)) {
+                return { gridSize: levelData.length, map: levelData };
+            }
+            if (levelData.level) return normalizeLevel(levelData.level);
+            if (levelData.state) return normalizeLevel(levelData.state);
+            if (levelData.map) {
+                return { gridSize: levelData.gridSize || levelData.map.length, map: levelData.map };
+            }
+            return null;
+        }
+
+        function initLevel(levelData, isGame = true) {
+            const norm = normalizeLevel(levelData);
+            if (!norm) { alert('Nivel no válido'); return; }
+
+            if (solveTimer) clearInterval(solveTimer);
+            isSolving = false; isGameWon = false; steps = 0; pushes = 0; history = []; redoStack = [];
+            GRID_SIZE = norm.gridSize || norm.map.length;
+            document.getElementById('gridSizeSelect').value = GRID_SIZE;
+
+            if (isGame) {
+                gameLevel = JSON.parse(JSON.stringify(norm));
+            } else {
+                editorLevel = JSON.parse(JSON.stringify(norm));
+                gameLevel = JSON.parse(JSON.stringify(norm));
+            }
+
+            map = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill('F'));
+            boxes = [];
+            player = { x: 1, y: 1, dir: 'down', isPushing: false };
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const char = norm.map && norm.map[r] ? norm.map[r][c] : 'F';
+                    if (char === 'W') map[r][c] = 'W';
+                    else if (char === 'T') map[r][c] = 'T';
+                    else map[r][c] = 'F';
+
+                    if (char === 'B') boxes.push({ x: c, y: r });
+                    if (char === 'P') player = { x: c, y: r, dir: 'down', isPushing: false };
+                }
+            }
+            resizeCanvas();
+            updateStats();
+            document.getElementById('message').innerText = '';
+        }
+
+        function resizeCanvas() {
+            const viewport = document.getElementById('viewport');
+            const rect = viewport.getBoundingClientRect();
+            const pad = 6;
+            const minDim = Math.max(120, Math.min(rect.width, rect.height) - pad);
+            canvas.width = minDim;
+            canvas.height = minDim;
+            tileSize = Math.floor(minDim / GRID_SIZE);
+            render();
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const img = texCache[map[r][c]] || texCache.F;
+                    ctx.drawImage(img, c * tileSize, r * tileSize, tileSize, tileSize);
+                }
+            }
+            boxes.forEach(b => {
+                const isOnTarget = map[b.y][b.x] === 'T';
+                drawBox(ctx, b.x * tileSize, b.y * tileSize, tileSize, isOnTarget);
+            });
+            drawPlayer(ctx, player.x * tileSize, player.y * tileSize, tileSize, player.dir, player.isPushing);
+
+            if (isEditor) {
+                ctx.strokeStyle = 'rgba(255, 152, 0, 0.35)';
+                ctx.lineWidth = 1;
+                for (let i = 0; i <= GRID_SIZE; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(i * tileSize, 0); ctx.lineTo(i * tileSize, canvas.height);
+                    ctx.moveTo(0, i * tileSize); ctx.lineTo(canvas.width, i * tileSize);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('stepCount').innerText = steps;
+            document.getElementById('pushCount').innerText = pushes;
+
+            let totalTargets = 0;
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) { if (map[r][c] === 'T') totalTargets++; }
+            }
+            let onTarget = 0;
+            boxes.forEach(b => { if (map[b.y][b.x] === 'T') onTarget++; });
+
+            document.getElementById('boxProgress').innerText = `${onTarget}/${totalTargets}`;
+            document.getElementById('btnUndo').disabled = history.length === 0 || isSolving || isEditor;
+            document.getElementById('btnRedo').disabled = redoStack.length === 0 || isSolving || isEditor;
+        }
+
+        function handleInput(dx, dy) {
+            if (isEditor || isGameWon || isSolving) return;
+            const newX = player.x + dx, newY = player.y + dy;
+
+            if (dx === 0 && dy === -1) player.dir = 'up';
+            if (dx === 0 && dy === 1) player.dir = 'down';
+            if (dx === -1 && dy === 0) player.dir = 'left';
+            if (dx === 1 && dy === 0) player.dir = 'right';
+
+            if (isOutOfBounds(newX, newY) || map[newY][newX] === 'W') {
+                player.isPushing = false;
+                render();
+                return;
+            }
+
+            const boxIndex = boxes.findIndex(b => b.x === newX && b.y === newY);
+
+            if (boxIndex !== -1) {
+                const boxNextX = newX + dx, boxNextY = newY + dy;
+                if (isOutOfBounds(boxNextX, boxNextY) || map[boxNextY][boxNextX] === 'W' || isBoxAt(boxNextX, boxNextY)) {
+                    player.isPushing = false;
+                    render();
+                    return;
+                }
+
+                history.push({ player: { ...player }, boxes: boxes.map(b => ({ ...b })), steps, pushes });
+                redoStack = [];
+
+                boxes[boxIndex].x = boxNextX; boxes[boxIndex].y = boxNextY;
+                player.x = newX; player.y = newY;
+                player.isPushing = true;
+                steps++; pushes++;
+                if (map[boxNextY][boxNextX] === 'T') playSound('target'); else playSound('push');
+            } else {
+                history.push({ player: { ...player }, boxes: boxes.map(b => ({ ...b })), steps, pushes });
+                redoStack = [];
+
+                player.x = newX; player.y = newY;
+                player.isPushing = false;
+                steps++; playSound('step');
+            }
+            render();
+            updateStats();
+            checkWin();
+        }
+
+        function isOutOfBounds(x, y) { return x < 0 || x >= GRID_SIZE || y < 0 || y >= GRID_SIZE; }
+        function isBoxAt(x, y) { return boxes.some(b => b.x === x && b.y === y); }
+
+        function undoMove() {
+            if (history.length === 0 || isSolving || isEditor) return;
+            redoStack.push({ player: { ...player }, boxes: boxes.map(b => ({ ...b })), steps, pushes });
+            const last = history.pop();
+            player = last.player; boxes = last.boxes; steps = last.steps; pushes = last.pushes;
+            isGameWon = false; document.getElementById('message').innerText = '';
+            playSound('step'); render(); updateStats();
+        }
+
+        function redoMove() {
+            if (redoStack.length === 0 || isSolving || isEditor) return;
+            history.push({ player: { ...player }, boxes: boxes.map(b => ({ ...b })), steps, pushes });
+            const next = redoStack.pop();
+            player = next.player; boxes = next.boxes; steps = next.steps; pushes = next.pushes;
+            isGameWon = false; document.getElementById('message').innerText = '';
+            playSound('step'); render(); updateStats();
+            checkWin();
+        }
+
+        function resetLevel() {
+            const src = isEditor ? editorLevel : gameLevel;
+            if (src) initLevel(src, !isEditor);
+        }
+
+        function checkWin() {
+    // 1) Recolectar todas las metas del mapa
+    const targets = [];
+    for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+            if (map[r][c] === 'T') targets.push({ x: c, y: r });
+        }
+    }
+
+    // Sin metas no hay nada que completar
+    if (targets.length === 0) return;
+
+    // 2) Comprobar que CADA meta tiene una caja encima
+    const allTargetsCovered = targets.every(t =>
+        boxes.some(b => b.x === t.x && b.y === t.y)
+    );
+
+    if (allTargetsCovered && !isGameWon) {
+        isGameWon = true;
+        playSound('win');
+        document.getElementById('message').innerText =
+            `🎉 ¡Nivel Completado en ${steps} pasos!`;
+        updateStats();
+    }
+}
+
+        function toggleMode() {
+            if (isSolving) return;
+            initAudio();
+            isEditor = !isEditor;
+
+            const badge = document.getElementById('modeBadge');
+            const panel = document.getElementById('editorPanel');
+            
+
+            if (isEditor) {
+    saveCurrentAsEditorLevel();
+    badge.innerText = 'Editor'; badge.className = 'mode-badge edit';
+    panel.classList.add('active');
+    document.getElementById('message').innerText = '✏️ Toca la cuadrícula para pintar tu mapa.';
+    if (editorLevel) initLevel(editorLevel, false);
+} else {
+    badge.innerText = 'Juego'; badge.className = 'mode-badge play';
+    panel.classList.remove('active');
+    saveCurrentAsEditorLevel();
+    if (editorLevel) initLevel(editorLevel, true);
+    document.getElementById('message').innerText = '';
+}
+            render(); updateStats();
+        }
+
+        function selectTool(tool) {
+            selectedTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+            const toolMap = { W: 'wall', B: 'box', T: 'target', P: 'player', F: 'floor' };
+            const el = document.getElementById('tool-' + toolMap[tool]);
+            if (el) el.classList.add('active');
+        }
+
+        function changeGridSize(newSize) {
+            const newSizeInt = parseInt(newSize, 10);
+            if (isNaN(newSizeInt)) return;
+            const newMap = Array.from({ length: newSizeInt }, () => Array(newSizeInt).fill('F'));
+            for (let r = 0; r < Math.min(GRID_SIZE, newSizeInt); r++) {
+                for (let c = 0; c < Math.min(GRID_SIZE, newSizeInt); c++) {
+                    if (map[r] && map[r][c]) newMap[r][c] = map[r][c];
+                }
+            }
+            GRID_SIZE = newSizeInt;
+            map = newMap;
+            boxes = boxes.filter(b => !isOutOfBounds(b.x, b.y));
+            if (isOutOfBounds(player.x, player.y)) {
+                let found = false;
+                for (let r = 0; r < GRID_SIZE && !found; r++) {
+                    for (let c = 0; c < GRID_SIZE; c++) {
+                        if (map[r][c] !== 'W') { player = { x: c, y: r, dir: 'down', isPushing: false }; found = true; break; }
+                    }
+                }
+                if (!found) player = { x: 0, y: 0, dir: 'down', isPushing: false };
+            }
+            resizeCanvas();
+            render();
+            updateStats();
+        }
+
+        function clearEditorGrid() {
+            map = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill('F'));
+            boxes = []; 
+            player = { x: 1, y: 1, dir: 'down', isPushing: false };
+            if (GRID_SIZE > 2) {
+                map[1][2] = 'T';
+                boxes = [{ x: 2, y: 2 }];
+                player = { x: 1, y: 2, dir: 'down', isPushing: false };
+            }
+            render(); updateStats(); playSound('paint');
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            if (!isEditor) return;
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const cx = Math.floor(((e.clientX - rect.left) * scaleX) / tileSize);
+            const cy = Math.floor(((e.clientY - rect.top) * scaleY) / tileSize);
+            if (isOutOfBounds(cx, cy)) return;
+
+            if (selectedTool === 'W') {
+                map[cy][cx] = 'W';
+                boxes = boxes.filter(b => !(b.x === cx && b.y === cy));
+                if (player.x === cx && player.y === cy) {
+                    let found = false;
+                    for (let r = 0; r < GRID_SIZE && !found; r++)
+                        for (let c = 0; c < GRID_SIZE; c++)
+                            if (map[r][c] !== 'W') { player.x = c; player.y = r; found = true; break; }
+                    if (!found) { player.x = 0; player.y = 0; }
+                }
+            } else if (selectedTool === 'F') {
+                map[cy][cx] = 'F';
+                boxes = boxes.filter(b => !(b.x === cx && b.y === cy));
+            } else if (selectedTool === 'T') {
+                map[cy][cx] = 'T';
+            } else if (selectedTool === 'B') {
+                if (map[cy][cx] === 'W') map[cy][cx] = 'F';
+                if (!isBoxAt(cx, cy) && !(player.x === cx && player.y === cy)) boxes.push({ x: cx, y: cy });
+            } else if (selectedTool === 'P') {
+                if (map[cy][cx] === 'W') map[cy][cx] = 'F';
+                boxes = boxes.filter(b => !(b.x === cx && b.y === cy));
+                player.x = cx; player.y = cy;
+            }
+            playSound('paint'); render(); updateStats();
+        }, { passive: false });
+
+        function saveCurrentAsEditorLevel() {
+            const levelMap = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill('F'));
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) { levelMap[r][c] = map[r][c]; }
+            }
+            boxes.forEach(b => { if (b.x >= 0 && b.x < GRID_SIZE && b.y >= 0 && b.y < GRID_SIZE) levelMap[b.y][b.x] = 'B'; });
+            if (player.x >= 0 && player.x < GRID_SIZE && player.y >= 0 && player.y < GRID_SIZE) {
+                levelMap[player.y][player.x] = 'P';
+            }
+            editorLevel = { gridSize: GRID_SIZE, map: levelMap };
+        }
+
+        function verifyCustomLevel() {
+            saveCurrentAsEditorLevel();
+            const sol = solveSokobanBFS(editorLevel);
+            if (sol && sol.length > 0) {
+                document.getElementById('message').innerText = `✅ ¡Nivel válido! Solucionable en ${sol.length} pasos.`;
+                return true;
+            } else {
+                document.getElementById('message').innerText = '❌ El nivel actual NO tiene solución o faltan elementos mínimos.';
+                return false;
+            }
+        }
+
+        function saveEditorLevel() {
+            if (!verifyCustomLevel()) {
+                if (!confirm('El nivel parece no tener solución. ¿Quieres guardarlo de todos modos?')) return;
+            }
+            openMenu(); showSaveDialog();
+        }
+
+        function solveSokobanBFS(level) {
+            const norm = normalizeLevel(level);
+            if (!norm) return null;
+            const gs = norm.gridSize || norm.map.length;
+            const lmap = norm.map;
+
+            let pStart = null;
+            const bStart = [];
+            let targets = 0;
+            for (let r = 0; r < gs; r++) {
+                for (let c = 0; c < gs; c++) {
+                    const ch = lmap[r] ? lmap[r][c] : 'F';
+                    if (ch === 'P') pStart = { x: c, y: r };
+                    if (ch === 'B') bStart.push({ x: c, y: r });
+                    if (ch === 'T') targets++;
+                }
+            }
+            if (!pStart || bStart.length === 0 || targets === 0 || bStart.length < targets) return null;
+
+            const getKey = (p, bxs) => {
+                const s = [...bxs].sort((a,b) => a.x - b.x || a.y - b.y);
+                return `${p.x},${p.y}|` + s.map(b => `${b.x},${b.y}`).join(';');
+            };
+
+            const initialKey = getKey(pStart, bStart);
+            const queue = [{ p: pStart, bxs: bStart, path: [] }];
+            const visited = new Set([initialKey]);
+            const dirs = [{ x: 0, y: -1 }, { x: 0, y: 1 }, { x: -1, y: 0 }, { x: 1, y: 0 }];
+            const isOut = (x, y) => x < 0 || x >= gs || y < 0 || y >= gs;
+            const isWall = (x, y) => isOut(x, y) || lmap[y][x] === 'W';
+
+            let iterations = 0;
+            const MAX_ITER = gs <= 6 ? 40000 : gs <= 8 ? 30000 : gs <= 10 ? 15000 : 8000;
+
+            while (queue.length > 0 && iterations < MAX_ITER) {
+                iterations++;
+                const curr = queue.shift();
+                let onTarget = 0;
+                curr.bxs.forEach(b => { if (lmap[b.y][b.x] === 'T') onTarget++; });
+                if (onTarget === targets) return curr.path;
+
+                for (const d of dirs) {
+                    const nx = curr.p.x + d.x, ny = curr.p.y + d.y;
+                    if (isWall(nx, ny)) continue;
+
+                    const boxIdx = curr.bxs.findIndex(b => b.x === nx && b.y === ny);
+                    if (boxIdx !== -1) {
+                        const bnx = nx + d.x, bny = ny + d.y;
+                        if (isWall(bnx, bny)) continue;
+                        if (curr.bxs.some(b => b.x === bnx && b.y === bny)) continue;
+
+                        const newBxs = curr.bxs.map((b, i) => i === boxIdx ? { x: bnx, y: bny } : { x: b.x, y: b.y });
+                        const key = getKey({ x: nx, y: ny }, newBxs);
+                        if (!visited.has(key)) {
+                            visited.add(key);
+                            queue.push({ p: { x: nx, y: ny }, bxs: newBxs, path: [...curr.path, d] });
+                        }
+                    } else {
+                        const key = getKey({ x: nx, y: ny }, curr.bxs);
+                        if (!visited.has(key)) {
+                            visited.add(key);
+                            queue.push({ p: { x: nx, y: ny }, bxs: curr.bxs, path: [...curr.path, d] });
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        function generateRandomLevelData(size) {
+            size = size || GRID_SIZE || 8;
+            const maxAttempts = 300;
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                const grid = Array.from({ length: size }, () => Array(size).fill('F'));
+                for (let i = 0; i < size; i++) {
+                    grid[0][i] = 'W'; grid[size-1][i] = 'W';
+                    grid[i][0] = 'W'; grid[i][size-1] = 'W';
+                }
+                for (let r = 1; r < size - 1; r++) {
+                    for (let c = 1; c < size - 1; c++) {
+                        if (Math.random() < 0.14) grid[r][c] = 'W';
+                    }
+                }
+                const free = [];
+                for (let r = 1; r < size - 1; r++)
+                    for (let c = 1; c < size - 1; c++)
+                        if (grid[r][c] === 'F') free.push({ x: c, y: r });
+
+                if (free.length < 14) continue;
+                for (let i = free.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [free[i], free[j]] = [free[j], free[i]];
+                }
+
+                const numBoxes = Math.max(1, Math.min(3, Math.floor(free.length / 12)));
+                const playerPos = free[0];
+                const targetPositions = free.slice(1, 1 + numBoxes);
+                const boxPositions = free.slice(1 + numBoxes, 1 + numBoxes * 2);
+
+                if (boxPositions.length < numBoxes) continue;
+
+                let cornerBad = false;
+                for (const b of boxPositions) {
+                    const up = grid[b.y-1][b.x] === 'W';
+                    const down = grid[b.y+1][b.x] === 'W';
+                    const left = grid[b.y][b.x-1] === 'W';
+                    const right = grid[b.y][b.x+1] === 'W';
+                    const isTarget = targetPositions.some(t => t.x === b.x && t.y === b.y);
+                    if (!isTarget && ((up || down) && (left || right))) { cornerBad = true; break; }
+                }
+                if (cornerBad) continue;
+
+                targetPositions.forEach(t => grid[t.y][t.x] = 'T');
+                boxPositions.forEach(b => grid[b.y][b.x] = 'B');
+                grid[playerPos.y][playerPos.x] = 'P';
+
+                const level = { gridSize: size, map: grid };
+                const sol = solveSokobanBFS(level);
+                if (sol && sol.length > 0 && sol.length <= 100) {
+                    return level;
+                }
+            }
+            return null;
+        }
+
+        function playRandomLevel() {
+            if (isEditor) toggleMode();
+            document.getElementById('message').innerText = '🎲 Generando nivel aleatorio...';
+            setTimeout(() => {
+                const lvl = generateRandomLevelData(GRID_SIZE <= 10 ? GRID_SIZE : 8);
+                if (lvl) {
+                    initLevel(lvl, true);
+                    document.getElementById('message').innerText = '🎲 Nivel aleatorio comprobado. ¡A jugar!';
+                } else {
+                    document.getElementById('message').innerText = '⚠️ No se pudo generar un nivel. Inténtalo de nuevo.';
+                }
+            }, 30);
+        }
+
+        function generateRandomLevel() {
+            if (!isEditor) toggleMode();
+            document.getElementById('message').innerText = '🎲 Generando nivel aleatorio...';
+            setTimeout(() => {
+                const size = parseInt(document.getElementById('gridSizeSelect').value, 10) || 8;
+                const lvl = generateRandomLevelData(size);
+                if (lvl) {
+                    initLevel(lvl, false);
+                    saveCurrentAsEditorLevel();
+                    document.getElementById('message').innerText = '🎲 Nivel aleatorio colocado en el editor.';
+                } else {
+                    document.getElementById('message').innerText = '⚠️ No se pudo generar un nivel. Inténtalo de nuevo.';
+                }
+            }, 30);
+        }
+
+        function openMenu() {
+            if (isSolving) return;
+            initAudio(); checkServerHealth();
+            document.getElementById('modalOverlay').classList.add('visible');
+            showMenuMain();
+        }
+
+        function openMenuAndListServer() {
+            openMenu();
+            listServerGames();
+        }
+
+        function closeMenu() { document.getElementById('modalOverlay').classList.remove('visible'); }
+
+        function setModal(title, bodyHTML) {
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerHTML = bodyHTML;
+        }
+
+        function showMenuMain() {
+    const html = `
+        <div class="menu-grid">
+            <div class="menu-card" onclick="closeMenu(); toggleMode()">
+                <span class="icon">✏️</span>
+                <span class="title">${isEditor ? 'Volver al Juego' : 'Editar Nivel'}</span>
+            </div>
+            <div class="menu-card" onclick="showSaveDialog()">
+                <span class="icon">💾</span>
+                <span class="title">Guardar Nivel</span>
+            </div>
+            <div class="menu-card" onclick="listServerGames()">
+                <span class="icon">🌐</span>
+                <span class="title">Cargar Servidor</span>
+            </div>
+            <div class="menu-card" onclick="listLocalGames()">
+                <span class="icon">📱</span>
+                <span class="title">Cargar Memoria</span>
+            </div>
+            <div class="menu-card" onclick="triggerImportJSON()">
+                <span class="icon">📥</span>
+                <span class="title">Importar JSON</span>
+            </div>
+        </div>
+        <button class="btn btn-menu" style="width:100%" onclick="exportJSON()">📤 Exportar sokoban.json</button>
+        <div id="menuStatus"></div>
+    `;
+    setModal('Menú de Opciones y Guardado', html);
+}
+
+        function setStatus(msg, type = 'info') {
+            const el = document.getElementById('menuStatus');
+            if (el) el.innerHTML = `<div class="status-msg ${type}">${msg}</div>`;
+        }
+
+        function showSaveDialog() {
+            const html = `
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="font-size:0.8rem; font-weight:bold;">Nombre del Puzzle:</label>
+                    <input type="text" id="puzzleNameInput" value="Nivel Sokoban" style="padding:6px; background:#111; color:#fff; border:1px solid #555; border-radius:4px;">
+                    <button class="btn btn-save-edit" onclick="executeSave('server')">💾 Guardar en Servidor</button>
+                    <button class="btn btn-undo" onclick="executeSave('local')">📱 Guardar en Memoria Local</button>
+                </div>
+                <div id="menuStatus"></div>
+            `;
+            setModal('Guardar Nivel Creado', html);
+        }
+
+        async function executeSave(destination) {
+            if (isEditor) saveCurrentAsEditorLevel();
+            const name = document.getElementById('puzzleNameInput')?.value || 'Nivel Sokoban';
+            const levelToSave = isEditor ? editorLevel : (editorLevel || gameLevel);
+            if (!levelToSave) { setStatus('No hay nivel para guardar.', 'err'); return; }
+            const stateData = {
+                type: 'sokoban',
+                title: name,
+                gridSize: levelToSave.gridSize,
+                map: levelToSave.map
+            };
+
+            if (destination === 'server') {
+                setStatus('Guardando en el servidor...', 'info');
+                try {
+                    const res = await fetch(`${SERVER_URL}${SERVER_SAVE_ENDPOINT}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: name, state: stateData })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        setStatus('✅ Guardado con éxito en el servidor.', 'ok');
+                        checkServerHealth();
+                        return;
+                    }
+                    throw new Error(data.message || 'Error en servidor');
+                } catch(e) {
+                    setStatus('⚠️ Error del Servidor. Se guardó copia en Memoria Local.', 'err');
+                    saveLocalFallback(stateData);
+                }
+            } else {
+                saveLocalFallback(stateData);
+                setStatus('✅ Guardado en Memoria Local.', 'ok');
+            }
+        }
+
+        function saveLocalFallback(stateData) {
+            let saved = [];
+            try { saved = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || []; } catch(e){}
+            saved.unshift({ id: 'sokoban_' + Date.now(), title: stateData.title, created: new Date().toLocaleString(), level: stateData });
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(saved));
+        }
+
+        async function listServerGames() {
+            setStatus('Obteniendo partidas del servidor...', 'info');
+            try {
+                const res = await fetch(`${SERVER_URL}${SERVER_LIST_ENDPOINT}`);
+                if (!res.ok) throw new Error('Error HTTP');
+                const data = await res.json();
+                const games = extractGamesFromServerData(data);
+                if (games.length > 0) {
+                    renderGameList(games, 'server');
+                    return;
+                }
+                setStatus('No hay partidas guardadas en el servidor.', 'info');
+            } catch(e) {
+                setStatus('No se pudo conectar al servidor.', 'err');
+            }
+        }
+
+        function listLocalGames() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
+                renderGameList(saved, 'local');
+            } catch(e) { setStatus('Error al leer memoria local.', 'err'); }
+        }
+
+        function renderGameList(games, source) {
+            if (!games || games.length === 0) {
+                setModal('Partidas Encontradas', '<div style="text-align:center; padding:15px; color:#aaa;">No se encontraron niveles guardados.</div>');
+                return;
+            }
+
+            let html = '<div class="game-list">';
+            games.forEach((g, idx) => {
+                const title = g.title || g.name || g.created || `Nivel ${idx + 1}`;
+                const id = g.id !== undefined ? g.id : idx;
+                const meta = source === 'server'
+                    ? `ID: ${id}${g.gridSize ? ' · ' + g.gridSize + 'x' + g.gridSize : ''}`
+                    : `ID: ${id}`;
+                html += `
+                    <div class="game-item">
+                        <div>
+                            <div class="game-title">${String(title).slice(0,40)}</div>
+                            <div class="game-meta">${meta}</div>
+                        </div>
+                        <div style="display:flex; gap:4px;">
+                            <button class="btn-sm load" onclick="loadSelectedGame('${id}', '${source}')">Cargar</button>
+                            <button class="btn-sm del" onclick="deleteSelectedGame('${id}', '${source}')">Borrar</button>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div><div id="menuStatus"></div>';
+            setModal(`Cargar Puzzle (${source === 'server' ? 'Servidor' : 'Local'})`, html);
+        }
+
+        async function loadSelectedGame(id, source) {
+            if (source === 'server') {
+                let loaded = false;
+                try {
+                    const res = await fetch(`${SERVER_URL}${SERVER_LOAD_ENDPOINT}?id=${encodeURIComponent(id)}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const candidate = data.game?.level || data.game?.state || data.game || data.state || data.level || data;
+                        const norm = normalizeLevel(candidate);
+                        if (norm) { initLevel(norm, true); loaded = true; }
+                    }
+                } catch(e) {}
+                if (loaded) {
+                    closeMenu();
+                    document.getElementById('message').innerText = '📂 Nivel cargado desde el Servidor';
+                } else {
+                    alert('No se pudo cargar la partida del servidor.');
+                }
+            } else {
+                const saved = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
+                const target = saved.find(g => String(g.id) === String(id));
+                if (target) {
+                    const norm = normalizeLevel(target.level);
+                    if (norm) {
+                        initLevel(norm, true);
+                        closeMenu();
+                        document.getElementById('message').innerText = '📂 Nivel cargado desde Memoria Local.';
+                    }
+                }
+            }
+        }
+
+        async function deleteSelectedGame(id, source) {
+            if (source === 'server') {
+                try {
+                    const res = await fetch(`${SERVER_URL}${SERVER_DEL_ENDPOINT}?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
+                    const data = await res.json();
+                    if (data.success) listServerGames();
+                } catch(e) { alert('No se pudo borrar del servidor.'); }
+            } else {
+                let saved = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || [];
+                saved = saved.filter(g => String(g.id) !== String(id));
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(saved));
+                listLocalGames();
+            }
+        }
+
+        function triggerImportJSON() { document.getElementById('fileInput').click(); }
+
+        function exportJSON() {
+            if (isEditor) saveCurrentAsEditorLevel();
+            const lvl = isEditor ? editorLevel : (editorLevel || gameLevel);
+            if (!lvl) { alert('No hay nivel para exportar.'); return; }
+            
+            const exportObj = {
+                games: [
+                    {
+                        id: 'sokoban_' + Date.now(),
+                        title: lvl.title || 'Nivel Sokoban',
+                        created: new Date().toLocaleString(),
+                        level: {
+                            type: 'sokoban',
+                            title: lvl.title || 'Nivel Sokoban',
+                            gridSize: lvl.gridSize,
+                            map: lvl.map
+                        }
+                    }
+                ]
+            };
+
+            const blob = new Blob([JSON.stringify(exportObj, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'sokoban.json'; a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importJSON(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    let gamesList = [];
+                    if (data.games && Array.isArray(data.games)) {
+                        gamesList = data.games;
+                    } else if (Array.isArray(data)) {
+                        gamesList = data;
+                    } else {
+                        gamesList = [ { title: data.title || 'Nivel importado', level: data } ];
+                    }
+
+                    let savedLocal = [];
+                    try { savedLocal = JSON.parse(localStorage.getItem(LOCAL_STORAGE_KEY)) || []; } catch(e){}
+
+                    gamesList.forEach((g, idx) => {
+                        const formattedGame = {
+                            id: g.id || 'imported_' + Date.now() + '_' + idx,
+                            title: g.title || (g.level && g.level.title) || `Nivel ${idx + 1}`,
+                            created: g.created || new Date().toLocaleString(),
+                            level: g.level || g
+                        };
+                        savedLocal.unshift(formattedGame);
+                    });
+
+                    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(savedLocal));
+
+                    if (gamesList.length > 0) {
+                        const firstNorm = normalizeLevel(gamesList[0].level || gamesList[0]);
+                        if (firstNorm) {
+                            initLevel(firstNorm, true);
+                            closeMenu();
+                            document.getElementById('message').innerText = `✅ ¡Importados ${gamesList.length} niveles correctamente!`;
+                        }
+                    }
+                } catch(err) { alert('Archivo JSON no válido'); }
+            };
+            reader.readAsText(file);
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (isEditor) return;
+            if (e.key === 'ArrowUp' || e.key === 'w') { e.preventDefault(); handleInput(0, -1); }
+            if (e.key === 'ArrowDown' || e.key === 's') { e.preventDefault(); handleInput(0, 1); }
+            if (e.key === 'ArrowLeft' || e.key === 'a') { e.preventDefault(); handleInput(-1, 0); }
+            if (e.key === 'ArrowRight' || e.key === 'd') { e.preventDefault(); handleInput(1, 0); }
+            if (e.key === 'z') { e.preventDefault(); undoMove(); }
+            if (e.key === 'y') { e.preventDefault(); redoMove(); }
+        });
+
+        window.addEventListener('resize', resizeCanvas);
+        window.addEventListener('orientationchange', () => setTimeout(resizeCanvas, 200));
+
+        window.onload = () => {
+            createTextures();
+            initLevel(DEFAULT_LEVEL, true);
+            editorLevel = JSON.parse(JSON.stringify(DEFAULT_LEVEL));
+            checkServerHealth();
+            setTimeout(resizeCanvas, 100);
+        };
+    </script>
+</body>
+</html>

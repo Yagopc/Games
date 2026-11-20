@@ -1,0 +1,4119 @@
+{
+  "titulo": "Acordes de Guitarra - Todas las Notas Musicales",
+  "acordes": [
+    {
+      "nombre": "Do Mayor (C)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        2,
+        0,
+        1,
+        0
+      ],
+      "dedos": [
+        null,
+        3,
+        2,
+        null,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Do Menor (Cm)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        5,
+        5,
+        4,
+        3
+      ],
+      "dedos": [
+        null,
+        1,
+        3,
+        3,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Do 7 Dominante (C7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        2,
+        3,
+        1,
+        0
+      ],
+      "dedos": [
+        null,
+        3,
+        2,
+        3,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Do Mayor 7 (Cmaj7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        2,
+        0,
+        0,
+        0
+      ],
+      "dedos": [
+        null,
+        2,
+        1,
+        null,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Do Menor 7 (Cm7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        5,
+        3,
+        4,
+        3
+      ],
+      "dedos": [
+        null,
+        1,
+        3,
+        1,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Do Sostenido Mayor (C#)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        6,
+        6,
+        6,
+        4
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        2,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Do Sostenido Menor (C#m)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        6,
+        6,
+        5,
+        4
+      ],
+      "dedos": [
+        null,
+        1,
+        3,
+        3,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Do Sostenido 7 (C#7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        6,
+        4,
+        6,
+        4
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        1,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re Bemol Mayor (Db)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        6,
+        6,
+        6,
+        4
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        2,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re Bemol Menor (Dbm)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        6,
+        6,
+        5,
+        4
+      ],
+      "dedos": [
+        null,
+        1,
+        3,
+        3,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re Bemol 7 (Db7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        6,
+        4,
+        6,
+        4
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        1,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re Mayor (D)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        0,
+        2,
+        3,
+        2
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        1,
+        2,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re Menor (Dm)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        0,
+        2,
+        3,
+        1
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        2,
+        3,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re 7 Dominante (D7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        0,
+        2,
+        1,
+        2
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        2,
+        1,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re Mayor 7 (Dmaj7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        0,
+        2,
+        2,
+        2
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        1,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re Menor 7 (Dm7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        0,
+        2,
+        1,
+        1
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        2,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re Sostenido Mayor (D#)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        6,
+        8,
+        8,
+        8,
+        6
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        2,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re Sostenido Menor (D#m)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        6,
+        8,
+        8,
+        7,
+        6
+      ],
+      "dedos": [
+        null,
+        1,
+        3,
+        3,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re Sostenido 7 (D#7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        6,
+        8,
+        6,
+        8,
+        6
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        1,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Mi Bemol Mayor (Eb)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        6,
+        8,
+        8,
+        8,
+        6
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        2,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Mi Bemol Menor (Ebm)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        6,
+        8,
+        8,
+        7,
+        6
+      ],
+      "dedos": [
+        null,
+        1,
+        3,
+        3,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Mi Bemol 7 (Eb7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        6,
+        8,
+        6,
+        8,
+        6
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        1,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Mi Mayor (E)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        2,
+        2,
+        1,
+        0,
+        0
+      ],
+      "dedos": [
+        null,
+        2,
+        2,
+        1,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Mi Menor (Em)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        2,
+        2,
+        0,
+        0,
+        0
+      ],
+      "dedos": [
+        null,
+        1,
+        1,
+        null,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Mi 7 Dominante (E7)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        2,
+        0,
+        1,
+        0,
+        0
+      ],
+      "dedos": [
+        null,
+        2,
+        null,
+        1,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Mi Mayor 7 (Emaj7)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        2,
+        1,
+        1,
+        0,
+        0
+      ],
+      "dedos": [
+        null,
+        2,
+        1,
+        1,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Mi Menor 7 (Em7)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dedos": [
+        null,
+        1,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Fa Mayor (F)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      "dedos": [
+        1,
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Fa Menor (Fm)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        3,
+        3,
+        1,
+        1,
+        1
+      ],
+      "dedos": [
+        1,
+        2,
+        2,
+        1,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Fa 7 Dominante (F7)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        3,
+        1,
+        2,
+        1,
+        1
+      ],
+      "dedos": [
+        1,
+        3,
+        1,
+        2,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Fa Mayor 7 (Fmaj7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        3,
+        2,
+        1,
+        0
+      ],
+      "dedos": [
+        null,
+        null,
+        3,
+        2,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Fa Menor 7 (Fm7)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        3,
+        1,
+        1,
+        1,
+        1
+      ],
+      "dedos": [
+        1,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Fa Sostenido Mayor (F#)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        4,
+        4,
+        3,
+        2,
+        2
+      ],
+      "dedos": [
+        1,
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Fa Sostenido Menor (F#m)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        4,
+        4,
+        2,
+        2,
+        2
+      ],
+      "dedos": [
+        1,
+        2,
+        2,
+        1,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Fa Sostenido 7 (F#7)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        4,
+        2,
+        3,
+        2,
+        2
+      ],
+      "dedos": [
+        1,
+        3,
+        1,
+        2,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Sol Bemol Mayor (Gb)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        4,
+        4,
+        3,
+        2,
+        2
+      ],
+      "dedos": [
+        1,
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Sol Bemol Menor (Gbm)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        4,
+        4,
+        2,
+        2,
+        2
+      ],
+      "dedos": [
+        1,
+        2,
+        2,
+        1,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Sol Bemol 7 (Gb7)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        4,
+        2,
+        3,
+        2,
+        2
+      ],
+      "dedos": [
+        1,
+        3,
+        1,
+        2,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Sol Mayor (G)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        2,
+        0,
+        0,
+        0,
+        3
+      ],
+      "dedos": [
+        2,
+        1,
+        null,
+        null,
+        null,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Sol Menor (Gm)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        5,
+        5,
+        3,
+        3,
+        3
+      ],
+      "dedos": [
+        1,
+        2,
+        2,
+        1,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Sol 7 Dominante (G7)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        2,
+        0,
+        0,
+        0,
+        1
+      ],
+      "dedos": [
+        3,
+        2,
+        null,
+        null,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Sol Mayor 7 (Gmaj7)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        2,
+        0,
+        0,
+        0,
+        2
+      ],
+      "dedos": [
+        2,
+        1,
+        null,
+        null,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Sol Menor 7 (Gm7)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        5,
+        3,
+        3,
+        3,
+        3
+      ],
+      "dedos": [
+        1,
+        2,
+        1,
+        1,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Sol Sostenido Mayor (G#)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        6,
+        6,
+        5,
+        4,
+        4
+      ],
+      "dedos": [
+        1,
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Sol Sostenido Menor (G#m)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        6,
+        6,
+        4,
+        4,
+        4
+      ],
+      "dedos": [
+        1,
+        2,
+        2,
+        1,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Sol Sostenido 7 (G#7)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        6,
+        4,
+        5,
+        4,
+        4
+      ],
+      "dedos": [
+        1,
+        3,
+        1,
+        2,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La Bemol Mayor (Ab)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        6,
+        6,
+        5,
+        4,
+        4
+      ],
+      "dedos": [
+        1,
+        3,
+        3,
+        2,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La Bemol Menor (Abm)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        6,
+        6,
+        4,
+        4,
+        4
+      ],
+      "dedos": [
+        1,
+        2,
+        2,
+        1,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La Bemol 7 (Ab7)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        6,
+        4,
+        5,
+        4,
+        4
+      ],
+      "dedos": [
+        1,
+        3,
+        1,
+        2,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La Mayor (A)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        0,
+        2,
+        2,
+        2,
+        0
+      ],
+      "dedos": [
+        null,
+        null,
+        1,
+        1,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La Menor (Am)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        0,
+        2,
+        2,
+        1,
+        0
+      ],
+      "dedos": [
+        null,
+        null,
+        2,
+        2,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La 7 Dominante (A7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        0,
+        2,
+        0,
+        2,
+        0
+      ],
+      "dedos": [
+        null,
+        null,
+        1,
+        null,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La Mayor 7 (Amaj7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        0,
+        2,
+        1,
+        2,
+        0
+      ],
+      "dedos": [
+        null,
+        null,
+        2,
+        1,
+        2,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La Menor 7 (Am7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        0,
+        2,
+        0,
+        1,
+        0
+      ],
+      "dedos": [
+        null,
+        null,
+        2,
+        null,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La Sostenido Mayor (A#)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        1,
+        3,
+        3,
+        3,
+        1
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        2,
+        2,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La Sostenido Menor (A#m)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        1,
+        3,
+        3,
+        2,
+        1
+      ],
+      "dedos": [
+        null,
+        1,
+        3,
+        3,
+        2,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La Sostenido 7 (A#7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        1,
+        3,
+        1,
+        3,
+        1
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        1,
+        2,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Si Bemol Mayor (Bb)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        1,
+        3,
+        3,
+        3,
+        1
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        2,
+        2,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Si Bemol Menor (Bbm)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        1,
+        3,
+        3,
+        2,
+        1
+      ],
+      "dedos": [
+        null,
+        1,
+        3,
+        3,
+        2,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Si Bemol 7 (Bb7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        1,
+        3,
+        1,
+        3,
+        1
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        1,
+        2,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Si Mayor (B)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        4,
+        4,
+        4,
+        2
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        2,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Si Menor (Bm)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        4,
+        4,
+        3,
+        2
+      ],
+      "dedos": [
+        null,
+        1,
+        3,
+        3,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Si 7 Dominante (B7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        1,
+        2,
+        0,
+        2
+      ],
+      "dedos": [
+        null,
+        2,
+        1,
+        2,
+        null,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Si Mayor 7 (Bmaj7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        4,
+        3,
+        4,
+        2
+      ],
+      "dedos": [
+        null,
+        1,
+        3,
+        2,
+        3,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Si Menor 7 (Bm7)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        0,
+        2,
+        0,
+        2
+      ],
+      "dedos": [
+        null,
+        1,
+        null,
+        1,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Do Suspendido 4 (Csus4)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        3,
+        0,
+        1,
+        1
+      ],
+      "dedos": [
+        null,
+        2,
+        2,
+        null,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re Suspendido 4 (Dsus4)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        0,
+        2,
+        3,
+        3
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        1,
+        2,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Mi Suspendido 4 (Esus4)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        2,
+        2,
+        2,
+        0,
+        0
+      ],
+      "dedos": [
+        null,
+        1,
+        1,
+        1,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La Suspendido 4 (Asus4)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        0,
+        2,
+        2,
+        3,
+        0
+      ],
+      "dedos": [
+        null,
+        null,
+        1,
+        1,
+        2,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La Suspendido 2 (Asus2)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        0,
+        2,
+        2,
+        0,
+        0
+      ],
+      "dedos": [
+        null,
+        null,
+        1,
+        1,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Mi 5 Power Chord (E5)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        2,
+        2,
+        "x",
+        "x",
+        "x"
+      ],
+      "dedos": [
+        null,
+        1,
+        1,
+        null,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "La 5 Power Chord (A5)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        0,
+        2,
+        2,
+        "x",
+        "x"
+      ],
+      "dedos": [
+        null,
+        null,
+        1,
+        1,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Re 5 Power Chord (D5)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        0,
+        2,
+        3,
+        "x"
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        1,
+        2,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Sol 5 Power Chord (G5)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        5,
+        5,
+        "x",
+        "x",
+        "x"
+      ],
+      "dedos": [
+        1,
+        2,
+        2,
+        null,
+        null,
+        null
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "C / G",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        3,
+        2,
+        0,
+        1,
+        0
+      ],
+      "dedos": [
+        3,
+        3,
+        2,
+        null,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "C / E",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        3,
+        2,
+        0,
+        1,
+        0
+      ],
+      "dedos": [
+        null,
+        3,
+        2,
+        null,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "C#m",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        "x",
+        6,
+        5,
+        4
+      ],
+      "dedos": [
+        null,
+        1,
+        null,
+        3,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Dm",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        5,
+        7,
+        7,
+        6,
+        5
+      ],
+      "dedos": [
+        null,
+        1,
+        3,
+        3,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Digitación orientativa; los dedos se numeran 1 índice, 2 medio, 3 anular y 4 meñique."
+    },
+    {
+      "nombre": "Do Disminuido (dim) (Cdim)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        1,
+        "x",
+        1,
+        2
+      ],
+      "dedos": [
+        null,
+        3,
+        1,
+        null,
+        1,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Aumentado (aug) (Caug)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        2,
+        1,
+        1,
+        0
+      ],
+      "dedos": [
+        null,
+        3,
+        2,
+        1,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Sexta (6) (C6)",
+      "cejilla": null,
+      "cuerdas": [
+        8,
+        0,
+        7,
+        0,
+        8,
+        0
+      ],
+      "dedos": [
+        2,
+        null,
+        1,
+        null,
+        2,
+        null
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Menor sexta (m6) (Cm6)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        1,
+        2,
+        1,
+        3
+      ],
+      "dedos": [
+        null,
+        3,
+        1,
+        2,
+        1,
+        3
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Suspendido 2 (sus2) (Csus2)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        0,
+        0,
+        3,
+        3
+      ],
+      "dedos": [
+        null,
+        1,
+        null,
+        null,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Suspendido 4 (sus4) (Csus4)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        3,
+        0,
+        1,
+        1
+      ],
+      "dedos": [
+        null,
+        2,
+        2,
+        null,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Añadido 9 (add9) (Cadd9)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        0,
+        0,
+        3,
+        0
+      ],
+      "dedos": [
+        null,
+        1,
+        null,
+        null,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Séptima suspendida 4 (7sus4) (C7sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        8,
+        8,
+        8,
+        0,
+        8,
+        8
+      ],
+      "dedos": [
+        1,
+        1,
+        1,
+        null,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Semidisminuido (m7b5) (Cm7b5)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        3,
+        1,
+        3,
+        1,
+        2
+      ],
+      "dedos": [
+        null,
+        3,
+        1,
+        3,
+        1,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Sostenido Disminuido (dim) (C#dim)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        5,
+        0,
+        5,
+        0
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        null,
+        2,
+        null
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Sostenido Aumentado (aug) (C#aug)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        3,
+        2,
+        2,
+        1
+      ],
+      "dedos": [
+        null,
+        4,
+        3,
+        2,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Sostenido Sexta (6) (C#6)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        3,
+        3,
+        2,
+        4
+      ],
+      "dedos": [
+        null,
+        3,
+        2,
+        2,
+        1,
+        3
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Sostenido Menor sexta (m6) (C#m6)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        2,
+        3,
+        2,
+        4
+      ],
+      "dedos": [
+        null,
+        3,
+        1,
+        2,
+        1,
+        3
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Sostenido Suspendido 2 (sus2) (C#sus2)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        1,
+        1,
+        2,
+        4
+      ],
+      "dedos": [
+        null,
+        3,
+        1,
+        1,
+        2,
+        3
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Sostenido Suspendido 4 (sus4) (C#sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        4,
+        1,
+        2,
+        2
+      ],
+      "dedos": [
+        null,
+        3,
+        3,
+        1,
+        2,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Sostenido Añadido 9 (add9) (C#add9)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        1,
+        1,
+        2,
+        1
+      ],
+      "dedos": [
+        null,
+        3,
+        1,
+        1,
+        2,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Sostenido Séptima suspendida 4 (7sus4) (C#7sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        4,
+        4,
+        0,
+        4
+      ],
+      "dedos": [
+        null,
+        1,
+        1,
+        1,
+        null,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Do Sostenido Semidisminuido (m7b5) (C#m7b5)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        4,
+        5,
+        0,
+        0,
+        0
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        null,
+        null,
+        null
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Disminuido (dim) (Ddim)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        0,
+        1,
+        "x",
+        1
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        1,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Aumentado (aug) (Daug)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        0,
+        3,
+        3,
+        2
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        2,
+        2,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Sexta (6) (D6)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        0,
+        2,
+        0,
+        2
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        1,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Menor sexta (m6) (Dm6)",
+      "cejilla": null,
+      "cuerdas": [
+        10,
+        0,
+        0,
+        10,
+        0,
+        10
+      ],
+      "dedos": [
+        1,
+        null,
+        null,
+        1,
+        null,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Suspendido 2 (sus2) (Dsus2)",
+      "cejilla": null,
+      "cuerdas": [
+        10,
+        0,
+        0,
+        9,
+        10,
+        0
+      ],
+      "dedos": [
+        2,
+        null,
+        null,
+        1,
+        2,
+        null
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Suspendido 4 (sus4) (Dsus4)",
+      "cejilla": null,
+      "cuerdas": [
+        10,
+        0,
+        0,
+        0,
+        10,
+        10
+      ],
+      "dedos": [
+        1,
+        null,
+        null,
+        null,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Añadido 9 (add9) (Dadd9)",
+      "cejilla": null,
+      "cuerdas": [
+        10,
+        9,
+        0,
+        9,
+        10,
+        0
+      ],
+      "dedos": [
+        2,
+        1,
+        null,
+        1,
+        2,
+        null
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Séptima suspendida 4 (7sus4) (D7sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        10,
+        0,
+        10,
+        0,
+        10,
+        10
+      ],
+      "dedos": [
+        1,
+        null,
+        1,
+        null,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Semidisminuido (m7b5) (Dm7b5)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        0,
+        1,
+        1,
+        1
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        1,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Sostenido Disminuido (dim) (D#dim)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        1,
+        2,
+        "x",
+        2
+      ],
+      "dedos": [
+        null,
+        null,
+        1,
+        2,
+        null,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Sostenido Aumentado (aug) (D#aug)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        1,
+        0,
+        0,
+        "x"
+      ],
+      "dedos": [
+        null,
+        null,
+        1,
+        null,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Sostenido Sexta (6) (D#6)",
+      "cejilla": null,
+      "cuerdas": [
+        11,
+        10,
+        10,
+        0,
+        11,
+        11
+      ],
+      "dedos": [
+        2,
+        1,
+        1,
+        null,
+        2,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Sostenido Menor sexta (m6) (D#m6)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        6,
+        4,
+        5,
+        4,
+        6
+      ],
+      "dedos": [
+        null,
+        3,
+        1,
+        2,
+        1,
+        3
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Sostenido Suspendido 2 (sus2) (D#sus2)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        6,
+        3,
+        3,
+        4,
+        6
+      ],
+      "dedos": [
+        null,
+        3,
+        1,
+        1,
+        2,
+        3
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Sostenido Suspendido 4 (sus4) (D#sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        6,
+        6,
+        3,
+        4,
+        4
+      ],
+      "dedos": [
+        null,
+        3,
+        3,
+        1,
+        2,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Sostenido Añadido 9 (add9) (D#add9)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        6,
+        5,
+        0,
+        6,
+        6
+      ],
+      "dedos": [
+        null,
+        2,
+        1,
+        null,
+        2,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Sostenido Séptima suspendida 4 (7sus4) (D#7sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        6,
+        6,
+        6,
+        4,
+        6
+      ],
+      "dedos": [
+        null,
+        2,
+        2,
+        2,
+        1,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Re Sostenido Semidisminuido (m7b5) (D#m7b5)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        "x",
+        1,
+        2,
+        2,
+        2
+      ],
+      "dedos": [
+        null,
+        null,
+        1,
+        2,
+        2,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Mi Disminuido (dim) (Edim)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        1,
+        2,
+        0,
+        "x",
+        0
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        null,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Mi Aumentado (aug) (Eaug)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        3,
+        2,
+        1,
+        1,
+        0
+      ],
+      "dedos": [
+        null,
+        3,
+        2,
+        1,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Mi Sexta (6) (E6)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        2,
+        2,
+        1,
+        2,
+        0
+      ],
+      "dedos": [
+        null,
+        2,
+        2,
+        1,
+        2,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Mi Menor sexta (m6) (Em6)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        2,
+        2,
+        0,
+        2,
+        0
+      ],
+      "dedos": [
+        null,
+        1,
+        1,
+        null,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Mi Suspendido 2 (sus2) (Esus2)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        2,
+        2,
+        "x",
+        0,
+        2
+      ],
+      "dedos": [
+        null,
+        1,
+        1,
+        null,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Mi Suspendido 4 (sus4) (Esus4)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        0,
+        2,
+        2,
+        0,
+        0
+      ],
+      "dedos": [
+        null,
+        null,
+        1,
+        1,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Mi Añadido 9 (add9) (Eadd9)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        2,
+        2,
+        1,
+        0,
+        2
+      ],
+      "dedos": [
+        null,
+        2,
+        2,
+        1,
+        null,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Mi Séptima suspendida 4 (7sus4) (E7sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        0,
+        0,
+        2,
+        0,
+        0
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        1,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Mi Semidisminuido (m7b5) (Em7b5)",
+      "cejilla": null,
+      "cuerdas": [
+        0,
+        1,
+        0,
+        0,
+        "x",
+        0
+      ],
+      "dedos": [
+        null,
+        1,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Disminuido (dim) (Fdim)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        2,
+        3,
+        1,
+        0,
+        1
+      ],
+      "dedos": [
+        1,
+        2,
+        3,
+        1,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Aumentado (aug) (Faug)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        0,
+        3,
+        2,
+        2,
+        1
+      ],
+      "dedos": [
+        1,
+        null,
+        3,
+        2,
+        2,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Sexta (6) (F6)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        0,
+        0,
+        2,
+        1,
+        1
+      ],
+      "dedos": [
+        1,
+        null,
+        null,
+        2,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Menor sexta (m6) (Fm6)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        "x",
+        0,
+        1,
+        1,
+        1
+      ],
+      "dedos": [
+        1,
+        null,
+        null,
+        1,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Suspendido 2 (sus2) (Fsus2)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        3,
+        3,
+        0,
+        1,
+        1
+      ],
+      "dedos": [
+        1,
+        2,
+        2,
+        null,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Suspendido 4 (sus4) (Fsus4)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        1,
+        3,
+        3,
+        1,
+        1
+      ],
+      "dedos": [
+        1,
+        1,
+        2,
+        2,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Añadido 9 (add9) (Fadd9)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        0,
+        "x",
+        0,
+        1,
+        1
+      ],
+      "dedos": [
+        1,
+        null,
+        null,
+        null,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Séptima suspendida 4 (7sus4) (F7sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        1,
+        1,
+        "x",
+        1,
+        1
+      ],
+      "dedos": [
+        1,
+        1,
+        1,
+        null,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Semidisminuido (m7b5) (Fm7b5)",
+      "cejilla": null,
+      "cuerdas": [
+        1,
+        2,
+        1,
+        1,
+        0,
+        1
+      ],
+      "dedos": [
+        1,
+        2,
+        1,
+        1,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Sostenido Disminuido (dim) (F#dim)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        0,
+        "x",
+        2,
+        1,
+        2
+      ],
+      "dedos": [
+        2,
+        null,
+        null,
+        2,
+        1,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Sostenido Aumentado (aug) (F#aug)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        1,
+        0,
+        3,
+        3,
+        2
+      ],
+      "dedos": [
+        2,
+        1,
+        null,
+        3,
+        3,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Sostenido Sexta (6) (F#6)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        1,
+        1,
+        3,
+        2,
+        2
+      ],
+      "dedos": [
+        2,
+        1,
+        1,
+        3,
+        2,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Sostenido Menor sexta (m6) (F#m6)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        0,
+        1,
+        2,
+        2,
+        2
+      ],
+      "dedos": [
+        2,
+        null,
+        1,
+        2,
+        2,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Sostenido Suspendido 2 (sus2) (F#sus2)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        4,
+        4,
+        1,
+        2,
+        2
+      ],
+      "dedos": [
+        2,
+        3,
+        3,
+        1,
+        2,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Sostenido Suspendido 4 (sus4) (F#sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        2,
+        4,
+        4,
+        2,
+        2
+      ],
+      "dedos": [
+        1,
+        1,
+        2,
+        2,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Sostenido Añadido 9 (add9) (F#add9)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        1,
+        "x",
+        1,
+        2,
+        2
+      ],
+      "dedos": [
+        2,
+        1,
+        null,
+        1,
+        2,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Sostenido Séptima suspendida 4 (7sus4) (F#7sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        2,
+        2,
+        "x",
+        2,
+        0
+      ],
+      "dedos": [
+        1,
+        1,
+        1,
+        null,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Fa Sostenido Semidisminuido (m7b5) (F#m7b5)",
+      "cejilla": null,
+      "cuerdas": [
+        2,
+        0,
+        2,
+        2,
+        1,
+        0
+      ],
+      "dedos": [
+        2,
+        null,
+        2,
+        2,
+        1,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Disminuido (dim) (Gdim)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        1,
+        "x",
+        0,
+        2,
+        3
+      ],
+      "dedos": [
+        3,
+        1,
+        null,
+        null,
+        2,
+        3
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Aumentado (aug) (Gaug)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        2,
+        1,
+        0,
+        0,
+        3
+      ],
+      "dedos": [
+        3,
+        2,
+        1,
+        null,
+        null,
+        3
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Sexta (6) (G6)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        2,
+        0,
+        0,
+        0,
+        0
+      ],
+      "dedos": [
+        2,
+        1,
+        null,
+        null,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Menor sexta (m6) (Gm6)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        1,
+        0,
+        0,
+        3,
+        0
+      ],
+      "dedos": [
+        2,
+        1,
+        null,
+        null,
+        2,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Suspendido 2 (sus2) (Gsus2)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        0,
+        0,
+        0,
+        3,
+        3
+      ],
+      "dedos": [
+        1,
+        null,
+        null,
+        null,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Suspendido 4 (sus4) (Gsus4)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        3,
+        0,
+        0,
+        3,
+        3
+      ],
+      "dedos": [
+        1,
+        1,
+        null,
+        null,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Añadido 9 (add9) (Gadd9)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        0,
+        0,
+        0,
+        0,
+        3
+      ],
+      "dedos": [
+        1,
+        null,
+        null,
+        null,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Séptima suspendida 4 (7sus4) (G7sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        3,
+        3,
+        0,
+        3,
+        3
+      ],
+      "dedos": [
+        1,
+        1,
+        1,
+        null,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Semidisminuido (m7b5) (Gm7b5)",
+      "cejilla": null,
+      "cuerdas": [
+        3,
+        1,
+        3,
+        0,
+        2,
+        1
+      ],
+      "dedos": [
+        3,
+        1,
+        3,
+        null,
+        2,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Sostenido Disminuido (dim) (G#dim)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        5,
+        0,
+        4,
+        0,
+        4
+      ],
+      "dedos": [
+        1,
+        2,
+        null,
+        1,
+        null,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Sostenido Aumentado (aug) (G#aug)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        3,
+        2,
+        1,
+        1,
+        0
+      ],
+      "dedos": [
+        4,
+        3,
+        2,
+        1,
+        1,
+        null
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Sostenido Sexta (6) (G#6)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        3,
+        3,
+        5,
+        4,
+        4
+      ],
+      "dedos": [
+        2,
+        1,
+        1,
+        3,
+        2,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Sostenido Menor sexta (m6) (G#m6)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        2,
+        3,
+        4,
+        4,
+        4
+      ],
+      "dedos": [
+        3,
+        1,
+        2,
+        3,
+        3,
+        3
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Sostenido Suspendido 2 (sus2) (G#sus2)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        1,
+        1,
+        1,
+        4,
+        4
+      ],
+      "dedos": [
+        2,
+        1,
+        1,
+        1,
+        2,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Sostenido Suspendido 4 (sus4) (G#sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        4,
+        1,
+        1,
+        2,
+        4
+      ],
+      "dedos": [
+        3,
+        3,
+        1,
+        1,
+        2,
+        3
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Sostenido Añadido 9 (add9) (G#add9)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        1,
+        1,
+        1,
+        1,
+        4
+      ],
+      "dedos": [
+        2,
+        1,
+        1,
+        1,
+        1,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Sostenido Séptima suspendida 4 (7sus4) (G#7sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        4,
+        4,
+        "x",
+        4,
+        4
+      ],
+      "dedos": [
+        1,
+        1,
+        1,
+        null,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Sol Sostenido Semidisminuido (m7b5) (G#m7b5)",
+      "cejilla": null,
+      "cuerdas": [
+        4,
+        5,
+        4,
+        4,
+        0,
+        4
+      ],
+      "dedos": [
+        1,
+        2,
+        1,
+        1,
+        null,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Disminuido (dim) (Adim)",
+      "cejilla": null,
+      "cuerdas": [
+        5,
+        0,
+        "x",
+        5,
+        4,
+        5
+      ],
+      "dedos": [
+        2,
+        null,
+        null,
+        2,
+        1,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Aumentado (aug) (Aaug)",
+      "cejilla": null,
+      "cuerdas": [
+        5,
+        0,
+        3,
+        2,
+        2,
+        5
+      ],
+      "dedos": [
+        3,
+        null,
+        2,
+        1,
+        1,
+        3
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Sexta (6) (A6)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        0,
+        2,
+        2,
+        2,
+        2
+      ],
+      "dedos": [
+        null,
+        null,
+        1,
+        1,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Menor sexta (m6) (Am6)",
+      "cejilla": null,
+      "cuerdas": [
+        5,
+        0,
+        4,
+        5,
+        5,
+        0
+      ],
+      "dedos": [
+        2,
+        null,
+        1,
+        2,
+        2,
+        null
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Suspendido 2 (sus2) (Asus2)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        0,
+        2,
+        2,
+        0,
+        0
+      ],
+      "dedos": [
+        null,
+        null,
+        1,
+        1,
+        null,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Suspendido 4 (sus4) (Asus4)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        0,
+        0,
+        2,
+        3,
+        0
+      ],
+      "dedos": [
+        null,
+        null,
+        null,
+        1,
+        2,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Añadido 9 (add9) (Aadd9)",
+      "cejilla": null,
+      "cuerdas": [
+        5,
+        2,
+        2,
+        2,
+        2,
+        0
+      ],
+      "dedos": [
+        2,
+        1,
+        1,
+        1,
+        1,
+        null
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Séptima suspendida 4 (7sus4) (A7sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        5,
+        0,
+        0,
+        0,
+        5,
+        0
+      ],
+      "dedos": [
+        1,
+        null,
+        null,
+        null,
+        1,
+        null
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Semidisminuido (m7b5) (Am7b5)",
+      "cejilla": null,
+      "cuerdas": [
+        5,
+        0,
+        5,
+        5,
+        4,
+        5
+      ],
+      "dedos": [
+        2,
+        null,
+        2,
+        2,
+        1,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Sostenido Disminuido (dim) (A#dim)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        1,
+        2,
+        3,
+        2,
+        0
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        3,
+        2,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Sostenido Aumentado (aug) (A#aug)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        1,
+        0,
+        3,
+        3,
+        2
+      ],
+      "dedos": [
+        null,
+        1,
+        null,
+        3,
+        3,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Sostenido Sexta (6) (A#6)",
+      "cejilla": null,
+      "cuerdas": [
+        6,
+        5,
+        0,
+        0,
+        6,
+        6
+      ],
+      "dedos": [
+        2,
+        1,
+        null,
+        null,
+        2,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Sostenido Menor sexta (m6) (A#m6)",
+      "cejilla": null,
+      "cuerdas": [
+        6,
+        4,
+        5,
+        0,
+        6,
+        6
+      ],
+      "dedos": [
+        3,
+        1,
+        2,
+        null,
+        3,
+        3
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Sostenido Suspendido 2 (sus2) (A#sus2)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        1,
+        3,
+        3,
+        1,
+        1
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        2,
+        1,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Sostenido Suspendido 4 (sus4) (A#sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        6,
+        6,
+        3,
+        3,
+        4,
+        6
+      ],
+      "dedos": [
+        3,
+        3,
+        1,
+        1,
+        2,
+        3
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Sostenido Añadido 9 (add9) (A#add9)",
+      "cejilla": null,
+      "cuerdas": [
+        6,
+        5,
+        0,
+        5,
+        6,
+        6
+      ],
+      "dedos": [
+        2,
+        1,
+        null,
+        1,
+        2,
+        2
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Sostenido Séptima suspendida 4 (7sus4) (A#7sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        1,
+        1,
+        1,
+        "x",
+        1
+      ],
+      "dedos": [
+        null,
+        1,
+        1,
+        1,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "La Sostenido Semidisminuido (m7b5) (A#m7b5)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        1,
+        2,
+        1,
+        2,
+        0
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        1,
+        2,
+        null
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Si Disminuido (dim) (Bdim)",
+      "cejilla": null,
+      "cuerdas": [
+        7,
+        8,
+        0,
+        7,
+        0,
+        7
+      ],
+      "dedos": [
+        1,
+        2,
+        null,
+        1,
+        null,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Si Aumentado (aug) (Baug)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        1,
+        0,
+        0,
+        3
+      ],
+      "dedos": [
+        null,
+        2,
+        1,
+        null,
+        null,
+        3
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Si Sexta (6) (B6)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        1,
+        1,
+        0,
+        2
+      ],
+      "dedos": [
+        null,
+        2,
+        1,
+        1,
+        null,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Si Menor sexta (m6) (Bm6)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        0,
+        1,
+        0,
+        2
+      ],
+      "dedos": [
+        null,
+        2,
+        null,
+        1,
+        null,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Si Suspendido 2 (sus2) (Bsus2)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        4,
+        4,
+        2,
+        2
+      ],
+      "dedos": [
+        null,
+        1,
+        2,
+        2,
+        1,
+        1
+      ],
+      "nivel": "intermedio",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Si Suspendido 4 (sus4) (Bsus4)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        2,
+        "x",
+        0,
+        2
+      ],
+      "dedos": [
+        null,
+        1,
+        1,
+        null,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Si Añadido 9 (add9) (Badd9)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        1,
+        "x",
+        2,
+        2
+      ],
+      "dedos": [
+        null,
+        2,
+        1,
+        null,
+        2,
+        2
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Si Séptima suspendida 4 (7sus4) (B7sus4)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        2,
+        2,
+        0,
+        2
+      ],
+      "dedos": [
+        null,
+        1,
+        1,
+        1,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    },
+    {
+      "nombre": "Si Semidisminuido (m7b5) (Bm7b5)",
+      "cejilla": null,
+      "cuerdas": [
+        "x",
+        2,
+        0,
+        2,
+        0,
+        1
+      ],
+      "dedos": [
+        null,
+        2,
+        null,
+        2,
+        null,
+        1
+      ],
+      "nivel": "basico",
+      "observaciones": "Posición seleccionada por contener las notas del acorde y mantener una extensión razonable. Puede haber inversiones o notas duplicadas."
+    }
+  ],
+  "version": "2.0",
+  "afinacion": "E-A-D-G-B-E (Mi-La-Re-Sol-Si-Mi), de sexta a primera cuerda",
+  "convenciones": {
+    "cuerdas": "Seis valores de sexta a primera cuerda; x = no tocar; 0 = cuerda al aire; número = traste.",
+    "dedos": "Seis valores en el mismo orden; null = cuerda al aire o no tocada; 1 = índice, 2 = medio, 3 = anular, 4 = meñique.",
+    "cejilla": "Si no es null, indica el traste de la cejilla. En algunas posiciones con varios dedos en el mismo traste puede usarse cejilla parcial.",
+    "nota": "La digitación es orientativa. La comodidad depende de la mano, guitarra y contexto musical; no existe una única digitación óptima."
+  },
+  "resumen_nuevos_acordes": {
+    "familias_agregadas": [
+      "Disminuido (dim)",
+      "Aumentado (aug)",
+      "Sexta (6)",
+      "Menor sexta (m6)",
+      "Suspendido 2 (sus2)",
+      "Suspendido 4 (sus4)",
+      "Añadido 9 (add9)",
+      "Séptima suspendida 4 (7sus4)",
+      "Semidisminuido (m7b5)"
+    ],
+    "cantidad_agregada": 108
+  }
+}

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>FLAPPY - Mobile Edition</title>
+    <title>FLAPPY · OBSTÁCULOS / RECOMPENSAS</title>
     <style>
         * {
             margin: 0;
@@ -14,7 +14,7 @@
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
-        
+
         html, body {
             width: 100%;
             height: 100%;
@@ -44,7 +44,6 @@
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
         }
 
-        /* Top Bar Overlay Controls */
         .top-bar {
             position: absolute;
             top: env(safe-area-inset-top, 12px);
@@ -86,7 +85,6 @@
             color: #fff;
         }
 
-        /* Difficulty Selector Overlay */
         .diff-bar {
             position: absolute;
             bottom: calc(env(safe-area-inset-bottom, 12px) + 12px);
@@ -122,7 +120,6 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
 
-        /* Screen Tap Instruction overlay */
         .tap-prompt {
             position: absolute;
             pointer-events: none;
@@ -147,11 +144,74 @@
             50% { transform: translateX(-50%) scale(1.05); }
             100% { transform: translateX(-50%) scale(1); }
         }
+
+        .game-mode-selector {
+            position: absolute;
+            top: 20%;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 20;
+            background: rgba(42, 26, 10, 0.85);
+            padding: 20px 28px;
+            border-radius: 28px;
+            border: 3px solid #ffd166;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 12px 28px rgba(0,0,0,0.5);
+            pointer-events: auto;
+        }
+
+        .game-mode-selector .title {
+            color: #ffd166;
+            font-weight: bold;
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .game-mode-selector button {
+            padding: 14px 36px;
+            border-radius: 40px;
+            border: none;
+            font-weight: bold;
+            font-size: 18px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.1s;
+            box-shadow: 0 4px 0 #8a5a1a;
+            letter-spacing: 1px;
+        }
+
+        .game-mode-selector button:active {
+            transform: translateY(3px);
+            box-shadow: 0 1px 0 #8a5a1a;
+        }
+
+        .btn-obstacles {
+            background: #ff5e7a;
+            color: #fff;
+        }
+
+        .btn-rewards {
+            background: #ffd166;
+            color: #2a1a0a;
+        }
+
+        .hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
-        <!-- Overlay UI controls for touch -->
+        <div class="game-mode-selector" id="gameModeSelector">
+            <div class="title">ELIGE MODO</div>
+            <button class="btn-obstacles" data-mode="obstacles">🧱 OBSTÁCULOS</button>
+            <button class="btn-rewards" data-mode="rewards">💰 RECOMPENSAS</button>
+        </div>
+
         <div class="top-bar">
             <button class="icon-btn" id="muteBtn" aria-label="Mute Audio">🔊</button>
             <button class="icon-btn" id="pauseBtn" aria-label="Pause Game">⏸</button>
@@ -169,7 +229,7 @@
     </div>
 
     <script>
-        // Audio synthesis setup
+        // ==================== AUDIO ====================
         const audio = {
             ctx: null,
             muted: false,
@@ -177,17 +237,13 @@
                 if (this.ctx) return;
                 try {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    if (AudioContext) {
-                        this.ctx = new AudioContext();
-                    }
+                    if (AudioContext) this.ctx = new AudioContext();
                 } catch(e) {}
                 this.muted = localStorage.getItem('flappy-muted') === '1';
                 this.updateMuteIcon();
             },
             resume() {
-                if (this.ctx && this.ctx.state === 'suspended') {
-                    this.ctx.resume();
-                }
+                if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
             },
             toggleMute() {
                 this.muted = !this.muted;
@@ -210,26 +266,30 @@
                     g.gain.linearRampToValueAtTime(gain || 0.18, this.ctx.currentTime + 0.005);
                     g.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
                     o.connect(g).connect(this.ctx.destination);
-                    o.start();
-                    o.stop(this.ctx.currentTime + dur);
+                    o.start(); o.stop(this.ctx.currentTime + dur);
                 } catch(e) {}
             },
             flap()  { this.tone(640, 0.06, 'sine', 0.16); },
             pass()  { this.tone(820, 0.08, 'triangle', 0.18); setTimeout(()=>this.tone(1040, 0.1, 'triangle', 0.16), 60); },
-            crash() { this.tone(220, 0.3, 'sawtooth', 0.22); setTimeout(()=>this.tone(140, 0.3, 'sawtooth', 0.2), 100); }
+            coin()  { this.tone(1200, 0.07, 'sine', 0.20); setTimeout(()=>this.tone(1600, 0.09, 'sine', 0.15), 50); },
+            crash() { this.tone(220, 0.3, 'sawtooth', 0.22); setTimeout(()=>this.tone(140, 0.3, 'sawtooth', 0.2), 100); },
+            lifeLost() { this.tone(400, 0.15, 'sawtooth', 0.18); setTimeout(()=>this.tone(300, 0.2, 'sawtooth', 0.15), 80); }
         };
 
-        // Main game controller
+        // ==================== GAME ====================
         const game = {
             canvas: document.getElementById('gameCanvas'),
             ctx: null,
             width: 400,
             height: 600,
             scale: 1,
-            bird: { x: 60, y: 300, width: 32, height: 25, vy: 0, gravity: 0.45, flapPower: -9.2, angle: 0 },
+            // Pájaro un 60% más grande: 32*1.6=51.2 -> 51 ; 25*1.6=40
+            bird: { x: 50, y: 300, width: 51, height: 40, vy: 0, gravity: 0.45, flapPower: -9.2, angle: 0 },
             pipes: [],
+            coins: [],
             score: 0,
-            best: 0,
+            bestObstacles: 0,
+            bestRewards: 0,
             gameRunning: false,
             gamePaused: false,
             gameOver: false,
@@ -244,19 +304,40 @@
             gameOverAlpha: 0,
             clouds: [],
             t: 0,
+            gameMode: null,
+            lives: 4,
+            maxLives: 4,
+            invulnerable: 0,
+            wallImage: null,
+            coinImage: null,
+            imagesLoaded: 0,
+            totalImages: 2,
             diffMap: {
-                easy:   { gap: 175, spacing: 310 },
-                medium: { gap: 145, spacing: 280 },
-                hard:   { gap: 115, spacing: 240 }
+                easy:   { gap: 175, spacing: 310, brickEvery: 100, brickMin: 1, brickMax: 1 },
+                medium: { gap: 145, spacing: 280, brickEvery: 80,  brickMin: 1, brickMax: 2 },
+                hard:   { gap: 115, spacing: 240, brickEvery: 60,  brickMin: 2, brickMax: 3 }
             },
+            brickEvery: 80,
+            brickMin: 1,
+            brickMax: 2,
 
             init() {
                 this.ctx = this.canvas.getContext('2d');
                 audio.init();
-                
                 this.difficulty = localStorage.getItem('flappy-difficulty') || 'medium';
-                this.best = parseInt(localStorage.getItem('flappy-best') || '0', 10);
-                
+                this.bestObstacles = parseInt(localStorage.getItem('flappy-best-obstacles') || '0', 10);
+                this.bestRewards = parseInt(localStorage.getItem('flappy-best-rewards') || '0', 10);
+
+                this.wallImage = new Image();
+                this.wallImage.src = 'y mediagames/muro.png';
+                this.wallImage.onload = () => { this.imagesLoaded++; };
+                this.wallImage.onerror = () => { console.warn('No se pudo cargar muro.png'); this.imagesLoaded++; };
+
+                this.coinImage = new Image();
+                this.coinImage.src = 'y mediagames/tesoro.png';
+                this.coinImage.onload = () => { this.imagesLoaded++; };
+                this.coinImage.onerror = () => { console.warn('No se pudo cargar tesoro.png'); this.imagesLoaded++; };
+
                 this.resizeCanvas();
                 window.addEventListener('resize', () => this.resizeCanvas());
                 window.addEventListener('orientationchange', () => setTimeout(() => this.resizeCanvas(), 200));
@@ -274,28 +355,56 @@
 
                 this.applyDifficulty();
                 this.setupInput();
-                this.startGame();
+                this.showModeSelector();
+
+                document.querySelectorAll('#gameModeSelector button').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        this.selectMode(btn.dataset.mode);
+                    });
+                });
+
                 this.gameLoop();
+            },
+
+            showModeSelector() {
+                document.getElementById('gameModeSelector').classList.remove('hidden');
+                document.getElementById('tapPrompt').style.display = 'none';
+                this.gameRunning = false;
+                this.gameOver = false;
+                this.gamePaused = false;
+                this.bird.y = 280;
+                this.bird.vy = 0;
+                this.bird.angle = 0;
+                this.pipes = [];
+                this.coins = [];
+                this.particles = [];
+                this.popups = [];
+                this.score = 0;
+                this.lives = this.maxLives;
+                this.titleAlpha = 1;
+                this.gameOverAlpha = 0;
+                this.invulnerable = 0;
+            },
+
+            selectMode(mode) {
+                this.gameMode = mode;
+                document.getElementById('gameModeSelector').classList.add('hidden');
+                this.startGame();
             },
 
             resizeCanvas() {
                 const containerWidth = window.innerWidth;
                 const containerHeight = window.innerHeight;
-                
-                // Keep ideal vertical aspect ratio (approx 2:3)
                 const targetRatio = 400 / 600;
                 let newWidth = containerWidth;
                 let newHeight = containerWidth / targetRatio;
-
                 if (newHeight > containerHeight) {
                     newHeight = containerHeight;
                     newWidth = containerHeight * targetRatio;
                 }
-
                 this.canvas.style.width = `${newWidth}px`;
                 this.canvas.style.height = `${newHeight}px`;
-                
-                // Native canvas scale
                 this.canvas.width = 400;
                 this.canvas.height = 600;
                 this.width = 400;
@@ -307,7 +416,7 @@
                 localStorage.setItem('flappy-difficulty', d);
                 this.updateDiffButtons();
                 this.applyDifficulty();
-                this.startGame();
+                if (this.gameMode) this.startGame();
             },
 
             updateDiffButtons() {
@@ -320,11 +429,34 @@
                 const d = this.diffMap[this.difficulty];
                 this.pipeGap = d.gap;
                 this.pipeSpacing = d.spacing;
+                this.brickEvery = d.brickEvery;
+                this.brickMin = d.brickMin;
+                this.brickMax = d.brickMax;
+            },
+
+            getBest() {
+                return this.gameMode === 'rewards' ? this.bestRewards : this.bestObstacles;
+            },
+
+            saveBest() {
+                if (this.gameMode === 'rewards') {
+                    if (this.score > this.bestRewards) {
+                        this.bestRewards = this.score;
+                        localStorage.setItem('flappy-best-rewards', String(this.bestRewards));
+                    }
+                } else {
+                    if (this.score > this.bestObstacles) {
+                        this.bestObstacles = this.score;
+                        localStorage.setItem('flappy-best-obstacles', String(this.bestObstacles));
+                    }
+                }
             },
 
             startGame() {
-                this.bird = { x: 60, y: 280, width: 32, height: 25, vy: 0, gravity: 0.45, flapPower: -9.2, angle: 0 };
+                // Pájaro grande: 51x40, x=50 para que quepa bien
+                this.bird = { x: 50, y: 280, width: 51, height: 40, vy: 0, gravity: 0.45, flapPower: -9.2, angle: 0 };
                 this.pipes = [];
+                this.coins = [];
                 this.score = 0;
                 this.gameRunning = true;
                 this.gamePaused = false;
@@ -334,39 +466,39 @@
                 this.popups = [];
                 this.titleAlpha = 1;
                 this.gameOverAlpha = 0;
-                
+                this.lives = this.maxLives;
+                this.invulnerable = 0;
+
                 const prompt = document.getElementById('tapPrompt');
                 if (prompt) prompt.style.display = 'block';
-                
+
                 const pauseBtn = document.getElementById('pauseBtn');
                 if (pauseBtn) pauseBtn.textContent = '⏸';
             },
 
             flap() {
                 if (this.gameOver) {
-                    this.startGame();
+                    this.showModeSelector();
                     return;
                 }
-
                 if (this.gamePaused) {
                     this.togglePause();
                     return;
                 }
-
                 if (this.gameRunning) {
                     this.bird.vy = this.bird.flapPower;
                     this.bird.angle = -0.45;
                     audio.flap();
                     this.titleAlpha = Math.max(0, this.titleAlpha - 0.35);
-                    this.emitParticles(this.bird.x, this.bird.y + this.bird.height, '#ffd166', 5);
-                    
+                    this.emitParticles(this.bird.x + this.bird.width/2, this.bird.y + this.bird.height, '#ffd166', 5);
+
                     const prompt = document.getElementById('tapPrompt');
                     if (prompt && this.titleAlpha <= 0) prompt.style.display = 'none';
                 }
             },
 
             emitParticles(x, y, color, count) {
-                count = count || 14; 
+                count = count || 14;
                 const limit = 150;
                 for (let i = 0; i < count; i++) {
                     if (this.particles.length >= limit) break;
@@ -380,22 +512,78 @@
                 this.popups.push({ x, y, text, color: color || '#ffd166', life: 45, max: 45 });
             },
 
-            triggerShake(mag) { 
-                this.shake.mag = Math.max(this.shake.mag, mag); 
+            triggerShake(mag) {
+                this.shake.mag = Math.max(this.shake.mag, mag);
+            },
+
+            // Monedas un 60% más grandes: 14->22, 20->32, 26->42
+            spawnCoin() {
+                const r = Math.random();
+                let size, value;
+                if (r < 0.33) {
+                    size = 22; value = 3;
+                } else if (r < 0.66) {
+                    size = 32; value = 2;
+                } else {
+                    size = 42; value = 1;
+                }
+                // La moneda más grande (42) sigue siendo menor que el ave (51) ✔
+                const x = this.width + 20;
+                // Elegir una altura donde la moneda NO se solape con ningún ladrillo
+                // (así nunca se coge una moneda "tocando" un obstáculo)
+                let y = 80 + Math.random() * (this.height - 200);
+                let ok = false;
+                for (let tries = 0; tries < 25 && !ok; tries++) {
+                    y = 80 + Math.random() * (this.height - 200);
+                    ok = !this.pipes.some(b =>
+                        x < b.x + b.width + 30 && x + size > b.x - 30 &&
+                        y < b.y + b.height + 30 && y + size > b.y - 30
+                    );
+                }
+                if (!ok) return; // no hay hueco limpio: no se genera esta moneda
+                this.coins.push({
+                    x, y,
+                    size,
+                    value,
+                    radius: size / 2,
+                    collected: false,
+                    bobPhase: Math.random() * Math.PI * 2
+                });
+            },
+
+            // Ladrillos flotantes pequeños (solo modo recompensas)
+            spawnWall() {
+                const n = this.brickMin + Math.floor(Math.random() * (this.brickMax - this.brickMin + 1));
+                const placed = [];
+                for (let i = 0; i < n; i++) {
+                    for (let tries = 0; tries < 30; tries++) {
+                        const w = 46 + Math.random() * 30;
+                        const h = 28 + Math.random() * 22;
+                        const x = this.width + i * 90 + Math.random() * 40;
+                        const y = 90 + Math.random() * (this.height - 90 - 130 - h);
+                        const clash = placed.concat(this.pipes).some(b =>
+                            x < b.x + b.width + 60 && x + w > b.x - 60 &&
+                            y < b.y + b.height + 100 && y + h > b.y - 100
+                        );
+                        if (clash) continue;
+                        placed.push({ x, y, width: w, height: h, passed: false, isWall: true });
+                        break;
+                    }
+                }
+                for (const b of placed) this.pipes.push(b);
             },
 
             update() {
                 this.t++;
-                // Clouds drift
+
                 for (const c of this.clouds) {
                     c.x -= c.v;
-                    if (c.x + c.s < 0) { 
-                        c.x = this.width + 20; 
-                        c.y = Math.random() * this.height * 0.45; 
+                    if (c.x + c.s < 0) {
+                        c.x = this.width + 20;
+                        c.y = Math.random() * this.height * 0.45;
                     }
                 }
 
-                // Particles & Popups
                 for (let i = this.particles.length - 1; i >= 0; i--) {
                     const p = this.particles[i];
                     p.x += p.vx; p.y += p.vy;
@@ -407,19 +595,17 @@
 
                 for (let i = this.popups.length - 1; i >= 0; i--) {
                     const p = this.popups[i];
-                    p.y -= 0.8; 
+                    p.y -= 0.8;
                     p.life--;
                     if (p.life <= 0) this.popups.splice(i, 1);
                 }
 
-                // Screen shake
                 if (this.shake.mag > 0.1) {
                     this.shake.dx = (Math.random() - 0.5) * this.shake.mag;
                     this.shake.dy = (Math.random() - 0.5) * this.shake.mag;
                     this.shake.mag *= 0.85;
-                } else { 
-                    this.shake.dx = 0; 
-                    this.shake.dy = 0; 
+                } else {
+                    this.shake.dx = 0; this.shake.dy = 0;
                 }
 
                 if (this.gameOver) {
@@ -429,53 +615,123 @@
 
                 if (!this.gameRunning || this.gamePaused) return;
 
-                // Bird dynamics
+                if (this.invulnerable > 0) this.invulnerable--;
+
                 this.bird.vy += this.bird.gravity;
                 this.bird.y += this.bird.vy;
                 this.bird.angle += 0.038;
                 if (this.bird.angle > 0.75) this.bird.angle = 0.75;
 
-                // Ceiling / Floor collision
                 if (this.bird.y < 0 || this.bird.y + this.bird.height > this.height) {
-                    this.endGame();
-                    return;
+                    if (this.gameMode === 'rewards') {
+                        // En recompensas solo los ladrillos hacen daño
+                        if (this.bird.y < 0) this.bird.y = 0;
+                        else this.bird.y = this.height - this.bird.height;
+                        this.bird.vy = 0;
+                    } else {
+                        this.endGame();
+                        return;
+                    }
                 }
 
-                // Pipe spawning
                 this.frameCount++;
-                if (this.frameCount % this.pipeSpacing === 0) {
-                    const pipeY = Math.floor(Math.random() * (this.height - this.pipeGap - 180)) + 80;
-                    this.pipes.push({ x: this.width, y: pipeY, width: 54, passed: false });
+
+                if (this.gameMode === 'rewards') {
+                    if (this.frameCount % 45 === 0 && Math.random() < 0.7) {
+                        this.spawnCoin();
+                    }
+                    if (this.frameCount % this.brickEvery === 0) {
+                        this.spawnWall();
+                    }
+                } else {
+                    // Modo obstáculos: SOLO tubos verdes, nunca muros
+                    if (this.frameCount % this.pipeSpacing === 0) {
+                        const pipeY = Math.floor(Math.random() * (this.height - this.pipeGap - 180)) + 80;
+                        this.pipes.push({ x: this.width, y: pipeY, width: 54, height: 0, isTop: false, passed: false, isWall: false });
+                    }
                 }
 
-                // Pipe movement & collision
+                // Movimiento y colisiones
                 for (let i = this.pipes.length - 1; i >= 0; i--) {
                     const pipe = this.pipes[i];
                     pipe.x -= 3.2;
 
-                    // Score calculation
-                    if (pipe.x + pipe.width < this.bird.x && !pipe.passed) {
-                        pipe.passed = true;
-                        this.score++;
-                        audio.pass();
-                        this.addPopup(pipe.x + pipe.width/2, pipe.y + this.pipeGap/2, '+1', '#ffd166');
-                        this.emitParticles(this.bird.x + 12, this.bird.y + 12, '#9be36b', 8);
+                    // En modo obstáculos ignoramos cualquier muro (por seguridad)
+                    if (this.gameMode === 'obstacles' && pipe.isWall) {
+                        this.pipes.splice(i, 1);
+                        continue;
                     }
 
                     if (pipe.x + pipe.width < -10) {
                         this.pipes.splice(i, 1);
+                        continue;
                     }
 
-                    // Collision bounds
                     const bL = this.bird.x + 3;
                     const bR = this.bird.x + this.bird.width - 3;
                     const bT = this.bird.y + 3;
                     const bB = this.bird.y + this.bird.height - 3;
 
-                    if (bR > pipe.x && bL < pipe.x + pipe.width) {
-                        if (bT < pipe.y || bB > pipe.y + this.pipeGap) {
+                    let collision = false;
+                    if (this.gameMode === 'obstacles') {
+                        if (bR > pipe.x && bL < pipe.x + pipe.width) {
+                            if (bT < pipe.y || bB > pipe.y + this.pipeGap) {
+                                collision = true;
+                            }
+                        }
+                    } else {
+                        if (bR > pipe.x && bL < pipe.x + pipe.width) {
+                            if (bT < pipe.y + pipe.height && bB > pipe.y) {
+                                collision = true;
+                            }
+                        }
+                    }
+
+                    if (collision && this.invulnerable <= 0) {
+                        this.lives--;
+                        audio.lifeLost();
+                        this.triggerShake(10);
+                        this.emitParticles(this.bird.x + this.bird.width/2, this.bird.y + this.bird.height/2, '#ff5e7a', 20);
+                        this.invulnerable = 60;
+
+                        if (this.lives <= 0) {
                             this.endGame();
                             return;
+                        }
+                        this.bird.vy = this.bird.flapPower * 0.7;
+                    }
+
+                    if (this.gameMode === 'obstacles' && !pipe.passed && pipe.x + pipe.width < this.bird.x) {
+                        pipe.passed = true;
+                        this.score++;
+                        audio.pass();
+                        this.addPopup(pipe.x + pipe.width/2, pipe.y + this.pipeGap/2, '+1', '#ffd166');
+                        this.emitParticles(this.bird.x + this.bird.width/2, this.bird.y + this.bird.height/2, '#9be36b', 8);
+                    }
+                }
+
+                if (this.gameMode === 'rewards') {
+                    for (let i = this.coins.length - 1; i >= 0; i--) {
+                        const coin = this.coins[i];
+                        coin.x -= 3.2;
+                        coin.bobPhase += 0.1;
+
+                        if (coin.x + coin.size < -20) {
+                            this.coins.splice(i, 1);
+                            continue;
+                        }
+
+                        const dx = (this.bird.x + this.bird.width/2) - (coin.x + coin.size/2);
+                        const dy = (this.bird.y + this.bird.height/2) - (coin.y + coin.size/2);
+                        const dist = Math.sqrt(dx*dx + dy*dy);
+                        const threshold = (this.bird.width/2 + coin.size/2) * 0.85;
+
+                        if (dist < threshold) {
+                            this.score += coin.value;
+                            audio.coin();
+                            this.addPopup(coin.x + coin.size/2, coin.y, '+' + coin.value, '#ffd166');
+                            this.emitParticles(coin.x + coin.size/2, coin.y + coin.size/2, '#ffd166', 10);
+                            this.coins.splice(i, 1);
                         }
                     }
                 }
@@ -486,13 +742,8 @@
                 this.gameOver = true;
                 audio.crash();
                 this.triggerShake(14);
-                this.emitParticles(this.bird.x + 15, this.bird.y + 12, '#ff5e7a', 36);
-                
-                if (this.score > this.best) {
-                    this.best = this.score;
-                    localStorage.setItem('flappy-best', String(this.best));
-                }
-
+                this.emitParticles(this.bird.x + this.bird.width/2, this.bird.y + this.bird.height/2, '#ff5e7a', 36);
+                this.saveBest();
                 const prompt = document.getElementById('tapPrompt');
                 if (prompt) prompt.style.display = 'none';
             },
@@ -509,7 +760,6 @@
                 ctx.save();
                 ctx.translate(this.shake.dx, this.shake.dy);
 
-                // Background gradient
                 const grad = ctx.createLinearGradient(0, 0, 0, this.height);
                 grad.addColorStop(0, '#ff9b3d');
                 grad.addColorStop(0.35, '#ffd166');
@@ -518,7 +768,6 @@
                 ctx.fillStyle = grad;
                 ctx.fillRect(0, 0, this.width, this.height);
 
-                // Sun
                 ctx.shadowColor = '#ffd166'; ctx.shadowBlur = 25;
                 ctx.fillStyle = '#fff7d6';
                 ctx.beginPath();
@@ -526,7 +775,6 @@
                 ctx.fill();
                 ctx.shadowBlur = 0;
 
-                // Clouds
                 ctx.fillStyle = 'rgba(255,255,255,0.7)';
                 for (const c of this.clouds) {
                     ctx.beginPath();
@@ -536,36 +784,84 @@
                     ctx.fill();
                 }
 
-                // Pipes
-                for (let pipe of this.pipes) {
-                    const grdT = ctx.createLinearGradient(pipe.x, 0, pipe.x + pipe.width, 0);
-                    grdT.addColorStop(0, '#2e8a4e');
-                    grdT.addColorStop(0.5, '#6dffb1');
-                    grdT.addColorStop(1, '#2e8a4e');
-                    ctx.fillStyle = grdT;
+                if (this.gameMode === 'obstacles') {
+                    for (let pipe of this.pipes) {
+                        if (pipe.isWall) continue; // seguridad extra
+                        const grdT = ctx.createLinearGradient(pipe.x, 0, pipe.x + pipe.width, 0);
+                        grdT.addColorStop(0, '#2e8a4e');
+                        grdT.addColorStop(0.5, '#6dffb1');
+                        grdT.addColorStop(1, '#2e8a4e');
+                        ctx.fillStyle = grdT;
+                        ctx.fillRect(pipe.x, 0, pipe.width, pipe.y);
+                        ctx.fillRect(pipe.x - 4, pipe.y - 18, pipe.width + 8, 18);
+                        ctx.fillRect(pipe.x, pipe.y + this.pipeGap, pipe.width, this.height - (pipe.y + this.pipeGap));
+                        ctx.fillRect(pipe.x - 4, pipe.y + this.pipeGap, pipe.width + 8, 18);
+                        ctx.strokeStyle = 'rgba(0, 50, 20, 0.4)';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(pipe.x - 4, pipe.y - 18, pipe.width + 8, 18);
+                        ctx.strokeRect(pipe.x - 4, pipe.y + this.pipeGap, pipe.width + 8, 18);
+                    }
+                } else {
+                    for (let wall of this.pipes) {
+                        if (!wall.isWall) continue;
+                        ctx.save();
+                        ctx.translate(wall.x, wall.y);
+                        if (this.wallImage && this.wallImage.complete && this.wallImage.naturalWidth > 0) {
+                            ctx.fillStyle = ctx.createPattern(this.wallImage, 'repeat');
+                        } else {
+                            ctx.fillStyle = '#b84a1e';
+                        }
+                        ctx.fillRect(0, 0, wall.width, wall.height);
+                        ctx.restore();
 
-                    // Top pipe
-                    ctx.fillRect(pipe.x, 0, pipe.width, pipe.y);
-                    ctx.fillRect(pipe.x - 4, pipe.y - 18, pipe.width + 8, 18);
+                        ctx.strokeStyle = 'rgba(60, 20, 5, 0.6)';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(wall.x, wall.y, wall.width, wall.height);
 
-                    // Bottom pipe
-                    ctx.fillRect(pipe.x, pipe.y + this.pipeGap, pipe.width, this.height - (pipe.y + this.pipeGap));
-                    ctx.fillRect(pipe.x - 4, pipe.y + this.pipeGap, pipe.width + 8, 18);
+                        if (!(this.wallImage && this.wallImage.complete && this.wallImage.naturalWidth > 0)) {
+                            ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+                            ctx.lineWidth = 1;
+                            for (let yy = wall.y + 15; yy < wall.y + wall.height; yy += 20) {
+                                ctx.beginPath();
+                                ctx.moveTo(wall.x, yy);
+                                ctx.lineTo(wall.x + wall.width, yy);
+                                ctx.stroke();
+                            }
+                        }
+                    }
 
-                    ctx.strokeStyle = 'rgba(0, 50, 20, 0.4)';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(pipe.x - 4, pipe.y - 18, pipe.width + 8, 18);
-                    ctx.strokeRect(pipe.x - 4, pipe.y + this.pipeGap, pipe.width + 8, 18);
+                    for (let coin of this.coins) {
+                        const bob = Math.sin(coin.bobPhase) * 3;
+                        if (this.coinImage && this.coinImage.complete && this.coinImage.naturalWidth > 0) {
+                            ctx.drawImage(this.coinImage, coin.x, coin.y + bob, coin.size, coin.size);
+                        } else {
+                            ctx.fillStyle = '#ffd166';
+                            ctx.beginPath();
+                            ctx.arc(coin.x + coin.size/2, coin.y + coin.size/2 + bob, coin.size/2, 0, Math.PI*2);
+                            ctx.fill();
+                            ctx.strokeStyle = '#c98a1a';
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+                            ctx.fillStyle = '#c98a1a';
+                            ctx.font = 'bold 16px monospace';
+                            ctx.textAlign = 'center';
+                            ctx.fillText(coin.value, coin.x + coin.size/2, coin.y + coin.size/2 + bob + 5);
+                        }
+                    }
                 }
 
-                // Bird with rotation
+                // Pájaro (grande)
                 ctx.save();
                 ctx.translate(this.bird.x + this.bird.width/2, this.bird.y + this.bird.height/2);
                 ctx.rotate(this.bird.angle);
-                
-                ctx.shadowColor = '#ffd166'; 
+
+                if (this.invulnerable > 0 && Math.floor(this.invulnerable / 5) % 2 === 0) {
+                    ctx.globalAlpha = 0.5;
+                }
+
+                ctx.shadowColor = '#ffd166';
                 ctx.shadowBlur = 12;
-                const bgrd = ctx.createRadialGradient(-4, -4, 2, 0, 0, this.bird.width/2);
+                const bgrd = ctx.createRadialGradient(-6, -6, 3, 0, 0, this.bird.width/2);
                 bgrd.addColorStop(0, '#fff7d6');
                 bgrd.addColorStop(0.5, '#ffd166');
                 bgrd.addColorStop(1, '#c98a1a');
@@ -575,31 +871,27 @@
                 ctx.fill();
                 ctx.shadowBlur = 0;
 
-                // Wing
                 ctx.fillStyle = '#ff9b3d';
-                const wingY = Math.sin(this.t * 0.3) * 3;
+                const wingY = Math.sin(this.t * 0.3) * 4;
                 ctx.beginPath();
-                ctx.ellipse(-2, wingY, 8, 5, 0, 0, Math.PI*2);
+                ctx.ellipse(-3, wingY, 12, 8, 0, 0, Math.PI*2);
                 ctx.fill();
 
-                // Eye
                 ctx.fillStyle = '#fff';
                 ctx.beginPath();
-                ctx.arc(7, -4, 4, 0, Math.PI*2);
+                ctx.arc(11, -6, 6, 0, Math.PI*2);
                 ctx.fill();
                 ctx.fillStyle = '#000';
                 ctx.beginPath();
-                ctx.arc(8, -4, 2, 0, Math.PI*2);
+                ctx.arc(13, -6, 3, 0, Math.PI*2);
                 ctx.fill();
 
-                // Beak
                 ctx.fillStyle = '#ff5e7a';
                 ctx.beginPath();
-                ctx.moveTo(12, 0); ctx.lineTo(20, -2); ctx.lineTo(20, 3); ctx.closePath();
+                ctx.moveTo(19, 0); ctx.lineTo(31, -3); ctx.lineTo(31, 4); ctx.closePath();
                 ctx.fill();
                 ctx.restore();
 
-                // Particles
                 for (const p of this.particles) {
                     ctx.globalAlpha = p.life / p.max;
                     ctx.fillStyle = p.color;
@@ -607,7 +899,6 @@
                 }
                 ctx.globalAlpha = 1;
 
-                // Popups
                 for (const p of this.popups) {
                     ctx.globalAlpha = p.life / p.max;
                     ctx.font = 'bold 22px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
@@ -616,29 +907,38 @@
                     ctx.globalAlpha = 1;
                 }
 
-                // HUD Score
                 ctx.font = 'bold 46px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
                 ctx.textAlign = 'center';
                 this.outline(this.score, this.width / 2, 70, '#fff', '#2a1a0a');
-                
-                ctx.font = '16px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
-                this.outline('MEJOR: ' + this.best, this.width / 2, 100, '#ffd166', '#2a1a0a');
 
-                // Initial Screen Overlay
-                if (this.titleAlpha > 0.01 && !this.gameOver) {
+                const best = this.getBest();
+                ctx.font = '16px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
+                this.outline('MEJOR: ' + best, this.width / 2, 100, '#ffd166', '#2a1a0a');
+
+                if (this.gameMode === 'rewards') {
+                    ctx.font = '18px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
+                    ctx.textAlign = 'left';
+                    for (let i = 0; i < this.maxLives; i++) {
+                        ctx.fillStyle = i < this.lives ? '#ff5e7a' : 'rgba(255,255,255,0.3)';
+                        ctx.fillText('❤️', 15 + i * 26, 125);
+                    }
+                }
+
+                if (this.titleAlpha > 0.01 && !this.gameOver && this.gameMode) {
                     ctx.globalAlpha = this.titleAlpha;
                     ctx.fillStyle = 'rgba(255,255,255,0.2)';
                     ctx.fillRect(0, 0, this.width, this.height);
                     ctx.textAlign = 'center';
                     ctx.font = 'bold 44px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
-                    this.outline('FLAPPY', this.width / 2, this.height / 2 - 40, '#ffd166', '#2a1a0a');
+                    const title = this.gameMode === 'rewards' ? 'RECOMPENSAS' : 'OBSTÁCULOS';
+                    this.outline(title, this.width / 2, this.height / 2 - 40, '#ffd166', '#2a1a0a');
                     ctx.font = '16px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
                     this.outline('Toca la pantalla para volar', this.width / 2, this.height / 2 + 5, '#2a1a0a', '#fff');
-                    this.outline('Esquiva las tuberías', this.width / 2, this.height / 2 + 30, '#2a1a0a', '#fff');
+                    this.outline(this.gameMode === 'rewards' ? 'Esquiva ladrillos y recoge monedas' : 'Esquiva las tuberías',
+                                 this.width / 2, this.height / 2 + 30, '#2a1a0a', '#fff');
                     ctx.globalAlpha = 1;
                 }
 
-                // Pause Overlay
                 if (this.gamePaused) {
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
                     ctx.fillRect(0, 0, this.width, this.height);
@@ -648,22 +948,21 @@
                     ctx.fillText('PAUSA', this.width / 2, this.height / 2);
                 }
 
-                // Game Over Overlay
                 if (this.gameOver) {
                     ctx.globalAlpha = this.gameOverAlpha;
                     ctx.fillStyle = 'rgba(0, 0, 0, 0.72)';
                     ctx.fillRect(0, 0, this.width, this.height);
                     ctx.textAlign = 'center';
-                    
+
                     ctx.font = 'bold 38px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
                     this.outline('FIN DEL JUEGO', this.width / 2, this.height / 2 - 50, '#ff5e7a', '#000');
-                    
+
                     ctx.font = '22px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
                     this.outline(`Puntuación: ${this.score}`, this.width / 2, this.height / 2, '#fff', '#000');
-                    this.outline(`Récord: ${this.best}`, this.width / 2, this.height / 2 + 32, '#ffd166', '#000');
-                    
+                    this.outline(`Récord: ${this.getBest()}`, this.width / 2, this.height / 2 + 32, '#ffd166', '#000');
+
                     ctx.font = 'bold 16px ui-monospace, "SF Mono", Menlo, Consolas, monospace';
-                    this.outline('TOCA PARA REINICIAR', this.width / 2, this.height / 2 + 80, '#6dffb1', '#000');
+                    this.outline('TOCA PARA VOLVER AL MENÚ', this.width / 2, this.height / 2 + 80, '#6dffb1', '#000');
                     ctx.globalAlpha = 1;
                 }
 
@@ -681,8 +980,7 @@
 
             setupInput() {
                 const handlePointer = (e) => {
-                    // Avoid triggering flap when interacting with buttons
-                    if (e.target.closest('.top-bar') || e.target.closest('.diff-bar')) {
+                    if (e.target.closest('.top-bar') || e.target.closest('.diff-bar') || e.target.closest('#gameModeSelector')) {
                         return;
                     }
                     if (e.cancelable) e.preventDefault();
@@ -691,22 +989,19 @@
                     this.flap();
                 };
 
-                // Touch & Pointer listeners
                 window.addEventListener('pointerdown', handlePointer, { passive: false });
 
-                // Keyboard controls fallback
                 document.addEventListener('keydown', (e) => {
                     audio.init();
                     audio.resume();
-                    if (e.key === ' ' || e.key === 'ArrowUp') { 
-                        this.flap(); 
-                        e.preventDefault(); 
+                    if (e.key === ' ' || e.key === 'ArrowUp') {
+                        this.flap();
+                        e.preventDefault();
                     }
                     if (e.key.toLowerCase() === 'p') this.togglePause();
                     if (e.key.toLowerCase() === 'm') audio.toggleMute();
                 });
 
-                // Button Listeners
                 document.getElementById('pauseBtn').addEventListener('pointerdown', (e) => {
                     e.stopPropagation();
                     this.togglePause();
@@ -733,7 +1028,6 @@
             }
         };
 
-        // Initialize game on window load
         window.onload = function() {
             game.init();
         };
